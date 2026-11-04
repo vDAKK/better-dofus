@@ -60,7 +60,7 @@ set(LOADER_SOURCES src/loader/launcher.cpp src/core/common.cpp src/loader/autolo
   src/core/settings.cpp src/loader/update-launch.cpp)
 add_executable(ModuleLoader ${LOADER_SOURCES})
 target_link_libraries(ModuleLoader PRIVATE bcrypt advapi32 user32)
-add_executable(ModuleAutoLoader WIN32 ${LOADER_SOURCES})
+add_executable(ModuleAutoLoader WIN32 ${LOADER_SOURCES} src/loader/notify.cpp)
 target_compile_definitions(ModuleAutoLoader PRIVATE DOFUS_AUTOLOADER)
 target_link_libraries(ModuleAutoLoader PRIVATE bcrypt advapi32 user32 shell32)
 add_library(RuntimeProbe SHARED src/loader/probe.cpp src/core/common.cpp)

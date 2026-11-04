@@ -1,6 +1,6 @@
 # Guide détaillé (français)
 
-Mod expérimental pour **Dofus Unity 3.7.13.17**, version **1.20.4**.
+Mod expérimental pour **Dofus Unity 3.7.13.17**, version **1.21.0**.
 
 Miniatures au choix, animations à la carte, surbrillance, curseurs dans le style
 de Dofus, jauges à la verticale, aide à la capture d’âmes, trajets rapides
@@ -22,7 +22,14 @@ Dans **Options → Dofus Enhanced → Chargement et mises à jour** :
 
 - **Chargement automatique** charge le mod lors des prochains lancements.
 - **Mises à jour GitHub** recherche, télécharge et vérifie une version compatible
-  avant le chargement. Activé par défaut. Aucun compte GitHub requis.
+  avant le chargement. Activé par défaut. Aucun compte GitHub requis. Le mod
+  regarde vDAKK/dofus-enhanced. Altansar69/dofus-enhanced sert de secours quand
+  aucune version installée ne convient à ton Dofus : une version qui marche n’est
+  jamais remplacée par la sienne.
+- **Après une mise à jour de Dofus**, si aucune version du mod ne lui correspond,
+  une notification Windows te prévient (une seule fois, même avec plusieurs
+  comptes). Le jeu reste intact et le mod revient au lancement qui suit la
+  publication d’une version adaptée.
 - **Reconnexion après une déconnexion** (1.20.2, cochée par défaut) : après une
   déconnexion pour inactivité, « Jouer » pouvait charger sans fin. C’est un
   défaut du jeu : quand le lanceur Ankama répond sans les informations du

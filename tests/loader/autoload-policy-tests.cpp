@@ -22,7 +22,13 @@ int main() {
         check(policy.Observe(6, 103, 180000, true, true, true) == D::Expired, "Deadline must prevent late load");
         check(policy.Observe(6, 103, 181000, true, true, true) == D::Ignore, "Expired process must not retry");
         check(policy.Observe(0, 104, 0, true, true, true) == D::Ignore, "Invalid identity must not load");
-        std::cout << "PASS: baseline, grace, readiness, disable, exit, PID reuse, deadline, one attempt\n";
+        IncompatibleGameNotice notice;
+        check(!notice.ShouldShow("Selected loader did not confirm startup"), "Another failure must stay in the log");
+        check(notice.ShouldShow("NO_COMPATIBLE_RELEASE: cette mise a jour"), "A game update must be told");
+        check(!notice.ShouldShow("NO_COMPATIBLE_RELEASE: cette mise a jour"), "A second client must not repeat the notice");
+        notice.Loaded();
+        check(notice.ShouldShow("NO_COMPATIBLE_RELEASE: cette mise a jour"), "A later game update must be told again");
+        std::cout << "PASS: baseline, grace, readiness, disable, exit, PID reuse, deadline, one attempt, one game update notice\n";
         return 0;
     } catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 1; }
 }

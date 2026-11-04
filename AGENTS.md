@@ -7,8 +7,10 @@
   the user's own version, shown in game as « par DAKK ». The user has read-only
   access to Altansar69's repository: releases go to the fork, with
   `python tools/publish-release.py ... --repository vDAKK/dofus-enhanced`. The
-  updater checks Altansar69's repository first, then the fork when it has nothing
-  newer. Keep Altansar credited as the mod's creator.
+  updater checks the fork, and Altansar69's repository only when no local release
+  fits the installed Dofus (since r129). A fork revision must be above any Altansar
+  revision already installed: the same number is one folder, so it would be ignored.
+  Keep Altansar credited as the mod's creator.
 - Always build with `build.ps1`: its clean build is required, because incremental
   builds miss header changes with this localized compiler.
 - The user requested automatic delivery: after an authorized mod update, increment
@@ -57,7 +59,8 @@
 - The bootstrap is version-independent, but each module and its own loader must
   still pin the exact supported binary AND metadata hashes. Never bypass these
   checks, the native guards or the ABI verification to accept a game update.
-- A new game build can require a native port. Validate method signatures, field
+- A new game build can require a native port: start with `tools/port/README.md`.
+  Validate method signatures, field
   layouts and interior callsites against that exact build before publication.
   The updater distributes a port; it does not generate one.
 - Every native method goes through a 16-byte guard in `src/core/signatures.hpp`

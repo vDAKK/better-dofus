@@ -10,7 +10,9 @@
 #include <fstream>
 #include <functional>
 #ifdef DOFUS_AUTOLOADER
+#include "loader/notify.hpp"
 #include <shellapi.h>
+#include <thread>
 #endif
 
 static DWORD ChooseClient() {
@@ -184,6 +186,7 @@ static int Watch(const std::filesystem::path& folder, const std::filesystem::pat
         struct Release { HANDLE value; ~Release() { ReleaseMutex(value); } } release{singleton.value};
         FILETIME started{}; GetSystemTimeAsFileTime(&started);
         AutoLoadPolicy policy(FileTimeValue(started));
+        IncompatibleGameNotice incompatibleNotice;
         LogEvent(log, "WATCH_STARTED pre-existing clients ignored; 25s grace; one attempt per new process");
         const auto enabled = [&] { return AutoLoadEnabled(folder, clientExe); };
         while (enabled()) {
@@ -226,9 +229,16 @@ static int Watch(const std::filesystem::path& folder, const std::filesystem::pat
                     if (DispatchVerifiedLoader(selectedRelease.folder, pid, creation, clientExe, log) != 0)
                         throw std::runtime_error("Selected loader did not confirm startup; inspect its autoload.log and module.log");
                     LogEvent(log, "LOAD_READY", pid);
+                    incompatibleNotice.Loaded();
                 } catch (const std::exception& error) {
                     LogEvent(log, "LOAD_NOT_CONFIRMED no retry for this process", pid);
                     log << error.what() << '\n'; log.flush();
+                    if (incompatibleNotice.ShouldShow(error.what())) {
+                        LogEvent(log, "INCOMPATIBLE_GAME_NOTICE");
+#ifdef DOFUS_AUTOLOADER
+                        std::thread(ShowIncompatibleGameNotice).detach();
+#endif
+                    }
                 }
             } while (Process32NextW(snapshot.value, &entry));
             Sleep(1000);

@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <map>
+#include <string_view>
 #include <utility>
 
 // Pure policy: no registry, process enumeration, Windows API, or game code.
@@ -28,4 +29,18 @@ private:
     struct State { uint64_t firstSeen; bool finished; };
     uint64_t cutoff;
     std::map<std::pair<uint32_t, uint64_t>, State> states;
+};
+
+// The player's only sign that a game update left the mod behind: told once, not
+// for each client of a multi-account session, and again if it happens after a
+// successful load. Any other failure stays in autoload.log.
+class IncompatibleGameNotice {
+public:
+    bool ShouldShow(std::string_view error) {
+        if (error.rfind("NO_COMPATIBLE_RELEASE", 0) != 0 || shown) return false;
+        return shown = true;
+    }
+    void Loaded() { shown = false; }
+private:
+    bool shown = false;
 };

@@ -10,7 +10,14 @@ all game rights belong to Ankama. I do not know whether using this mod is
 allowed by Ankama's terms: a ban cannot be completely ruled out. Use it at
 your own risk; the software is provided "as is", without any warranty.
 
-DOFUS ENHANCED — Dofus Unity 3.7.13.17 — VERSION 1.20.4
+DOFUS ENHANCED — Dofus Unity 3.7.13.17 — VERSION 1.21.0
+
+VERSION 1.21.0 : TA VERSION RESTE LA TIENNE, MISE À JOUR DE DOFUS SIGNALÉE
+- Mises à jour GitHub : le mod regarde d’abord vDAKK/dofus-enhanced. Une version
+  qui marche n’est plus remplacée par celle d’Altansar69/dofus-enhanced, qui sert
+  de secours quand aucune version installée ne convient au Dofus présent.
+- Après une mise à jour de Dofus sans version adaptée du mod, une notification
+  Windows le signale une fois. Le jeu reste intact, comme avant.
 
 VERSION 1.20.4 : TRAJETS PLUS RÉACTIFS, VERSION DE DAKK
 - Trajets du mod : le personnage part dès l’image suivante quand le trajet

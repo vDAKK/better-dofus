@@ -13,12 +13,13 @@ $script:Repository = 'Altansar69/dofus-enhanced'
 # Renamed from Altansar69/dofus-miniatures (GitHub redirects the old name):
 # assets published under either name stay trusted.
 $script:AssetRepositories = @('Altansar69/dofus-miniatures', 'Altansar69/dofus-enhanced')
-# Checked in this order: the fork is asked only when Altansar's repository has
-# nothing newer than the verified local releases, or cannot answer. A source's
-# listing can only designate that source's own assets.
+# Checked in this order. DAKK's version comes first and is never replaced while
+# it works: Altansar's repository is only a rescue, asked when no local release
+# verifies against the installed Dofus (a game update DAKK has not ported yet).
+# A source's listing can only designate that source's own assets.
 $script:Sources = @(
-    [pscustomobject]@{ Name = $script:Repository; Assets = $script:AssetRepositories },
-    [pscustomobject]@{ Name = 'vDAKK/dofus-enhanced'; Assets = @('vDAKK/dofus-enhanced') }
+    [pscustomobject]@{ Name = 'vDAKK/dofus-enhanced'; Assets = @('vDAKK/dofus-enhanced'); RescueOnly = $false },
+    [pscustomobject]@{ Name = $script:Repository; Assets = $script:AssetRepositories; RescueOnly = $true }
 )
 $script:Family = 'DofusMiniatures-3.7.11.11-r'
 $script:PayloadFiles = @('DofusMiniatures.dll', 'ModuleLoader.exe', 'ModuleAutoLoader.exe',
@@ -256,7 +257,8 @@ function Invoke-GitHubUpdate([string]$Root, [string]$Exe) {
         $failure = $null
         $answered = $false
         foreach ($source in $script:Sources) {
-            $sourceLimit = [Threading.CancellationTokenSource]::CreateLinkedTokenSource($cancellation.Token)
+            if ($source.RescueOnly -and $localRevision) { continue }
+            $sourceLimit =[Threading.CancellationTokenSource]::CreateLinkedTokenSource($cancellation.Token)
             $sourceLimit.CancelAfter(14000)
             $folder = Join-Path $stage ([Guid]::NewGuid().ToString('N'))
             $null = [IO.Directory]::CreateDirectory($folder)
@@ -280,9 +282,9 @@ function Invoke-GitHubUpdate([string]$Root, [string]$Exe) {
             }
         }
         if (!$answered) { throw $failure }
-        if (!$known) { Write-Output 'UPDATE_NO_COMPATIBLE_RELEASE'; return }
+        if (!$known -and !$localRevision) { Write-Output 'UPDATE_NO_COMPATIBLE_RELEASE'; return }
         if (!$update) {
-            if ($known.revision -eq $localRevision) { Write-Output "UPDATE_ALREADY_INSTALLED r$localRevision" }
+            if ($known -and $known.revision -eq $localRevision) { Write-Output "UPDATE_ALREADY_INSTALLED r$localRevision" }
             else { Write-Output "UPDATE_LOCAL_NEWER r$localRevision" }
             return
         }
