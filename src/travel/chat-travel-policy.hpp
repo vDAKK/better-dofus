@@ -11,6 +11,10 @@ enum class Phase { Idle, Havenbag, Destinations, Planning, DirectQuote, Arrival,
 // The walk to Bad Aboum may cross a city; his dialog and teleport have their
 // own shorter limits (roublard_passage).
 constexpr uint64_t PassageWalkMs=600000, PassageMs=60000;
+// Two ready samples at least this far apart settle an arrival. Every frame looks
+// at it now: the former spacing was the 200 ms pump's. No real trip needed the
+// bounded retry at 200 ms, which stays for a route dropped right after acceptance.
+constexpr uint64_t SettleGapMs=100;
 struct Journey {
     Phase phase=Phase::Idle;
     ChatTpTarget target{};
@@ -18,14 +22,21 @@ struct Journey {
     uint64_t deadline=0;
     unsigned readySamples=0, onwardAttempts=0, idleSamples=0;
     bool onwardAccepted=false;
-    uint64_t onwardAt=0;
+    uint64_t onwardAt=0, lastReadyAt=0;
     void Begin(ChatTpTarget destination,int64_t currentMap,uint64_t now) {
         target=destination; sourceMap=currentMap; arrivalMap=0; phase=Phase::Havenbag; deadline=now+30000;
     }
     void Interact(int64_t map,uint64_t now) { sourceMap=map; phase=Phase::Destinations; deadline=now+30000; }
     void Quote(uint64_t now) { phase=Phase::DirectQuote; deadline=now+30000; }
     void Teleport(int64_t map,uint64_t now) { arrivalMap=map; phase=Phase::Arrival; deadline=now+30000; readySamples=0; }
-    bool Settled(bool ready) { readySamples=ready?readySamples+1:0; return readySamples>=2; }
+    // Already on the departure map, nothing to wait for: its first ready sample settles.
+    void AlreadyThere(int64_t map,uint64_t now) { Teleport(map,now); readySamples=1; lastReadyAt=0; }
+    bool Settled(bool ready,uint64_t now,uint64_t gap) {
+        if (!ready) { readySamples=0; return false; }
+        if (readySamples && now-lastReadyAt<gap) return false;
+        ++readySamples; lastReadyAt=now;
+        return readySamples>=2;
+    }
     void Walk(uint64_t now) { phase=Phase::Onward; onwardAt=now; ++onwardAttempts; readySamples=0; }
     // The game's autopilot walks to Bad Aboum's map: arrival there starts the passage.
     void WalkToPassage(int64_t map,uint64_t now) { arrivalMap=map; phase=Phase::PassageWalk; deadline=now+PassageWalkMs; readySamples=idleSamples=0; }

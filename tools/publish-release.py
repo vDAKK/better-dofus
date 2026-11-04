@@ -34,14 +34,17 @@ commit = git("rev-parse", "HEAD")
 remote = git("remote", "get-url", "origin")
 assert remote in (f"https://{ACCOUNT}@github.com/{REPO}.git", f"https://github.com/{REPO}.git")
 assert git("ls-remote", "origin", "refs/heads/main").split()[0] == commit, "Push main before publishing"
-# Use only the configured GitHub owner's credential via Git Credential Manager.
-# It stays in memory, is never printed, saved, or included in downloaded packages.
+# Use only the configured GitHub owner's credential, via Git Credential Manager or
+# the GitHub CLI's login (its account is checked below). It stays in memory, is
+# never printed, saved, or included in downloaded packages.
 env = dict(os.environ, GIT_TERMINAL_PROMPT="0", GCM_INTERACTIVE="never", GCM_GUI_PROMPT="false")
 credential = subprocess.run(
     ["git", "credential", "fill"], input=f"protocol=https\nhost=github.com\nusername={ACCOUNT}\n\n",
-    capture_output=True, text=True, env=env, timeout=20, check=True,
+    capture_output=True, text=True, env=env, timeout=20,
 )
 fields = dict(line.split("=", 1) for line in credential.stdout.splitlines() if "=" in line)
+if credential.returncode or not fields.get("password"):
+    fields = {"password": subprocess.check_output(["gh", "auth", "token"], text=True, timeout=20).strip()}
 headers = {
     "Authorization": "Bearer " + fields["password"], "Accept": "application/vnd.github+json",
     "User-Agent": "DofusMiniatures-release-maintenance", "X-GitHub-Api-Version": "2022-11-28",

@@ -27,7 +27,7 @@ std::wstring Wide(std::string_view ascii) {
     return wide;
 }
 std::wstring UserAgent() {
-    return L"DofusEnhanced/" + Wide(ModSemanticVersion) + L" (+https://github.com/Altansar69/dofus-enhanced)";
+    return L"DofusEnhanced/" + Wide(ModSemanticVersion) + L" (+https://github.com/vDAKK/dofus-enhanced)";
 }
 // The key travels in this buffer only: built at its final size (no stray copy
 // left by a reallocation) and wiped once the request is over.

@@ -10,7 +10,15 @@ all game rights belong to Ankama. I do not know whether using this mod is
 allowed by Ankama's terms: a ban cannot be completely ruled out. Use it at
 your own risk; the software is provided "as is", without any warranty.
 
-DOFUS ENHANCED — Dofus Unity 3.7.13.17 — VERSION 1.20.3
+DOFUS ENHANCED — Dofus Unity 3.7.13.17 — VERSION 1.20.4
+
+VERSION 1.20.4 : TRAJETS PLUS RÉACTIFS, VERSION DE DAKK
+- Trajets du mod : le personnage part dès l’image suivante quand le trajet
+  commence à pied, et plus vite après un zaap. Le calcul du trajet était déjà
+  immédiat : le temps se perdait à attendre la vérification du mod, toutes les
+  200 ms, qui suit maintenant ces étapes à chaque image.
+- Options > À propos : version de DAKK, d’après le mod créé par Altansar, avec
+  le bouton GitHub vers vDAKK/dofus-enhanced et la bonne version de Dofus.
 
 VERSION 1.20.3 : DOFUS 3.7.13.17
 - Le mod suit la mise à jour de Dofus du 3 novembre 2026 (3.7.13.17). Aucune
@@ -2348,7 +2356,7 @@ bloque le chargement jusqu’à nouvelle vérification.
 
 SOURCES
 Le code source (C++, avec MinHook et nlohmann/json) est publié sur
-https://github.com/Altansar69/dofus-enhanced. Recompiler avec Visual Studio
+https://github.com/vDAKK/dofus-enhanced. Recompiler avec Visual Studio
 C++ x64, CMake et Ninja : build.ps1, puis ctest --test-dir build
 --output-on-failure. Les binaires propriétaires de Dofus ne sont pas fournis.
 

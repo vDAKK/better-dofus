@@ -1,7 +1,7 @@
 Français | [English](README_en.md)
 
 # 🐉 **Dofus Enhanced**
-![License](https://img.shields.io/badge/License-UNLICENSE-red) [![Version](https://img.shields.io/github/v/release/Altansar69/dofus-enhanced?label=Version&color=blue)](../../releases/latest) ![Dofus Unity](https://img.shields.io/badge/Dofus%20Unity-3.7.13.17-orange) ![OS](https://img.shields.io/badge/OS-Windows-green)
+![License](https://img.shields.io/badge/License-UNLICENSE-red) [![Version](https://img.shields.io/github/v/release/vDAKK/dofus-enhanced?label=Version&color=blue)](../../releases/latest) ![Dofus Unity](https://img.shields.io/badge/Dofus%20Unity-3.7.13.17-orange) ![OS](https://img.shields.io/badge/OS-Windows-green)
 
 > [!WARNING]
 > **Projet non officiel : à lire avant toute utilisation**
@@ -133,6 +133,7 @@ Ce projet suit un schéma de [versionnement sémantique](https://semver.org/). C
 
 ## 🤝 Crédits
 
+- [vDAKK](https://github.com/vDAKK) - maintient cette version
 - [Altansar69](https://github.com/Altansar69) - a créé le projet
 - [MinHook](https://github.com/TsudaKageyu/minhook) (Tsuda Kageyu) - bibliothèque de hooks
 - [nlohmann/json](https://github.com/nlohmann/json) (Niels Lohmann) - lecture du JSON

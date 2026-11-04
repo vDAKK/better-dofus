@@ -488,7 +488,7 @@ static void UpdateHook(Obj self, Method method) {
         nextDiscovery[self] = now + 1000;
     } else if (self != module->compositor.get()) return;
     if (module->servicesReady) TickMapPreload();
-    if (module->servicesReady) TickChatTravelPlanning();
+    if (module->servicesReady) TickChatTravelFrame();
     if (module->servicesReady) { MapInfoFrame(now); PerfOverlayFrame(now); VerticalGaugesFrame(now); }
     if (module->servicesReady && now < nextPump) { if (CompositorGlowTick(now)) TickMonsterGlow(); resourceMap::PumpRender(now); return; }
     nextPump = now + 200;

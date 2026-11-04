@@ -146,7 +146,7 @@ InitFn originalInit = nullptr;
 using TextButtonFn = void(*)(Obj, Obj, Method);
 TextButtonFn originalTextButton = nullptr, originalTextButtonInit = nullptr;
 Method textButtonModelGetter = nullptr, openUrl = nullptr, setPassword = nullptr, setEnabled = nullptr;
-constexpr const char* ProjectUrl = "https://github.com/Altansar69/dofus-enhanced";
+constexpr const char* ProjectUrl = "https://github.com/vDAKK/dofus-enhanced";
 // « À propos » › « Dossier du mod » (1.20.1): an owned text-button row (see
 // TextButtonHook) that opens the running module's folder (ui/mod-folder.hpp).
 constexpr const char* ModFolderTitle = "Dossier du mod";
@@ -561,9 +561,9 @@ bool EnsureModels(OptionsUi& ui, Obj page) {
     prepared.statsButtonOption.reset(MakeBoolOption(prepared.statsButtonSource.get(), current.get(), tooltip.get(), StatsButtonTitle,
         StatsButtonDescription));
     // Section « À propos »: credits, then « Dossier du mod », owned text buttons (see TextButtonHook).
-    const std::string creditsTitle = std::string(ModDisplayName) + " " + ModSemanticVersion + " — par Altansar";
-    const std::string creditsText = std::string("Mod créé par Altansar. Code source, versions et signalements : ") + ProjectUrl +
-        " (Dofus 3.7.12.12). Le bouton ouvre la page du projet dans le navigateur.";
+    const std::string creditsTitle = std::string(ModDisplayName) + " " + ModSemanticVersion + " — par DAKK";
+    const std::string creditsText = std::string("Version de DAKK, d’après le mod créé par Altansar. Code source, versions et signalements : ") + ProjectUrl +
+        " (Dofus 3.7.13.17). Le bouton ouvre la page du projet dans le navigateur.";
     prepared.creditsOption.reset(MakeTextButtonOption(tooltip.get(), creditsTitle.c_str(), creditsText.c_str(), "Ouvrir GitHub", 0, prepared.creditsMarker));
     // Then « Dossier du mod »: the folder of this version, named as installed.
     const std::string modFolderText = std::string("Ouvre dans l’Explorateur de Windows le dossier de cette version du mod, "

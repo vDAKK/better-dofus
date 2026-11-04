@@ -1,6 +1,6 @@
 # Guide détaillé (français)
 
-Mod expérimental pour **Dofus Unity 3.7.13.17**, version **1.20.3**.
+Mod expérimental pour **Dofus Unity 3.7.13.17**, version **1.20.4**.
 
 Miniatures au choix, animations à la carte, surbrillance, curseurs dans le style
 de Dofus, jauges à la verticale, aide à la capture d’âmes, trajets rapides
@@ -14,7 +14,7 @@ Les nouveautés depuis la 1.13.0 sont vérifiées hors jeu ; leur rendu en jeu r
 
 ## Mises à jour
 
-Les versions sont disponibles dans les [Releases](https://github.com/Altansar69/dofus-enhanced/releases).
+Les versions sont disponibles dans les [Releases](https://github.com/vDAKK/dofus-enhanced/releases).
 Extraire l’archive entière. Le nom historique `DofusMiniatures-3.7.11.11-rN`
 conserve les réglages partagés ; la version du jeu ciblée figure dans `release.ini`.
 
@@ -76,7 +76,7 @@ Cartes, Carnet, Chasse au trésor, Déplacements, Pierre d’âme (avec Metamob)
 Chat, Calendrier, Performances, Statistiques, Chargement et mises à jour et À
 propos. La version
 chargée (x.y.z)
-figure dans le dernier bloc, **À propos**, avec l’auteur Altansar et un bouton
+figure dans le dernier bloc, **À propos**, avec le crédit de DAKK et un bouton
 **Ouvrir GitHub** vers le dépôt.
 
 Depuis la 1.20.1, la ligne **Dossier du mod** du même bloc a un bouton
@@ -1026,7 +1026,7 @@ jusqu’à ce que tu le relances.
 Windows x64, outils C++ Visual Studio, CMake, Ninja, Python 3 et Windows PowerShell.
 
 ```powershell
-git clone --recurse-submodules https://github.com/Altansar69/dofus-enhanced.git
+git clone --recurse-submodules https://github.com/vDAKK/dofus-enhanced.git
 cd dofus-enhanced
 .\build.ps1
 ctest --test-dir build --output-on-failure --output-junit test-results.xml

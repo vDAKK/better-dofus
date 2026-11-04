@@ -3,6 +3,14 @@
 - The public repository is https://github.com/Altansar69/dofus-enhanced (renamed
   from dofus-miniatures on 2026-10-23; the old name redirects). Its owner's
   display name is Altansar; use the Altansar69 GitHub credential.
+- This checkout is the fork https://github.com/vDAKK/dofus-enhanced (`origin`),
+  the user's own version, shown in game as « par DAKK ». The user has read-only
+  access to Altansar69's repository: releases go to the fork, with
+  `python tools/publish-release.py ... --repository vDAKK/dofus-enhanced`. The
+  updater checks Altansar69's repository first, then the fork when it has nothing
+  newer. Keep Altansar credited as the mod's creator.
+- Always build with `build.ps1`: its clean build is required, because incremental
+  builds miss header changes with this localized compiler.
 - The user requested automatic delivery: after an authorized mod update, increment
   the revision, build, test, package, commit/push the reviewed sources and publish
   a GitHub release. Do not leave a completed revision local-only.

@@ -36,6 +36,7 @@ bool installed=false, dispatching=false;
 bool directPlan=false;
 bool teleportOnly=false, havenbagDeparture=false;
 uint64_t nextPlanningSlice=0;
+uint64_t nextFrameStep=0, settleGap=chat_travel::SettleGapMs;
 // The game's own destination: the last map esg.zid gives for the coordinates
 // and world, the one its autopilot travels to. The route search, already there,
 // the arrival and the onward trip use this map only.
@@ -358,7 +359,7 @@ void CompletePlan() {
             Notice("le trajet passe par le passage secret des Roublards, "+roublard_passage::Describe(passageLink)+".");
         } else Log("ROUBLARD_PASSAGE_ROUTE_IGNORED link="+std::to_string(result.shortcut));
     }
-    if(result.departure.map==journey.sourceMap)journey.Teleport(journey.sourceMap,GetTickCount64());
+    if(result.departure.map==journey.sourceMap)journey.AlreadyThere(journey.sourceMap,GetTickCount64());
     else if(directPlan)QuoteDirect(result.departure);
     else RequestTeleport(freshSource,result.departure.map,result.departure.cost);
 }
@@ -371,6 +372,7 @@ bool ArrivalReady() {
     return data.get() && api.Value<int>(api.Field(data.get(),"id"))==journey.arrivalMap &&
         api.Value<bool>(api.Invoke(eligible,character.get()));
 }
+bool Settled(bool ready) { return journey.Settled(ready,GetTickCount64(),settleGap); }
 // The autopilot's target: Bad Aboum's map before a passage, else the game's own
 // destination map.
 int64_t Goal() { return passageLink>=0?passageMap:targetMap; }
@@ -422,7 +424,7 @@ void ContinueOnward() {
         Cancel("onward not started","l'autopilote n'a pas démarré. Le jeu a refusé ou interrompu le trajet."); return;
     }
     if (journey.onwardAccepted && journey.onwardAttempts==1) Log("CHAT_TRAVEL onward dropped right after acceptance; one retry");
-    if (journey.Settled(ArrivalReady())) RequestOnward();
+    if (Settled(ArrivalReady())) RequestOnward();
 }
 // The current map's scene is loaded (as ArrivalReady reads it, for any map).
 bool SceneReady(int64_t map) {
@@ -469,7 +471,7 @@ void ContinuePassageWalk() {
     }
     if (Map()==passageMap) {
         journey.idleSamples=0;
-        if (!active && !pending && journey.Settled(ArrivalReady())) BeginPassage();
+        if (!active && !pending && Settled(ArrivalReady())) BeginPassage();
         return;
     }
     journey.readySamples=0;
@@ -622,7 +624,7 @@ void TickChatTravel() {
             if (journey.CanWalk(Map()) && Map()==targetMap) { StatsModTrip(); RestoreChatTravel(); Notice("destination atteinte."); return; }
             // Departure on Bad Aboum's own map: no autopilot before the passage.
             if (passageLink>=0 && journey.CanWalk(Map()) && Map()==passageMap) { journey.WalkToPassage(passageMap,GetTickCount64()); return; }
-            if (journey.Settled(journey.CanWalk(Map()) && ArrivalReady())) RequestOnward();
+            if (Settled(journey.CanWalk(Map()) && ArrivalReady())) RequestOnward();
         } else if (journey.phase==Phase::Onward) {
             ContinueOnward();
         } else if (journey.phase==Phase::PassageWalk) {
@@ -632,13 +634,21 @@ void TickChatTravel() {
         }
     } catch (const std::exception& e) { Log(std::string("CHAT_TRAVEL_ERROR ")+e.what()); RestoreChatTravel();Notice("échec du calcul du trajet. Le détail est enregistré dans module.log."); }
 }
-void TickChatTravelPlanning() {
-    // The compositor runs each frame; the rest of the mod only pumps every
-    // 200ms. Advance the bounded CPU search here, leaving network phases on
-    // their existing cadence. The shared slice gate prevents double pumping.
-    if(journey.phase==Phase::Planning)TickChatTravel();
+void TickChatTravelFrame() {
+    // The compositor runs each frame; the rest of the mod only pumps every 200ms.
+    // These phases only wait: for the bounded CPU search (its slice gate is shared
+    // with the pump), a reply already received, or a settled map. Waiting for the
+    // pump was most of the time before a trip started. The confirmation of the
+    // request and its retry keep the pump.
+    if(journey.phase==Phase::Planning) { TickChatTravel(); return; }
+    if(journey.phase!=Phase::DirectQuote&&journey.phase!=Phase::Destinations&&journey.phase!=Phase::Arrival)return;
+    const auto now=GetTickCount64();
+    if(now<nextFrameStep)return;
+    nextFrameStep=now+10;
+    TickChatTravel();
 }
-void EndJourney() { chat_route::Clear(); journey.Clear(); freshList.reset(); freshSource=-1; character.reset(); teleports.reset(); cached.reset(); compositor.reset(); cartography.reset(); routeService.reset(); quotedMap=targetMap=0; quotedCost=-1; quoteReceived=false;directPlan=false;teleportOnly=havenbagDeparture=false;nextPlanningSlice=0;
+void SetChatTravelSettleGap(uint64_t milliseconds) { settleGap=milliseconds; }
+void EndJourney() { chat_route::Clear(); journey.Clear(); freshList.reset(); freshSource=-1; character.reset(); teleports.reset(); cached.reset(); compositor.reset(); cartography.reset(); routeService.reset(); quotedMap=targetMap=0; quotedCost=-1; quoteReceived=false;directPlan=false;teleportOnly=havenbagDeparture=false;nextPlanningSlice=nextFrameStep=0;
     roublard_passage::Stop(); passageLink=-1; passageMap=0; passageOff=false; plannedLinks.clear(); }
 void RestoreChatTravel() { EndJourney(); watch=Watch{}; roublard_passage::Restore(); }
 void PostChatNotice(const std::string& text) { PostNotice(text); }

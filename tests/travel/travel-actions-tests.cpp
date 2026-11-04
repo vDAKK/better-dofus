@@ -257,6 +257,7 @@ struct Fixture {
         auto context=Make("epk");Get(services["fns"]).fields["dqst"]=context;
         spell=Make("ht");Get(spell).numbers={{"id",413},{"owner",localId}};Get(spell).fields["level"]=Make("hr");spellList=List({spell});
         failSpellEligibility=false;allowedChecks=0;
+        SetChatTravelSettleGap(0); // Sample by sample below: the real spacing has its own tests.
     }
     Obj Maker() { auto maker=Make("MonsterGroupMenuMaker");Get(maker).fields={{"m_data",entity},{"m_rolePlayEntitiesService",services["fns"]},{"m_staticInfoService",services["fsr"]}};return maker; }
     Obj MapOwner(int world=1,const char* type="CartographyBannerView") {auto cartographer=Make(type),root=Make("MapRoot"),data=Make("WorldMapData");Get(root).fields["panel"]=root;Get(data).fields["id"]=Box(world);Get(cartographer).fields={{"dugy",localCharacter},{"dugv",services["fkc"]},{"dugq",root},{"world",data},{"dugt",Box<float>(-1000.f)}};return cartographer;}
@@ -1013,6 +1014,36 @@ void RoublardPassageJourneyTests() {
             TickChatTravel();Sleep(250);TickChatTravel();Sleep(1300);TickChatTravel();Sleep(250);TickChatTravel();
             Check(on?game.finds>0:game.finds==0,"The passive look follows the option");}});
 }
+// How fast the trip starts: 361 real trips spent their 300 to 600 ms in the 200 ms
+// pump, the route itself taking 2 ms. Each frame now advances these phases.
+void AutopilotLatencyTests() {
+    using namespace fake;
+    constexpr uint64_t Gap=chat_travel::SettleGapMs;
+    const auto frame=[]{Sleep(15);TickChatTravelFrame();};
+    // On foot from the current map: nothing to settle, the next frame walks.
+    {Fixture f;SetChatTravelSettleGap(Gap);plannedDeparture=10;Info(10,9,10,1);
+        StartChatTravel({10,10,1});Check(!walked,"The autopilot is never requested inside the click");
+        frame();Check(walked==1&&walkedMap==123&&!quotes&&!teleported,"On foot, the next frame requests the autopilot");
+        frame();frame();Check(walked==1,"Frames never repeat the request");}
+    // The current map not ready yet: the short-cut gives way to the stability window.
+    {Fixture f;SetChatTravelSettleGap(Gap);plannedDeparture=10;Info(10,9,10,1);sceneReady=false;
+        StartChatTravel({10,10,1});frame();Check(!walked,"A map still loading is not walked from");
+        sceneReady=true;frame();frame();Check(!walked,"A map just ready waits for its stability window");
+        Sleep(static_cast<DWORD>(Gap)+10);TickChatTravelFrame();Check(walked==1,"The stability window ends on a frame, not at the 200ms pump");}
+    // After a teleport: every frame looks, two samples a gap apart still required.
+    {Fixture f;SetChatTravelSettleGap(Gap);
+        StartChatTravel({10,10,1});f.Price();frame();Check(teleported==1,"The teleport is requested on a frame");
+        frame();Check(!walked,"The departure map is not the arrival");
+        Get(currentMap).numbers["m_mapId"]=104;frame();frame();frame();Check(!walked,"Frames within the gap count as one sample");
+        sceneReady=false;frame();sceneReady=true;frame();Sleep(static_cast<DWORD>(Gap)/2);TickChatTravelFrame();Check(!walked,"A readiness loss starts the window again");
+        Sleep(static_cast<DWORD>(Gap));TickChatTravelFrame();Check(walked==1&&walkedMap==123,"Settled arrival walks within the gap");
+        frame();frame();Check(walked==1,"Frames never repeat the onward request");}
+    // The frame stops at the request: its confirmation and bounded retry keep the pump.
+    {Fixture f;SetChatTravelSettleGap(Gap);plannedDeparture=10;Info(10,9,10,1);
+        StartChatTravel({10,10,1});frame();Check(walked==1,"Requested");
+        acceptRoute=false;frame();Check(std::none_of(notices.begin(),notices.end(),[](const std::string& n){return n.find("autopilote")!=std::string::npos;}),"The frame neither confirms nor gives up");}
+    SetChatTravelSettleGap(0);
+}
 int main(){using namespace fake;try{
     Initialize();InstallChatTravel();InstallMapTravel();InstallSoulGroupMenu();soul::InstallSpell();
     Check(std::none_of(logs.begin(),logs.end(),[](const std::string& l){return l.find("CHAT_TRAVEL_HERE_ZONE_UNAVAILABLE")!=std::string::npos;}),"The player's zone contracts install");
@@ -1021,12 +1052,13 @@ int main(){using namespace fake;try{
     TravelFixTests();
     RoublardPassageJourneyTests();
     {Fixture f;routePending=true;StartChatTravel({10,10,1});Check(!quotes,"Pending route must not request a price");
-      TickChatTravelPlanning();auto slices=routeTicks;TickChatTravel();TickChatTravelPlanning();
+      TickChatTravelFrame();auto slices=routeTicks;TickChatTravel();TickChatTravelFrame();
       Check(routeTicks==slices,"Frame and normal pumps share a single planning-slice gate");
-      Sleep(25);routePending=false;TickChatTravelPlanning();
+      Sleep(25);routePending=false;TickChatTravelFrame();
       Check(quotes==1,"Planning advances without waiting for the 200ms mod pump");
-      f.Price();TickChatTravelPlanning();Check(!teleported,"Fast planning pump does not advance network phases");
-      TickChatTravel();Check(teleported==1,"Normal pump still dispatches the verified teleport");}
+      f.Price();Check(!teleported,"Never teleport from the receive callback");
+      Sleep(15);TickChatTravelFrame();Check(teleported==1,"The price answer dispatches the teleport on the next frame, not at the 200ms pump");}
+    AutopilotLatencyTests();
     {Fixture f;Get(monsterInfos.at(1)).numbers["boss"]=0;Get(monsterInfos.at(1)).fields["souls"]=List();createHook(f.Maker(),nullptr);Check(Get(Get(lastMenu).fields["rows"]).items.size()==2&&inventoryReads==0&&equipped==0,"Ordinary Piou group must retain only native menu rows without inventory access");}
     {Fixture f;Get(monsterInfos.at(1)).fields["souls"]=List();createHook(f.Maker(),nullptr);Check(Get(Get(lastMenu).fields["rows"]).items.size()==2,"Boss without capture definition must not offer equip");}
     {Fixture f;Get(monsterInfos.at(1)).numbers["forbidden"]=1;createHook(f.Maker(),nullptr);Check(Get(Get(lastMenu).fields["rows"]).items.size()==2,"Forbidden boss must not offer equip");}
