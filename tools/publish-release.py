@@ -10,15 +10,17 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-REPO = "Altansar69/dofus-enhanced"
-ACCOUNT = REPO.split("/")[0]
 source = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser()
 parser.add_argument("--package", type=Path, required=True)
 parser.add_argument("--notes", type=Path, required=True)
+parser.add_argument("--repository", default="Altansar69/dofus-enhanced", choices=("Altansar69/dofus-enhanced", "vDAKK/dofus-enhanced"),
+                    help="the repository receiving the release, which must be origin; the updater checks Altansar69's first, then vDAKK's")
 # Updaters older than 1.13.1 only read rN tags: 1.13.1 alone was published as r113.
 parser.add_argument("--revision-tag", action="store_true", help="tag rN instead of vX.Y.Z (1.13.1 only)")
 args = parser.parse_args()
+REPO = args.repository
+ACCOUNT = REPO.split("/")[0]
 package = json.loads(args.package.read_text(encoding="utf8"))
 asset = Path(package["asset"])
 assert hashlib.sha256(asset.read_bytes()).hexdigest() == package["sha256"]

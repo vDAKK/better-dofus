@@ -33,7 +33,7 @@ const std::string Ui = "UnityEngine.UIElements.";
 const std::string UiImage = "UnityEngine.UIElementsModule.dll", CoreImage = "UnityEngine.CoreModule.dll";
 // DofusCursor's requests come back from ApplyCursor here; UI Toolkit's
 // CursorManager.SetCursor calls from elsewhere.
-constexpr uintptr_t ApplyCursorReturn = 0x280A741, CursorManagerReturn = 0x5752D85;
+constexpr uintptr_t ApplyCursorReturn = 0x27C5791, CursorManagerReturn = 0x5752D85;
 struct Class { std::string name; };
 struct MethodData { std::string type, name; int argc = 0; uintptr_t rva = 0; };
 struct FieldInfo { std::string type, name; size_t offset = 0; };
@@ -337,7 +337,7 @@ void GameAsks(int32_t layer, int64_t type, int32_t state = 0, bool withTexture =
 void AddHook(managed::Method method, uintptr_t rva, void* replacement, void** original) {
     using namespace fake;
     const auto& m = *static_cast<const MethodData*>(method);
-    Check(m.rva == rva && rva == 0x54024F0 && m.type == "UnityEngine.Cursor" && m.name == "SetCursor" && m.argc == 3,
+    Check(m.rva == rva && rva == 0x53C7830 && m.type == "UnityEngine.Cursor" && m.name == "SetCursor" && m.argc == 3,
         "The only hook: UnityEngine.Cursor.SetCursor, through its verified method");
     Check(replacement == reinterpret_cast<void*>(&customCursor::SetCursorHook), "The detour is SetCursorHook");
     hooks.push_back({rva, &m, contracts.size(), natives.size(), fieldLookups.size()});
@@ -690,18 +690,18 @@ void InstallContracts() {
     Fresh();
     Check(customCursor::s.installed && Logged("CUSTOM_CURSOR_READY textHover=1 theme=1 themes=1 drag=1 size=1"), "Installed, with its four optional parts");
     const std::set<std::tuple<std::string, std::string, int, uintptr_t>> expected{
-        {"Core.UILogic.DofusCursor", "UpdateCursorTexture", 0, 0x280A4C0}, {"UnityEngine.Cursor", "SetCursor", 3, 0x54024F0},
-        {"UnityEngine.Texture2D", ".ctor", 5, 0x5410E20}, {"UnityEngine.Texture2D", "LoadRawTextureData", 2, 0x540E4C0},
-        {"UnityEngine.Texture2D", "Apply", 2, 0x540BCE0}, {"UnityEngine.Object", "set_hideFlags", 1, 0x5439360},
-        {"UnityEngine.Object", "Destroy", 1, 0x5435EA0},
-        {Ui + "VisualElement", "get_parent", 0, 0x55F7180}, {"pq", "pbs", 0, 0x2E93CC0},
-        {Ui + "VisualElement", "get_panel", 0, 0x55F7170}, {Ui + "VisualElement", "get_enabledInHierarchy", 0, 0x55F5EF0},
-        {Ui + "BaseVisualElementPanel", "GetTopElementUnderPointer", 1, 0x57A3FC0},
-        {Ui + "VisualElement", "get_customStyle", 0, 0x55F5C30}, {Ui + "VisualElement+CustomStyleAccess", "TryGetValue", 2, 0x55FCCB0},
-        {FigmaStyles, "GetInstance", 0, 0x2CA7EA0}, {FigmaStyles, "GetColorByVarName", 2, 0x2CA7C90}};
+        {"Core.UILogic.DofusCursor", "UpdateCursorTexture", 0, 0x27C5510}, {"UnityEngine.Cursor", "SetCursor", 3, 0x53C7830},
+        {"UnityEngine.Texture2D", ".ctor", 5, 0x53D6160}, {"UnityEngine.Texture2D", "LoadRawTextureData", 2, 0x53D3800},
+        {"UnityEngine.Texture2D", "Apply", 2, 0x53D1020}, {"UnityEngine.Object", "set_hideFlags", 1, 0x53FE6A0},
+        {"UnityEngine.Object", "Destroy", 1, 0x53FB1E0},
+        {Ui + "VisualElement", "get_parent", 0, 0x55BC4C0}, {"pq", "pbs", 0, 0x2E57130},
+        {Ui + "VisualElement", "get_panel", 0, 0x55BC4B0}, {Ui + "VisualElement", "get_enabledInHierarchy", 0, 0x55BB230},
+        {Ui + "BaseVisualElementPanel", "GetTopElementUnderPointer", 1, 0x5769300},
+        {Ui + "VisualElement", "get_customStyle", 0, 0x55BAF70}, {Ui + "VisualElement+CustomStyleAccess", "TryGetValue", 2, 0x55C1FF0},
+        {FigmaStyles, "GetInstance", 0, 0x2C667B0}, {FigmaStyles, "GetColorByVarName", 2, 0x2C665A0}};
     Check(contracts == expected, "Exactly the required and optional natives, each at its pinned RVA");
     for (const auto& contract : expected) Check(Guarded(std::get<3>(contract)), "Every verified method guarded");
-    Check(natives == std::set<uintptr_t>{0x280A73C, 0x28088F9}, "UpdateCursorTexture's call of ApplyCursor and ApplyCursor's tail jump checked");
+    Check(natives == std::set<uintptr_t>{0x27C578C, 0x27C3949}, "UpdateCursorTexture's call of ApplyCursor and ApplyCursor's tail jump checked");
     const std::set<std::pair<std::string, std::string>> images{
         {"Core.dll", "Core.UILogic.DofusCursor"}, {"Core.dll", "Core.UILogic.Cursor"}, {CoreImage, "UnityEngine.Texture2D"},
         {CoreImage, "UnityEngine.Object"}, {CoreImage, "UnityEngine.Cursor"}, {UiImage, Ui + "VisualElement"}, {"Core.dll", "pq"},
@@ -727,9 +727,9 @@ void InstallContracts() {
 // A required contract missing: no hook, nothing else, the Windows cursor.
 void RequiredContractMissing() {
     const std::vector<std::pair<const char*, std::function<void()>>> breaks{
-        {"ApplyCursor's call", [] { nativeMismatch = 0x280A73C; }}, {"ApplyCursor's tail jump", [] { nativeMismatch = 0x28088F9; }},
-        {"SetCursor", [] { failVerified.insert(0x54024F0); }}, {"UpdateCursorTexture", [] { failVerified.insert(0x280A4C0); }},
-        {"LoadRawTextureData", [] { failVerified.insert(0x540E4C0); }}, {"Destroy", [] { failVerified.insert(0x5435EA0); }},
+        {"ApplyCursor's call", [] { nativeMismatch = 0x27C578C; }}, {"ApplyCursor's tail jump", [] { nativeMismatch = 0x27C3949; }},
+        {"SetCursor", [] { failVerified.insert(0x53C7830); }}, {"UpdateCursorTexture", [] { failVerified.insert(0x27C5510); }},
+        {"LoadRawTextureData", [] { failVerified.insert(0x53D3800); }}, {"Destroy", [] { failVerified.insert(0x53FB1E0); }},
         {"m_currentCursor", [] { offsets[{"Core.UILogic.DofusCursor", "m_currentCursor"}] = 0x10; }},
         {"cursorType", [] { offsets.erase({"Core.UILogic.Cursor", "cursorType"}); }},
         {"m_CachedPtr", [] { offsets[{"UnityEngine.Object", "m_CachedPtr"}] = 0x18; }},
@@ -762,7 +762,7 @@ void OptionalParts() {
     ExpectOurs(Shape::Arrow, "Without the text part, the arrow over the chat");
     Check(topCalls == 0, "No pointer read without the text part");
     Fresh(false);
-    failVerified.insert(0x55F7180);
+    failVerified.insert(0x55BC4C0);
     InstallCustomCursor();
     Check(LoggedPrefix("CUSTOM_CURSOR_PART_UNAVAILABLE ui ") == 1 && Logged("CUSTOM_CURSOR_READY textHover=0 theme=0 themes=1 drag=1 size=1"),
         "Without get_parent: the text and theme parts off");
@@ -781,7 +781,7 @@ void OptionalParts() {
     ExpectOurs(Shape::Beam, "The text part still works without the theme part");
     // Without GetColorByVarName (1.18.1): a theme's colours are the panel's
     // while the game shows it, the Standard theme's otherwise.
-    for (const uintptr_t missing : {uintptr_t{0x2CA7C90}, uintptr_t{0x2CA7EA0}}) {
+    for (const uintptr_t missing : {uintptr_t{0x2C665A0}, uintptr_t{0x2C667B0}}) {
         Fresh(false);
         failVerified.insert(missing);
         InstallCustomCursor();

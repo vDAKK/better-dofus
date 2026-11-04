@@ -207,14 +207,14 @@ void InstallMapPreload() {
     handleClass = api.Class("Unity.ResourceManager.dll", "UnityEngine.ResourceManagement.AsyncOperations", "AsyncOperationHandle");
     auto implementation = api.Class("Unity.Addressables.dll", "UnityEngine.AddressableAssets", "AddressablesImpl");
     auto resourceManager = api.Class("Unity.ResourceManager.dll", "UnityEngine.ResourceManagement", "ResourceManager");
-    locate = api.FindVerified(implementation, "GetResourceLocations", 3, 0x4D786C0);
-    provide = api.FindVerified(resourceManager, "ProvideResource", 3, 0x527B010);
-    release = api.FindVerified(resourceManager, "Release", 1, 0x527BFD0);
-    getManager = api.FindVerified(addressesClass, "get_ResourceManager", 0, 0x4D83070);
-    isValid = api.FindVerified(handleClass, "IsValid", 0, 0x526BC70);
-    isDone = api.FindVerified(handleClass, "get_IsDone", 0, 0x526C320);
-    status = api.FindVerified(handleClass, "get_Status", 0, 0x526C5C0);
-    result = api.FindVerified(handleClass, "get_Result", 0, 0x526BE70);
+    locate = api.FindVerified(implementation, "GetResourceLocations", 3, 0x4D3D9A0);
+    provide = api.FindVerified(resourceManager, "ProvideResource", 3, 0x5240300);
+    release = api.FindVerified(resourceManager, "Release", 1, 0x52412C0);
+    getManager = api.FindVerified(addressesClass, "get_ResourceManager", 0, 0x4D48350);
+    isValid = api.FindVerified(handleClass, "IsValid", 0, 0x5230F60);
+    isDone = api.FindVerified(handleClass, "get_IsDone", 0, 0x5231610);
+    status = api.FindVerified(handleClass, "get_Status", 0, 0x52318B0);
+    result = api.FindVerified(handleClass, "get_Result", 0, 0x5231160);
 }
 void TickMapPreload() {
     try { TickAt(GetTickCount64()); }

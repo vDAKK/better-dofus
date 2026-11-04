@@ -111,7 +111,7 @@ void RefreshFaceTheme(uint64_t nowMs) {
         Ref custom(api.Call(scope.get(), "get_customStyle"));
         if (custom.get()) {
             if (!state.readThemeColor)
-                state.readThemeColor = api.FindVerified(api.object_get_class(custom.get()), "TryGetValue", 2, 0x55FCCB0);
+                state.readThemeColor = api.FindVerified(api.object_get_class(custom.get()), "TryGetValue", 2, 0x55C1FF0);
             std::array<float, 4> candidate{};
             if (api.Value<bool>(api.Invoke(state.readThemeColor, custom.get(), {&property, &candidate})) &&
                 std::all_of(candidate.begin(), candidate.end(), [](float f) { return std::isfinite(f) && f >= 0 && f <= 1; })) {
@@ -517,34 +517,34 @@ void InstallDisplayShortcut() {
     state.mapClass = map;
     state.hubClass = api.Class("Core.dll", "", "ghz");
     state.findExisting = api.Find(state.hubClass, "bfsu", 2);
-    api.Native(state.findExisting, 0x1FBBC70);
+    api.Native(state.findExisting, 0x1F8FAD0);
     auto dropdown = api.Class("Core.dll", FigmaNamespace, "Dropdown");
     auto binding = api.Class("Core.dll", "Core.UILogic.Bindings", "MapInfoBinding");
     auto toggle = api.Class("Core.dll", FigmaNamespace, "DofusToggleButtonCustom");
-    api.Native(api.Find(binding, "get_tg_creature", 0), 0x2F6C770);
-    api.Native(api.Find(binding, "get_ctr_buttonsToHide", 0), 0x2F6B720);
-    api.Native(api.Find(binding, "get_ctr_buttons", 0), 0x2F6B7D0);
-    api.Native(api.Find(binding, "get_MapInfoScreenContainer", 0), 0x2F6AA20);
-    api.Native(api.Find(map, "blrn", 0), 0x3BFE0D0);
-    api.Native(api.Find(toggle, "SetValueWithoutNotify", 1), 0x1714F40);
-    api.Native(api.Find(dropdown, ".ctor", 0), 0x17282C0);
-    api.Native(api.Find(dropdown, "AddListElementBasic", 6), 0x1724840);
-    api.Native(api.Find(dropdown, "SelectItemWithoutNotify", 1), 0x17266E0);
-    api.Native(api.Find(dropdown, "set_activated", 1), 0x1728300);
-    api.Native(api.Find(dropdown, "set_captionText", 1), 0x1728470);
-    api.Native(api.Find(dropdown, "set_choiceText", 1), 0x1728550);
-    api.Native(api.Find(dropdown, "set_dropdownSize", 1), 0x1728620);
-    api.Native(api.Find(api.Class(UiImage, UiNamespace, "VisualElement"), "set_tooltip", 1), 0x55F9AB0);
-    api.Native(api.Find(dropdown, "set_dropdownType", 1), 0x1728730);
-    api.Native(api.Find(api.Class(UiImage, UiNamespace, "Length"), ".ctor", 2), 0x561D3D0);
-    api.Native(api.Find(api.Class(UiImage, UiNamespace, "ResolvedStyleAccess"), "get_display", 0), 0x55D9890);
-    api.Native(api.Find(api.Class(UiImage, UiNamespace, "VisualElement"), "get_customStyle", 0), 0x55F5C30);
-    api.Native(api.Find(api.Class("Core.dll", FigmaNamespace, "DofusVisualElement"), "set_hasShadow", 1), 0x1722D30);
-    AddHook(api.Find(dropdown, "Show", 0), 0x1726AE0, reinterpret_cast<void*>(ShowHook), reinterpret_cast<void**>(&originalShow));
-    AddHook(api.Find(map, "OnEnable", 0), 0x2C63890, reinterpret_cast<void*>(EnableHook), reinterpret_cast<void**>(&originalEnable));
-    AddHook(api.Find(map, "OnContextChanged", 1), 0x2C63540, reinterpret_cast<void*>(ContextHook), reinterpret_cast<void**>(&originalContext));
-    AddHook(api.Find(map, "OnRefreshCreatureMode", 1), 0x2C65410, reinterpret_cast<void*>(RefreshHook), reinterpret_cast<void**>(&originalRefresh));
-    AddHook(api.Find(map, "OnClickedBtnCreature", 0), 0x2C63270, reinterpret_cast<void*>(ClickHook), reinterpret_cast<void**>(&originalClick));
+    api.Native(api.Find(binding, "get_tg_creature", 0), 0x2F2FAD0);
+    api.Native(api.Find(binding, "get_ctr_buttonsToHide", 0), 0x2F2EA80);
+    api.Native(api.Find(binding, "get_ctr_buttons", 0), 0x2F2EB30);
+    api.Native(api.Find(binding, "get_MapInfoScreenContainer", 0), 0x2F2DD80);
+    api.Native(api.Find(map, "blrn", 0), 0x3BC18E0);
+    api.Native(api.Find(toggle, "SetValueWithoutNotify", 1), 0x170E9D0);
+    api.Native(api.Find(dropdown, ".ctor", 0), 0x1721D90);
+    api.Native(api.Find(dropdown, "AddListElementBasic", 6), 0x171E310);
+    api.Native(api.Find(dropdown, "SelectItemWithoutNotify", 1), 0x17201B0);
+    api.Native(api.Find(dropdown, "set_activated", 1), 0x1721DD0);
+    api.Native(api.Find(dropdown, "set_captionText", 1), 0x1721F40);
+    api.Native(api.Find(dropdown, "set_choiceText", 1), 0x1722020);
+    api.Native(api.Find(dropdown, "set_dropdownSize", 1), 0x17220F0);
+    api.Native(api.Find(api.Class(UiImage, UiNamespace, "VisualElement"), "set_tooltip", 1), 0x55BEDF0);
+    api.Native(api.Find(dropdown, "set_dropdownType", 1), 0x1722200);
+    api.Native(api.Find(api.Class(UiImage, UiNamespace, "Length"), ".ctor", 2), 0x55E2710);
+    api.Native(api.Find(api.Class(UiImage, UiNamespace, "ResolvedStyleAccess"), "get_display", 0), 0x559EBD0);
+    api.Native(api.Find(api.Class(UiImage, UiNamespace, "VisualElement"), "get_customStyle", 0), 0x55BAF70);
+    api.Native(api.Find(api.Class("Core.dll", FigmaNamespace, "DofusVisualElement"), "set_hasShadow", 1), 0x171C800);
+    AddHook(api.Find(dropdown, "Show", 0), 0x17205B0, reinterpret_cast<void*>(ShowHook), reinterpret_cast<void**>(&originalShow));
+    AddHook(api.Find(map, "OnEnable", 0), 0x2C221B0, reinterpret_cast<void*>(EnableHook), reinterpret_cast<void**>(&originalEnable));
+    AddHook(api.Find(map, "OnContextChanged", 1), 0x2C21E60, reinterpret_cast<void*>(ContextHook), reinterpret_cast<void**>(&originalContext));
+    AddHook(api.Find(map, "OnRefreshCreatureMode", 1), 0x2C23D30, reinterpret_cast<void*>(RefreshHook), reinterpret_cast<void**>(&originalRefresh));
+    AddHook(api.Find(map, "OnClickedBtnCreature", 0), 0x2C21B90, reinterpret_cast<void*>(ClickHook), reinterpret_cast<void**>(&originalClick));
     state.failed = false;
     state.nextDiscovery = 0;
     state.installed = true;

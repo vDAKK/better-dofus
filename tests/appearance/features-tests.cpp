@@ -41,19 +41,19 @@ struct Object {
 struct MethodInfo { Class* type; std::string name; int argc; uintptr_t rva; };
 struct Declaration { const char* type; const char* name; int argc; uintptr_t rva; };
 constexpr Declaration declarations[] = {
-    {"EntityLook", "dbfj", 0, 0x79A3D0}, {"EntityLook", "dbev", 1, 0x799F70},
-    {"EntityLook", "dbex", 1, 0x79A060}, {"EntityInfo", "bajs", 1, 0x19518F0},
-    {"EntityInfo", "bake", 1, 0x1951DB0}, {"EntityInfo", "bajy", 2, 0x1951B60},
-    {"evv", "bamm", 2, 0x1957A70}, {"esg", "zcx", 0, 0x18BB140},
-    {"exf", "baza", 1, 0x1975060}, {"exf", "bazg", 2, 0x19755D0},
-    {"mhy", "dcdf", 3, 0x76F790},
-    {"AnimatedEntity", "rez", 0, 0x2614FF0},
-    {"AnimatedEntity", "rfa", 0, 0x2615260},
-    {"AnimatedEntity", "rgx", 0, 0x26173C0},
-    {"yh", "rmo", 1, 0x2652CF0}, {"yh", "rmp", 1, 0x2652E50},
-    {"EntityInfo", "bajh", 0, 0x1951440}, {"EntityInfo", "balc", 2, 0x1952710},
-    {"fti", "bfmh", 0, 0x752E20}, {"lg", "oab", 0, 0x68D2B0},
-    {"EntityInfo", "baks", 2, 0x1952330},
+    {"EntityLook", "dbfj", 0, 0x786B40}, {"EntityLook", "dbev", 1, 0x7866E0},
+    {"EntityLook", "dbex", 1, 0x7867D0}, {"EntityInfo", "bajs", 1, 0x1956AC0},
+    {"EntityInfo", "bake", 1, 0x1956F80}, {"EntityInfo", "bajy", 2, 0x1956D30},
+    {"evv", "bamm", 2, 0x195CFF0}, {"esg", "zcx", 0, 0x18B7060},
+    {"exf", "baza", 1, 0x197C9D0}, {"exf", "bazg", 2, 0x197CF40},
+    {"mhy", "dcdf", 3, 0x77A860},
+    {"AnimatedEntity", "rez", 0, 0x25CC490},
+    {"AnimatedEntity", "rfa", 0, 0x25CC700},
+    {"AnimatedEntity", "rgx", 0, 0x25CE860},
+    {"yh", "rmo", 1, 0x2609F90}, {"yh", "rmp", 1, 0x2607840},
+    {"EntityInfo", "bajh", 0, 0x1956610}, {"EntityInfo", "balc", 2, 0x19578E0},
+    {"fti", "bfmh", 0, 0x750E50}, {"lg", "oab", 0, 0x68D2B0},
+    {"EntityInfo", "baks", 2, 0x1957500},
 };
 std::map<std::string, std::unique_ptr<Class>> classes;
 std::vector<std::unique_ptr<Object>> objects;
@@ -325,15 +325,15 @@ static bool NativeCreatureHide(managed::Obj self, managed::Method) {
 }
 void AddHook(managed::Method method, uintptr_t rva, void* replacement, void** original) {
     managed::api.Native(method, rva);
-    if (rva == 0x19755D0) {
+    if (rva == 0x197CF40) {
         fake::convertHook = reinterpret_cast<fake::ConvertFn>(replacement);
         *original = reinterpret_cast<void*>(NativeConvert);
     }
-    else if (rva == 0x2614FF0) {
+    else if (rva == 0x25CC490) {
         fake::creatureLookHook = reinterpret_cast<fake::CreatureLookFn>(replacement);
         *original = reinterpret_cast<void*>(NativeCreatureLook);
-    } else if (rva == 0x2652CF0 || rva == 0x2652E50) {
-        auto& hook = rva == 0x2652CF0 ? fake::creatureHideHook : fake::creatureForcedHideHook;
+    } else if (rva == 0x2609F90 || rva == 0x2607840) {
+        auto& hook = rva == 0x2609F90 ? fake::creatureHideHook : fake::creatureForcedHideHook;
         hook = reinterpret_cast<fake::CreatureHideFn>(replacement);
         *original = reinterpret_cast<void*>(NativeCreatureHide);
     } else throw std::runtime_error("Unexpected feature hook");
@@ -491,8 +491,8 @@ void SubentityEligibilityAndNativeFallback() {
         const auto calls = nativeCreatureLookCalls;
         Check(creatureLookHook(child, nullptr) == nativeResult && nativeCreatureLookCalls == calls + 1,
             "Ineligible attachment did not use the native path");
-        Check(!f.F().PreserveMiniatureAttachmentVisibility(child, gameBase + 0x2617618) &&
-              !f.F().PreserveMiniatureAttachmentVisibility(child, gameBase + 0x2619FDB),
+        Check(!f.F().PreserveMiniatureAttachmentVisibility(child, gameBase + 0x25CEAB8) &&
+              !f.F().PreserveMiniatureAttachmentVisibility(child, gameBase + 0x25D148B),
               "Ineligible attachment bypassed native visibility");
     };
     for (int mode : {0, 1}) { f.state.settings.roleplayMode = mode; native(); }
@@ -525,7 +525,7 @@ void SubentityEligibilityAndNativeFallback() {
     Check(creatureLookHook(child, nullptr) == rider, "Mirrored valid rider appearance rejected");
     Put(rider, 0x2C, 0.1f); Put(rider, 0x30, 0.05f);
     Check(creatureLookHook(child, nullptr) == rider &&
-          f.F().PreserveMiniatureAttachmentVisibility(child, gameBase + 0x2617618),
+          f.F().PreserveMiniatureAttachmentVisibility(child, gameBase + 0x25CEAB8),
           "Small finite authored child scales must not invent a native visibility exclusion");
     Check(!f.state.stopRequested.load(), "Guarded unavailable data stopped the module");
 }
@@ -537,7 +537,7 @@ void MountedVisibilityNativePolicies() {
         Put(child, 0x1A8, root); Put(child, 0x170, rider); Put(child, 0x398, f.context);
         Put<int64_t>(child, 0x1C8, 0);
         Get(mount).sublooks[{2, 0}] = rider;
-        const uintptr_t hideCaller = gameBase + 0x2617618, forcedCaller = gameBase + 0x2619FDB;
+        const uintptr_t hideCaller = gameBase + 0x25CEAB8, forcedCaller = gameBase + 0x25D148B;
         const auto visible = [&](bool nativeVisibility, bool correctLookOnly) {
             // Saved native order: ric stores rmp in +0x38D; rgx evaluates
             // visibility policy, then independently applies the rmo gate.

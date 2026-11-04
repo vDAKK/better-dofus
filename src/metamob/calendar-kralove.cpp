@@ -342,8 +342,8 @@ void Uncache(Obj root) {
     const auto enterType = api.object_get_class(enter.get()), leaveType = api.object_get_class(leave.get());
     if (std::string(api.class_get_name(enterType)) != "Dictionary`2" || std::string(api.class_get_name(leaveType)) != "Dictionary`2")
         throw std::runtime_error("Calendar cursor cache type");
-    const auto has = api.FindVerified(enterType, "ContainsKey", 1, 0x36EEAC0);
-    const auto enterRemove = api.FindVerified(enterType, "Remove", 1, 0x36F0D60), leaveRemove = api.FindVerified(leaveType, "Remove", 1, 0x36F0D60);
+    const auto has = api.FindVerified(enterType, "ContainsKey", 1, 0x36B1E50);
+    const auto enterRemove = api.FindVerified(enterType, "Remove", 1, 0x36B40F0), leaveRemove = api.FindVerified(leaveType, "Remove", 1, 0x36B40F0);
     for (const auto element : Tree(root)) {
         if (!api.Value<bool>(api.Invoke(has, enter.get(), {element}))) continue;
         api.Invoke(n.removeCursor, nullptr, {element});
@@ -793,78 +793,78 @@ void InstallCalendarKralove() {
         // the generic definition's metadata has no offset; CalendarUI.OnEnable
         // and OnDisable pass this + 0x10 to its getters.
         if (api.field_get_offset(api.FieldInfo(calendar, "dzyi")) != 0x10) throw std::runtime_error("Calendar binding layout");
-        api.FindVerified(binding, "get_ctr_days", 0, 0x2E9E140);
-        api.FindVerified(binding, "get_gd_events", 0, 0x2E9E630);
-        api.FindVerified(binding, "get_gd_calendarFilters", 0, 0x2E9E580);
+        api.FindVerified(binding, "get_ctr_days", 0, 0x2E614A0);
+        api.FindVerified(binding, "get_gd_events", 0, 0x2E61990);
+        api.FindVerified(binding, "get_gd_calendarFilters", 0, 0x2E618E0);
         // The calendar's own templates, as CalendarUI.MakeItem, MakeFilterItem and the CalendarCard constructor clone them.
         const auto settings = api.Class("Core.dll", "Core.UILogic.Components", "DofusUISettings");
-        n.settings = api.FindVerified(settings, "GetSettings", 0, 0x1597FD0);
-        n.lineAsset = api.FindVerified(settings, "get_calendarLine", 0, 0x1599AB0);
-        n.cardAsset = api.FindVerified(settings, "get_calendarCard", 0, 0x15999F0);
-        n.filterAsset = api.FindVerified(settings, "get_calendarFilterItem", 0, 0x1599A70);
-        n.cloneTree = api.FindVerified(api.Class(Ui, UiSpace, "VisualTreeAsset"), "CloneTree", 1, 0x567E440);
+        n.settings = api.FindVerified(settings, "GetSettings", 0, 0x1591A70);
+        n.lineAsset = api.FindVerified(settings, "get_calendarLine", 0, 0x1593550);
+        n.cardAsset = api.FindVerified(settings, "get_calendarCard", 0, 0x1593490);
+        n.filterAsset = api.FindVerified(settings, "get_calendarFilterItem", 0, 0x1593510);
+        n.cloneTree = api.FindVerified(api.Class(Ui, UiSpace, "VisualTreeAsset"), "CloneTree", 1, 0x5643780);
         n.element = api.Class(Ui, UiSpace, "VisualElement");
-        api.FindVerified(n.element, ".ctor", 0, 0x55F50B0);
-        api.FindVerified(n.element, "Add", 1, 0x55DFAD0);
-        api.FindVerified(n.element, "Insert", 2, 0x55E5710);
-        api.FindVerified(n.element, "IndexOf", 1, 0x55E55B0);
-        api.FindVerified(n.element, "get_parent", 0, 0x55F7180);
-        api.FindVerified(n.element, "get_panel", 0, 0x55F7170);
-        api.FindVerified(n.element, "get_layout", 0, 0x55F6930);
-        api.FindVerified(n.element, "RemoveFromHierarchy", 0, 0x55E7BD0);
-        api.FindVerified(n.element, "get_style", 0, 0x55F74A0);
-        api.FindVerified(n.element, "AddToClassList", 1, 0x55DF820);
-        api.FindVerified(n.element, "RemoveFromClassList", 1, 0x55E7AB0);
-        api.FindVerified(n.element, "get_childCount", 0, 0x55F5970);
-        api.FindVerified(n.element, "ElementAt", 1, 0x55E2DE0);
-        api.FindVerified(n.element, "get_name", 0, 0x3158710);
-        api.FindVerified(n.element, "set_name", 1, 0x55F9670);
-        api.FindVerified(n.element, "set_visible", 1, 0x55FA170);
+        api.FindVerified(n.element, ".ctor", 0, 0x55BA3F0);
+        api.FindVerified(n.element, "Add", 1, 0x55A4E10);
+        api.FindVerified(n.element, "Insert", 2, 0x55AAA50);
+        api.FindVerified(n.element, "IndexOf", 1, 0x55AA8F0);
+        api.FindVerified(n.element, "get_parent", 0, 0x55BC4C0);
+        api.FindVerified(n.element, "get_panel", 0, 0x55BC4B0);
+        api.FindVerified(n.element, "get_layout", 0, 0x55BBC70);
+        api.FindVerified(n.element, "RemoveFromHierarchy", 0, 0x55ACF10);
+        api.FindVerified(n.element, "get_style", 0, 0x55BC7E0);
+        api.FindVerified(n.element, "AddToClassList", 1, 0x55A4B60);
+        api.FindVerified(n.element, "RemoveFromClassList", 1, 0x55ACDF0);
+        api.FindVerified(n.element, "get_childCount", 0, 0x55BACB0);
+        api.FindVerified(n.element, "ElementAt", 1, 0x55A8120);
+        api.FindVerified(n.element, "get_name", 0, 0x311BA90);
+        api.FindVerified(n.element, "set_name", 1, 0x55BE9B0);
+        api.FindVerified(n.element, "set_visible", 1, 0x55BF4B0);
         const auto length = api.Class(Ui, UiSpace, "Length");
-        api.FindVerified(length, ".ctor", 2, 0x561D3D0);
+        api.FindVerified(length, ".ctor", 2, 0x55E2710);
         const auto style = api.Class(Ui, UiSpace, "InlineStyleAccess");
         for (const auto& [property, get, set] : std::array<std::tuple<const char*, uintptr_t, uintptr_t>, 12>{{
-            {"position", 0x55D1A30, 0x55D48B0}, {"left", 0x55D1610, 0x55D3EB0}, {"width", 0x55D2740, 0x55D63F0},
-            {"height", 0x55D1540, 0x55D3D60}, {"flexShrink", 0x55D1460, 0x55D3BC0}, {"opacity", 0x55D1890, 0x55D44B0},
-            {"display", 0x55D1270, 0x55D37F0}, {"alignItems", 0x55D0C60, 0x55D2870}, {"flexDirection", 0x55D13C0, 0x55D3A80},
-            {"whiteSpace", 0x55D26B0, 0x55D6370}, {"backgroundColor", 0x55D0D90, 0x55D2BA0},
-            {"unityBackgroundImageTintColor", 0x55D1FC0, 0x55D5530}}}) {
+            {"position", 0x5596D70, 0x5599BF0}, {"left", 0x5596950, 0x55991F0}, {"width", 0x5597A80, 0x559B730},
+            {"height", 0x5596880, 0x55990A0}, {"flexShrink", 0x55967A0, 0x5598F00}, {"opacity", 0x5596BD0, 0x55997F0},
+            {"display", 0x55965B0, 0x5598B30}, {"alignItems", 0x5595FA0, 0x5597BB0}, {"flexDirection", 0x5596700, 0x5598DC0},
+            {"whiteSpace", 0x55979F0, 0x559B6B0}, {"backgroundColor", 0x55960D0, 0x5597EE0},
+            {"unityBackgroundImageTintColor", 0x5597300, 0x559A870}}}) {
             api.FindVerified(style, (std::string("UnityEngine.UIElements.IStyle.get_") + property).c_str(), 0, get);
             api.FindVerified(style, (std::string("UnityEngine.UIElements.IStyle.set_") + property).c_str(), 1, set);
         }
         n.icon = api.Class("Core.dll", Figma, "DofusIcon");
-        api.FindVerified(n.icon, "set_icon", 1, 0x170F480);
+        api.FindVerified(n.icon, "set_icon", 1, 0x1708F10);
         n.label = api.Class("Core.dll", "Core.UILogic.Components", "DofusLabel");
-        api.FindVerified(n.label, ".ctor", 0, 0x1593940);
-        api.FindVerified(n.label, "set_text", 1, 0x1594570);
-        api.FindVerified(api.Class(Ui, UiSpace, "TextElement"), "set_enableRichText", 1, 0x564B1E0);
+        api.FindVerified(n.label, ".ctor", 0, 0x158D3E0);
+        api.FindVerified(n.label, "set_text", 1, 0x158E010);
+        api.FindVerified(api.Class(Ui, UiSpace, "TextElement"), "set_enableRichText", 1, 0x5610520);
         n.checkbox = api.Class("Core.dll", Figma, "CheckboxCustom");
-        api.FindVerified(n.checkbox, "get_value", 0, 0x1705050);
-        api.FindVerified(n.checkbox, "SetValueWithoutNotify", 1, 0x17044F0);
-        api.FindVerified(n.checkbox, "set_rightText", 1, 0x1705590);
-        api.FindVerified(n.checkbox, "set_iconValue", 1, 0x1705240);
+        api.FindVerified(n.checkbox, "get_value", 0, 0x16FEAE0);
+        api.FindVerified(n.checkbox, "SetValueWithoutNotify", 1, 0x16FDF80);
+        api.FindVerified(n.checkbox, "set_rightText", 1, 0x16FF020);
+        api.FindVerified(n.checkbox, "set_iconValue", 1, 0x16FECD0);
         n.square = api.Class("Core.dll", Figma, "ColorSquare");
-        api.FindVerified(n.square, "set_selectable", 1, 0x17094E0);
-        n.setColor = api.FindVerified(n.square, "SetColor", 1, 0x1708AF0); // SetColor(string), not SetColor(Color)
+        api.FindVerified(n.square, "set_selectable", 1, 0x1702F70);
+        n.setColor = api.FindVerified(n.square, "SetColor", 1, 0x1702580); // SetColor(string), not SetColor(Color)
         const auto tooltips = "Core.UILogic.Components.Tooltips";
         n.tooltip = api.Class("Core.dll", tooltips, "TooltipManipulator");
-        n.tooltipCtor = api.FindVerified(n.tooltip, ".ctor", 6, 0x15DFAE0);
-        n.hideTooltip = api.FindVerified(api.Class("Core.dll", tooltips, "BaseTooltipManipulator"), "HideTooltip", 0, 0x15CD030);
+        n.tooltipCtor = api.FindVerified(n.tooltip, ".ctor", 6, 0x15D9580);
+        n.hideTooltip = api.FindVerified(api.Class("Core.dll", tooltips, "BaseTooltipManipulator"), "HideTooltip", 0, 0x15C6AD0);
         const auto extensions = api.Class(Ui, UiSpace, "VisualElementExtensions");
-        n.addManipulator = api.FindVerified(extensions, "AddManipulator", 2, 0x56755F0);
-        n.removeManipulator = api.FindVerified(extensions, "RemoveManipulator", 2, 0x5676A90);
+        n.addManipulator = api.FindVerified(extensions, "AddManipulator", 2, 0x563A930);
+        n.removeManipulator = api.FindVerified(extensions, "RemoveManipulator", 2, 0x563BDD0);
         n.clickable = api.Class("Core.dll", Figma, "ExtendedClickable");
-        n.clickableCtor = api.FindVerified(n.clickable, ".ctor", 1, 0x172B830); // ExtendedClickable(Action), not (Action<EventBase>)
+        n.clickableCtor = api.FindVerified(n.clickable, ".ctor", 1, 0x1725300); // ExtendedClickable(Action), not (Action<EventBase>)
         n.cursor = api.Class("Core.dll", "Core.UILogic", "DofusCursor");
-        n.enableCursor = api.FindVerified(n.cursor, "EnableCursorHandler", 3, 0x2808CD0);
-        n.removeCursor = api.FindVerified(n.cursor, "RemoveCursorHandler", 1, 0x2809CD0);
+        n.enableCursor = api.FindVerified(n.cursor, "EnableCursorHandler", 3, 0x27C3D20);
+        n.removeCursor = api.FindVerified(n.cursor, "RemoveCursorHandler", 1, 0x27C4D20);
         RequireField(n.cursor, "s_mouseEnterCursorMap", 0x40);
         RequireField(n.cursor, "s_mouseLeaveCursorMap", 0x48);
-        n.openUrl = api.FindVerified(api.Class("UnityEngine.CoreModule.dll", "UnityEngine", "Application"), "OpenURL", 1, 0x53ACA50);
-        const auto enable = api.FindVerified(calendar, "OnEnable", 0, 0x2E065E0);
-        const auto disable = api.FindVerified(calendar, "OnDisable", 0, 0x2E06550);
-        AddHook(enable, 0x2E065E0, reinterpret_cast<void*>(EnableHook), reinterpret_cast<void**>(&originalEnable));
-        AddHook(disable, 0x2E06550, reinterpret_cast<void*>(DisableHook), reinterpret_cast<void**>(&originalDisable));
+        n.openUrl = api.FindVerified(api.Class("UnityEngine.CoreModule.dll", "UnityEngine", "Application"), "OpenURL", 1, 0x5371D90);
+        const auto enable = api.FindVerified(calendar, "OnEnable", 0, 0x2DC59D0);
+        const auto disable = api.FindVerified(calendar, "OnDisable", 0, 0x2DC5940);
+        AddHook(enable, 0x2DC59D0, reinterpret_cast<void*>(EnableHook), reinterpret_cast<void**>(&originalEnable));
+        AddHook(disable, 0x2DC5940, reinterpret_cast<void*>(DisableHook), reinterpret_cast<void**>(&originalDisable));
         nativeClick::AddHandler(CardClick);
         installed = true;
         Log("CALENDAR_KRALOVE_READY");

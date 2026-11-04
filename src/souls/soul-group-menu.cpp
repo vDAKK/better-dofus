@@ -45,7 +45,7 @@ bool Fresh(const Menu& menu) {
     if (!collection.get() || collection.get()!=menu.collection.get() || !api.Value<bool>(api.Invoke(findEntity, collection.get(), {&id,&found})) || found!=menu.entity.get()) return false;
     Ref groups(api.Invoke(store,menu.statics.get()));
     found = nullptr;
-    return groups.get() && api.Value<bool>(api.Invoke(api.FindVerified(api.object_get_class(groups.get()),"baqa",2,0x3BFB210),groups.get(),{&id,&found})) && found==menu.group.get();
+    return groups.get() && api.Value<bool>(api.Invoke(api.FindVerified(api.object_get_class(groups.get()),"baqa",2,0x3BBE660),groups.get(),{&id,&found})) && found==menu.group.get();
 }
 int Highest(const Menu& menu) {
     if (!Fresh(menu)) return 0;
@@ -98,7 +98,7 @@ Obj CreateHook(Obj maker, Method method) {
         int64_t id=api.Value<int64_t>(api.Invoke(entityId,next->entity.get()));
         Ref groups(api.Invoke(store,next->statics.get()));
         Obj group=nullptr;
-        if (groups.get() && api.Value<bool>(api.Invoke(api.FindVerified(api.object_get_class(groups.get()),"baqa",2,0x3BFB210),groups.get(),{&id,&group}))) next->group.reset(group);
+        if (groups.get() && api.Value<bool>(api.Invoke(api.FindVerified(api.object_get_class(groups.get()),"baqa",2,0x3BBE660),groups.get(),{&id,&group}))) next->group.reset(group);
         const int highest=next->group.get() ? Highest(*next) : 0;
         if (highest == 0) return result;
         const auto* required=soul::RequiredStone(highest);
@@ -170,15 +170,15 @@ void InstallSoulGroupMenu() {
     const auto verify=[](const char* ns,const char* type,const char* name,int argc,uintptr_t rva) {
         return api.FindVerified(api.Class("Core.dll",ns,type),name,argc,rva);
     };
-    append=verify(MenuSpace,"DofusContextualMenu","AppendDefaultItem",13,0x16D6C60);
-    entityId=verify("Core.Services.Entities.EntityInformationServices","EntityInfo","bajh",0,0x1951440);
-    store=verify("","ewa","bapo",0,0x73DC70);
-    variant=verify("","evh","bafy",1,0x1938C10);
+    append=verify(MenuSpace,"DofusContextualMenu","AppendDefaultItem",13,0x16D06F0);
+    entityId=verify("Core.Services.Entities.EntityInformationServices","EntityInfo","bajh",0,0x1956610);
+    store=verify("","ewa","bapo",0,0x73BCA0);
+    variant=verify("","evh","bafy",1,0x193B9C0);
     entities=verify("","epk","xmg",0,0x68D2D0);
-    rpService=verify("","epk","xmp",0,0x9566A0);
-    staticService=verify("","epk","xmi",0,0x73DC70);
-    findEntity=verify("","evv","bamm",2,0x1957A70);
-    auto create=verify(MakerSpace,"MonsterGroupMenuMaker","CreateMenu",0,0x16E72F0);
-    AddHook(create,0x16E72F0,reinterpret_cast<void*>(&CreateHook),reinterpret_cast<void**>(&originalCreate));
+    rpService=verify("","epk","xmp",0,0x94D320);
+    staticService=verify("","epk","xmi",0,0x73BCA0);
+    findEntity=verify("","evv","bamm",2,0x195CFF0);
+    auto create=verify(MakerSpace,"MonsterGroupMenuMaker","CreateMenu",0,0x16E0D80);
+    AddHook(create,0x16E0D80,reinterpret_cast<void*>(&CreateHook),reinterpret_cast<void**>(&originalCreate));
     installed=true;
 }

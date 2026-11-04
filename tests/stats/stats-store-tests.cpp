@@ -78,15 +78,15 @@ const FieldData Fields[] = {{"esg", "dpzj", 0x128}, {"z", "dbrm", 0x18}, {"z", "
 const FieldData MovedSize{"List`1", "_size", 0x1C};
 // The calls stats.cpp verifies, exactly as in the pinned snapshot.
 const MethodData Contracts[] = {
-    {"esg", "zcx", 0, 0x18BB140}, {"SpellData", "GetById", 1, 0x7CCE20}, {"SpellData", "get_name", 0, 0x7CD300},
-    {"SpellData", "get_spellVariant", 0, 0x7CD6B0},
-    {"DataCenterModule", "get_dungeonsDataRoot", 0, 0x7BC7C0}, {"MetadataRoot`1", "GetObjects", 0, 0x3874CB0},
-    {"DungeonData", "get_name", 0, 0x7C24C0}, {"WorldMapData", "GetWorldMapById", 1, 0x7D3D50}, {"WorldMapData", "get_name", 0, 0x7D3DE0}};
+    {"esg", "zcx", 0, 0x18B7060}, {"SpellData", "GetById", 1, 0x7C3C70}, {"SpellData", "get_name", 0, 0x7C4150},
+    {"SpellData", "get_spellVariant", 0, 0x7C4500},
+    {"DataCenterModule", "get_dungeonsDataRoot", 0, 0x7B3610}, {"MetadataRoot`1", "GetObjects", 0, 0x3838040},
+    {"DungeonData", "get_name", 0, 0x7B9310}, {"WorldMapData", "GetWorldMapById", 1, 0x7CABA0}, {"WorldMapData", "get_name", 0, 0x7CAC30}};
 // The method pointer the client's MethodInfo holds, the one FindVerified
 // compares (0: no such method): each contract's own address. Unity 6000.3
 // shares generic code fully: MetadataRoot<DungeonData>.GetObjectById returns
 // its type parameter T, so its MethodInfo holds a signature adapter (an
-// unresolved call stub), the shared code (0x3874B80) only behind it, and
+// unresolved call stub), the shared code (0x3837F10) only behind it, and
 // FindVerified never finds it there (1.15.0's log: STATS_DUNGEON_NAMES_DISABLED
 // Verified method unavailable: MetadataRoot`1.GetObjectById). GetObjects
 // returns a List<T>, a reference: its MethodInfo holds the shared code.
@@ -1090,7 +1090,7 @@ void ModuleSide() {
 // and only them.
 void DungeonNames() {
     std::string refused;
-    try { managed::api.FindVerified(managed::api.class_get_parent(fake::Type("DungeonsDataRoot")), "GetObjectById", 1, 0x3874B80); }
+    try { managed::api.FindVerified(managed::api.class_get_parent(fake::Type("DungeonsDataRoot")), "GetObjectById", 1, 0x3837F10); }
     catch (const std::exception& error) { refused = error.what(); }
     Check(refused == "Verified method unavailable: MetadataRoot`1.GetObjectById", "1.15.0's lookup by id, refused as in the client's log");
     const auto disabled = [] {

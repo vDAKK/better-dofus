@@ -189,10 +189,10 @@ void* Api::NativeAt(uintptr_t expectedRva) const {
 void Api::WaitForInitialization() const {
     // Exact-version Runtime::Init counter and final lock release, verified in the
     // saved binary. domain_get is a lazy allocator and cannot serve as a probe.
-    NativeAt(0x59D540);
-    NativeAt(0x59E63E);
-    const auto count = reinterpret_cast<volatile const LONG*>(gameBase + 0x71678C0);
-    const auto lock = reinterpret_cast<volatile const LONG*>(gameBase + 0x7167870);
+    NativeAt(0x59D240);
+    NativeAt(0x59E33E);
+    const auto count = reinterpret_cast<volatile const LONG*>(gameBase + 0x712FEC0);
+    const auto lock = reinterpret_cast<volatile const LONG*>(gameBase + 0x712FE70);
     const auto deadline = GetTickCount64() + 180000;
     while (*count <= 0 || *lock != 0) {
         if (GetTickCount64() >= deadline) throw std::runtime_error("IL2CPP initialization did not complete within three minutes");

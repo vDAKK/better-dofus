@@ -68,9 +68,9 @@ void* Api::FieldAddress(Obj o,const char* name) const {
 }
 Method Api::FindVerified(Klass,const char* name,int argc,uintptr_t rva) const {
     const std::map<std::string,uintptr_t> expected{
-        {"qyb",0x2629090},{"qyg",0x2629380},{"xkj",0x18389C0},{"xkd",0x11ECD00},
-        {"dayr",0x782BE0},{"op_Implicit",0x5439190},{"get_enabled",0x53F2300},
-        {"get_gameObject",0x5429D00},{"get_activeInHierarchy",0x5432080}};
+        {"qyb",0x25DFC00},{"qyg",0x25DFEF0},{"xkj",0x1832640},{"xkd",0x11E3980},
+        {"dayr",0x7604B0},{"op_Implicit",0x53FE4D0},{"get_enabled",0x53B7640},
+        {"get_gameObject",0x53EF040},{"get_activeInHierarchy",0x53F73C0}};
     fake::Check(expected.at(name)==rva,"Unverified native method");
     auto m=std::make_unique<fake::MethodInfo>(fake::MethodInfo{name,argc}); auto ptr=m.get();
     fake::methods.push_back(std::move(m)); return ptr;

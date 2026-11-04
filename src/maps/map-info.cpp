@@ -334,39 +334,39 @@ void Install() {
     RequireField(infos, "zaapPrice", 0x2C);
     RequireField(builder, "m_binding", 0x10); // BaseTooltipBuilder<CartographyTooltipBinding>
     const auto binding = api.Class("Core.dll", "Core.UILogic.Bindings", "CartographyTooltipBinding");
-    n.coordsLabel = api.FindVerified(binding, "get_lbl_coords", 0, 0x2EA53C0);
-    n.priceLabel = api.FindVerified(binding, "get_lbl_zaapPrice", 0, 0x2EA55D0);
+    n.coordsLabel = api.FindVerified(binding, "get_lbl_coords", 0, 0x2E68720);
+    n.priceLabel = api.FindVerified(binding, "get_lbl_zaapPrice", 0, 0x2E68930);
     n.label = api.Class("Core.dll", "Core.UILogic.Components", "DofusLabel");
-    n.setText = api.FindVerified(n.label, "set_text", 1, 0x1594570);
-    n.getText = api.FindVerified(n.label, "get_text", 0, 0x1593FA0);
-    n.getSingleLine = api.FindVerified(n.label, "get_isSingleLine", 0, 0x1593B70);
-    n.setSingleLine = api.FindVerified(n.label, "set_isSingleLine", 1, 0x1593FB0);
-    n.measure = api.FindVerified(api.Class(UiImage, UiSpace, "TextElement"), "MeasureTextSize", 5, 0x5645AF0);
-    n.subAreaName = api.FindVerified(api.Class(DataImage, WorldSpace, "SubAreaData"), "get_name", 0, 0x7D0F60);
+    n.setText = api.FindVerified(n.label, "set_text", 1, 0x158E010);
+    n.getText = api.FindVerified(n.label, "get_text", 0, 0x158DA40);
+    n.getSingleLine = api.FindVerified(n.label, "get_isSingleLine", 0, 0x158D610);
+    n.setSingleLine = api.FindVerified(n.label, "set_isSingleLine", 1, 0x158DA50);
+    n.measure = api.FindVerified(api.Class(UiImage, UiSpace, "TextElement"), "MeasureTextSize", 5, 0x560AE30);
+    n.subAreaName = api.FindVerified(api.Class(DataImage, WorldSpace, "SubAreaData"), "get_name", 0, 0x7C7DB0);
     // The shown world map: its name, and its id for « Oui, sauf dans le Monde des Douze ».
     const auto worldMap = api.Class(DataImage, WorldSpace, "WorldMapData");
     RequireField(worldMap, "id", 0x10);
-    n.worldName = api.FindVerified(worldMap, "get_name", 0, 0x7D3DE0);
+    n.worldName = api.FindVerified(worldMap, "get_name", 0, 0x7CAC30);
     const auto element = api.Class(UiImage, UiSpace, "VisualElement");
-    n.parent = api.FindVerified(element, "get_parent", 0, 0x55F7180);
-    n.name = api.FindVerified(element, "get_name", 0, 0x3158710);
-    n.panel = api.FindVerified(element, "get_panel", 0, 0x55F7170);
-    n.style = api.FindVerified(element, "get_style", 0, 0x55F74A0);
+    n.parent = api.FindVerified(element, "get_parent", 0, 0x55BC4C0);
+    n.name = api.FindVerified(element, "get_name", 0, 0x311BA90);
+    n.panel = api.FindVerified(element, "get_panel", 0, 0x55BC4B0);
+    n.style = api.FindVerified(element, "get_style", 0, 0x55BC7E0);
     const auto inlineStyle = api.Class(UiImage, UiSpace, "InlineStyleAccess");
-    n.getMinWidth = api.FindVerified(inlineStyle, "UnityEngine.UIElements.IStyle.get_minWidth", 0, 0x55D1850);
-    n.setMinWidth = api.FindVerified(inlineStyle, "UnityEngine.UIElements.IStyle.set_minWidth", 1, 0x55D4410);
-    n.getShrink = api.FindVerified(inlineStyle, "UnityEngine.UIElements.IStyle.get_flexShrink", 0, 0x55D1460);
-    n.setShrink = api.FindVerified(inlineStyle, "UnityEngine.UIElements.IStyle.set_flexShrink", 1, 0x55D3BC0);
+    n.getMinWidth = api.FindVerified(inlineStyle, "UnityEngine.UIElements.IStyle.get_minWidth", 0, 0x5596B90);
+    n.setMinWidth = api.FindVerified(inlineStyle, "UnityEngine.UIElements.IStyle.set_minWidth", 1, 0x5599750);
+    n.getShrink = api.FindVerified(inlineStyle, "UnityEngine.UIElements.IStyle.get_flexShrink", 0, 0x55967A0);
+    n.setShrink = api.FindVerified(inlineStyle, "UnityEngine.UIElements.IStyle.set_flexShrink", 1, 0x5598F00);
     n.length = api.Class(UiImage, UiSpace, "Length");
-    api.FindVerified(n.length, ".ctor", 2, 0x561D3D0);
-    n.setLength = api.FindVerified(api.Class(UiImage, UiSpace, "StyleLength"), "set_value", 1, 0x5623940);
-    n.setFloat = api.FindVerified(api.Class(UiImage, UiSpace, "StyleFloat"), "set_value", 1, 0x5622C10);
+    api.FindVerified(n.length, ".ctor", 2, 0x55E2710);
+    n.setLength = api.FindVerified(api.Class(UiImage, UiSpace, "StyleLength"), "set_value", 1, 0x55E8C80);
+    n.setFloat = api.FindVerified(api.Class(UiImage, UiSpace, "StyleFloat"), "set_value", 1, 0x55E7F50);
     // The tooltip of both maps: fhw.berz(mouse, infos) creates it for the
     // hovered cell; CartographyTooltipBuilder.Update writes its « [x,y] ».
-    const auto berz = api.FindVerified(view, "berz", 2, 0x1BEF880);
-    const auto update = api.FindVerified(builder, "Update", 1, 0x15EFCA0);
-    AddHook(berz, 0x1BEF880, reinterpret_cast<void*>(&BerzHook), reinterpret_cast<void**>(&originalBerz));
-    AddHook(update, 0x15EFCA0, reinterpret_cast<void*>(&UpdateHook), reinterpret_cast<void**>(&originalUpdate));
+    const auto berz = api.FindVerified(view, "berz", 2, 0x1BE85E0);
+    const auto update = api.FindVerified(builder, "Update", 1, 0x15E9740);
+    AddHook(berz, 0x1BE85E0, reinterpret_cast<void*>(&BerzHook), reinterpret_cast<void**>(&originalBerz));
+    AddHook(update, 0x15E9740, reinterpret_cast<void*>(&UpdateHook), reinterpret_cast<void**>(&originalUpdate));
 }
 }
 }

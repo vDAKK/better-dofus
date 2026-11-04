@@ -763,22 +763,22 @@ using prop::Property;
 struct StyleContract { const char* name; uintptr_t get, set; };
 // InlineStyleAccess's IStyle accessors (pinned 3.7.12.12 snapshot), in Property order.
 constexpr std::array<StyleContract, prop::Count> StyleContracts{{
-    {"position", 0x55D1A30, 0x55D48B0}, {"left", 0x55D1610, 0x55D3EB0}, {"top", 0x55D1CD0, 0x55D4F70},
-    {"right", 0x55D1AC0, 0x55D4960}, {"bottom", 0x55D1190, 0x55D3530},
-    {"paddingLeft", 0x55D1970, 0x55D46D0}, {"paddingRight", 0x55D19B0, 0x55D4770},
-    {"paddingTop", 0x55D19F0, 0x55D4810}, {"paddingBottom", 0x55D1930, 0x55D4630},
-    {"borderTopLeftRadius", 0x55D1100, 0x55D33E0}, {"borderTopRightRadius", 0x55D1140, 0x55D3440},
-    {"borderBottomLeftRadius", 0x55D0F90, 0x55D3050}, {"borderBottomRightRadius", 0x55D0FD0, 0x55D30B0},
-    {"backgroundColor", 0x55D0D90, 0x55D2BA0}, {"color", 0x55D11D0, 0x55D35D0},
-    {"fontSize", 0x55D1500, 0x55D3D00}, {"whiteSpace", 0x55D26B0, 0x55D6370}, {"minWidth", 0x55D1850, 0x55D4410},
-    {"minHeight", 0x55D1810, 0x55D4370}, {"unityTextAlign", 0x55D23B0, 0x55D5ED0}}};
+    {"position", 0x5596D70, 0x5599BF0}, {"left", 0x5596950, 0x55991F0}, {"top", 0x5597010, 0x559A2B0},
+    {"right", 0x5596E00, 0x5599CA0}, {"bottom", 0x55964D0, 0x5598870},
+    {"paddingLeft", 0x5596CB0, 0x5599A10}, {"paddingRight", 0x5596CF0, 0x5599AB0},
+    {"paddingTop", 0x5596D30, 0x5599B50}, {"paddingBottom", 0x5596C70, 0x5599970},
+    {"borderTopLeftRadius", 0x5596440, 0x5598720}, {"borderTopRightRadius", 0x5596480, 0x5598780},
+    {"borderBottomLeftRadius", 0x55962D0, 0x5598390}, {"borderBottomRightRadius", 0x5596310, 0x55983F0},
+    {"backgroundColor", 0x55960D0, 0x5597EE0}, {"color", 0x5596510, 0x5598910},
+    {"fontSize", 0x5596840, 0x5599040}, {"whiteSpace", 0x55979F0, 0x559B6B0}, {"minWidth", 0x5596B90, 0x5599750},
+    {"minHeight", 0x5596B50, 0x55996B0}, {"unityTextAlign", 0x55976F0, 0x559B210}}};
 // il2cpp_gc_get_used_size / il2cpp_gc_get_heap_size: thunks to Boehm's
 // counters (GC_get_heap_size, minus GC_get_free_bytes for the used part),
 // plain reads without the GC lock.
-constexpr uintptr_t GcUsedExport = 0x5B9230, GcHeapExport = 0x5B9210;
-// The code behind them, guarded too: GetUsedHeapSize (0x5FE340), the heap
-// size thunk (0x5FDB20), GC_get_heap_size (0x6194D0), GC_get_free_bytes (0x6194B0).
-constexpr std::array<uintptr_t, 4> GcBodies{0x5FE340, 0x5FDB20, 0x6194D0, 0x6194B0};
+constexpr uintptr_t GcUsedExport = 0x5B8F30, GcHeapExport = 0x5B8F10;
+// The code behind them, guarded too: GetUsedHeapSize (0x5FE040), the heap
+// size thunk (0x5FD820), GC_get_heap_size (0x6191D0), GC_get_free_bytes (0x6191B0).
+constexpr std::array<uintptr_t, 4> GcBodies{0x5FE040, 0x5FD820, 0x6191D0, 0x6191B0};
 using GcSize = int64_t (*)();
 
 struct Natives {
@@ -987,30 +987,30 @@ void Install() {
     if (frequency <= 0) throw std::runtime_error("No performance counter");
     processors = std::max(1u, sys.processors());
     n.element = api.Class(UiImage, UiSpace, "VisualElement");
-    n.parent = api.FindVerified(n.element, "get_parent", 0, 0x55F7180);
-    n.panel = api.FindVerified(n.element, "get_panel", 0, 0x55F7170);
-    n.name = api.FindVerified(n.element, "get_name", 0, 0x3158710);
-    n.hierarchy = api.FindVerified(n.element, "get_hierarchy", 0, 0x185C4A0);
-    n.insert = api.FindVerified(n.element, "Insert", 2, 0x55E5710);
-    n.remove = api.FindVerified(n.element, "RemoveFromHierarchy", 0, 0x55E7BD0);
-    n.picking = api.FindVerified(n.element, "set_pickingMode", 1, 0x55F97B0);
-    n.setName = api.FindVerified(n.element, "set_name", 1, 0x55F9670);
-    n.getStyle = api.FindVerified(n.element, "get_style", 0, 0x55F74A0);
-    n.layout = api.FindVerified(n.element, "get_layout", 0, 0x55F6930);
+    n.parent = api.FindVerified(n.element, "get_parent", 0, 0x55BC4C0);
+    n.panel = api.FindVerified(n.element, "get_panel", 0, 0x55BC4B0);
+    n.name = api.FindVerified(n.element, "get_name", 0, 0x311BA90);
+    n.hierarchy = api.FindVerified(n.element, "get_hierarchy", 0, 0x1854EF0);
+    n.insert = api.FindVerified(n.element, "Insert", 2, 0x55AAA50);
+    n.remove = api.FindVerified(n.element, "RemoveFromHierarchy", 0, 0x55ACF10);
+    n.picking = api.FindVerified(n.element, "set_pickingMode", 1, 0x55BEAF0);
+    n.setName = api.FindVerified(n.element, "set_name", 1, 0x55BE9B0);
+    n.getStyle = api.FindVerified(n.element, "get_style", 0, 0x55BC7E0);
+    n.layout = api.FindVerified(n.element, "get_layout", 0, 0x55BBC70);
     const auto hierarchy = api.NestedClass(n.element, "Hierarchy");
-    n.childCount = api.FindVerified(hierarchy, "get_childCount", 0, 0x55FFA80);
-    n.childAt = api.FindVerified(hierarchy, "get_Item", 1, 0x55FE670);
-    n.focusable = api.FindVerified(api.Class(UiImage, UiSpace, "Focusable"), "set_focusable", 1, 0x5777EF0);
+    n.childCount = api.FindVerified(hierarchy, "get_childCount", 0, 0x55C4DC0);
+    n.childAt = api.FindVerified(hierarchy, "get_Item", 1, 0x55C39B0);
+    n.focusable = api.FindVerified(api.Class(UiImage, UiSpace, "Focusable"), "set_focusable", 1, 0x573D230);
     n.label = api.Class(UiImage, UiSpace, "Label");
-    n.labelCtor = api.FindVerified(n.label, ".ctor", 0, 0x5729760);
+    n.labelCtor = api.FindVerified(n.label, ".ctor", 0, 0x56EEAA0);
     // The grip: plain elements, shown and hidden as a whole (VisualElement.visible).
-    n.elementCtor = api.FindVerified(n.element, ".ctor", 0, 0x55F50B0);
-    n.visible = api.FindVerified(n.element, "set_visible", 1, 0x55FA170);
+    n.elementCtor = api.FindVerified(n.element, ".ctor", 0, 0x55BA3F0);
+    n.visible = api.FindVerified(n.element, "set_visible", 1, 0x55BF4B0);
     const auto text = api.Class(UiImage, UiSpace, "TextElement");
-    n.setText = api.FindVerified(text, "set_text", 1, 0x564B780);
-    n.richText = api.FindVerified(text, "set_enableRichText", 1, 0x564B1E0);
+    n.setText = api.FindVerified(text, "set_text", 1, 0x5610AC0);
+    n.richText = api.FindVerified(text, "set_enableRichText", 1, 0x5610520);
     // Its items measured with its own font (as the map info measures its tooltip).
-    n.measure = api.FindVerified(text, "MeasureTextSize", 5, 0x5645AF0);
+    n.measure = api.FindVerified(text, "MeasureTextSize", 5, 0x560AE30);
     n.style = api.Class(UiImage, UiSpace, "InlineStyleAccess");
     const std::string accessor = "UnityEngine.UIElements.IStyle.";
     for (size_t i = 0; i < prop::Count; ++i) {
@@ -1018,21 +1018,21 @@ void Install() {
         n.set[i] = api.FindVerified(n.style, (accessor + "set_" + StyleContracts[i].name).c_str(), 1, StyleContracts[i].set);
     }
     n.length = api.Class(UiImage, UiSpace, "Length");
-    api.FindVerified(n.length, ".ctor", 2, 0x561D3D0);
+    api.FindVerified(n.length, ".ctor", 2, 0x55E2710);
     // The panel's own pick (IPanel.Pick: Pick(point, mouse pointer), Panel's
     // override): what a press at a point reaches, the mouse placement's test.
     n.panelType = api.Class(UiImage, UiSpace, "BaseVisualElementPanel");
-    n.pick = api.FindVerified(n.panelType, "Pick", 1, 0x57A4050);
+    n.pick = api.FindVerified(n.panelType, "Pick", 1, 0x5769390);
     // The UIDocument root, the layer service and its host (soul::GetUiRoot's chain).
-    n.documentRoot = api.FindVerified(api.Class("Core.dll", "", "pq"), "pbs", 0, 0x2E93CC0);
+    n.documentRoot = api.FindVerified(api.Class("Core.dll", "", "pq"), "pbs", 0, 0x2E57130);
     n.layerService = api.Class("Core.dll", "", "gmo");
     n.layerHost = api.Class("Core.dll", "", "gmy");
     RequireField(n.layerService, "dzrv", 0x70);
     // The game's cursor manager (static): the cursor over the overlay, asked
     // for on its UI layer as the game's resizable windows ask for theirs.
     n.cursors = api.Class("Core.dll", "Core.UILogic", "DofusCursor");
-    n.setCursor = api.FindVerified(n.cursors, "SetCursor", 4, 0x280A070);
-    n.removeCursor = api.FindVerified(n.cursors, "RemoveCursor", 2, 0x2809EA0);
+    n.setCursor = api.FindVerified(n.cursors, "SetCursor", 4, 0x27C50C0);
+    n.removeCursor = api.FindVerified(n.cursors, "RemoveCursor", 2, 0x27C4EF0);
     // The managed heap is optional: without it, the rest of the overlay.
     try {
         const auto used = Export("il2cpp_gc_get_used_size", GcUsedExport);

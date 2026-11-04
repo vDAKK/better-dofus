@@ -63,12 +63,12 @@ void InstallCombatAppearanceRefresh() {
     methods.creature = api.Class("Core.dll", "", "exf");
     methods.info = api.Class("Core.dll", "Core.Services.Entities.EntityInformationServices", "EntityInfo");
     methods.entity = api.Class("Core.dll", "Core.Rendering.Entity.CoreAnimatedEntity", "AnimatedEntity");
-    methods.list = Verified(methods.fighters, "baml", 0, 0x19579E0);
-    methods.findInfo = Verified(methods.fighters, "bamm", 2, 0x1957A70);
-    methods.id = Verified(methods.info, "bajh", 0, 0x1951440);
-    methods.flag = Verified(methods.info, "bajs", 1, 0x19518F0);
-    methods.findRendered = Verified(methods.registry, "vkq", 1, 0x27695E0);
-    methods.refresh = Verified(methods.entity, "ric", 0, 0x2619F70);
+    methods.list = Verified(methods.fighters, "baml", 0, 0x195CF60);
+    methods.findInfo = Verified(methods.fighters, "bamm", 2, 0x195CFF0);
+    methods.id = Verified(methods.info, "bajh", 0, 0x1956610);
+    methods.flag = Verified(methods.info, "bajs", 1, 0x1956AC0);
+    methods.findRendered = Verified(methods.registry, "vkq", 1, 0x271D7E0);
+    methods.refresh = Verified(methods.entity, "ric", 0, 0x25D1420);
     methods.installed = true;
 }
 

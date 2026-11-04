@@ -176,9 +176,9 @@ Method Api::FindVerified(Klass klass, const char* name, int argc, uintptr_t rva)
     auto& type = *static_cast<fake::Class*>(klass);
     const auto key = type.name + "." + name;
     static const std::map<std::string, std::pair<int, uintptr_t>> expected{
-        {"esg.zcx", {0, 0x18BB140}}, {"mc.myn", {0, 0xF20D40}}, {"mc.myo", {0, 0x861E70}}, {"mc.mzb", {0, 0x2AAC720}},
-        {"mc.myx", {0, 0x2AAC6B0}}, {"MonsterData.GetById", {1, 0x7E76B0}}, {"MonsterData.get_isBoss", {0, 0x7C43C0}},
-        {"MonsterData.get_isMiniBoss", {0, 0x7C43B0}}, {"MonsterData.get_name", {0, 0x7E7A30}}};
+        {"esg.zcx", {0, 0x18B7060}}, {"mc.myn", {0, 0xF179C0}}, {"mc.myo", {0, 0x858AF0}}, {"mc.mzb", {0, 0x2A69C90}},
+        {"mc.myx", {0, 0x2A69C20}}, {"MonsterData.GetById", {1, 0x7DE500}}, {"MonsterData.get_isBoss", {0, 0x7BB210}},
+        {"MonsterData.get_isMiniBoss", {0, 0x7BB200}}, {"MonsterData.get_name", {0, 0x7DE880}}};
     if (key == fake::fail) throw std::runtime_error("Verified method unavailable");
     const auto found = expected.find(key);
     fake::Check(found != expected.end() && found->second == std::pair(argc, rva), "Capture native outside the pinned contract");
@@ -297,7 +297,7 @@ void InstallContract() {
     Check(layouts == std::set<std::string>{"exf.drih", "fxc.<dwaq>k__BackingField", "fzf.dwqq", "fyz.dwou", "fze.dwpw", "fze.dwpy",
         "fze.dwqb", "fzg.dwqv", "esg.dpzj", "z.dbrm", "ItemData.possibleEffects", "EffectInstanceData.actionId", "EffectInstanceInteger.value"},
         "Every field read by name has its pinned offset checked");
-    Check(guarded == std::set<uintptr_t>{0x18BB140, 0xF20D40, 0x861E70, 0x2AAC720, 0x2AAC6B0, 0x7E76B0, 0x7C43C0, 0x7C43B0, 0x7E7A30},
+    Check(guarded == std::set<uintptr_t>{0x18B7060, 0xF179C0, 0x858AF0, 0x2A69C90, 0x2A69C20, 0x7DE500, 0x7BB210, 0x7BB200, 0x7DE880},
         "Exactly the soul-inventory item accessors, esg.zcx and MonsterData, each behind a signature guard");
     InstallCaptureDetect(Sink);
     Check(verifications == 9 && logs.empty(), "A second installation only replaces the sink");

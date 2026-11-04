@@ -13,6 +13,13 @@ $script:Repository = 'Altansar69/dofus-enhanced'
 # Renamed from Altansar69/dofus-miniatures (GitHub redirects the old name):
 # assets published under either name stay trusted.
 $script:AssetRepositories = @('Altansar69/dofus-miniatures', 'Altansar69/dofus-enhanced')
+# Checked in this order: the fork is asked only when Altansar's repository has
+# nothing newer than the verified local releases, or cannot answer. A source's
+# listing can only designate that source's own assets.
+$script:Sources = @(
+    [pscustomobject]@{ Name = $script:Repository; Assets = $script:AssetRepositories },
+    [pscustomobject]@{ Name = 'vDAKK/dofus-enhanced'; Assets = @('vDAKK/dofus-enhanced') }
+)
 $script:Family = 'DofusMiniatures-3.7.11.11-r'
 $script:PayloadFiles = @('DofusMiniatures.dll', 'ModuleLoader.exe', 'ModuleAutoLoader.exe',
     'TreasureOverlay.exe', 'Update-GitHub.ps1')
@@ -65,7 +72,7 @@ function Test-Package([string]$Folder, [int]$Revision, [string]$GameHash, [strin
     }
 }
 
-function Select-Update($Releases, [string]$GameHash, [string]$MetadataHash) {
+function Select-Update($Releases, [string]$GameHash, [string]$MetadataHash, [string[]]$Repositories = $script:AssetRepositories) {
     $selected = $null
     foreach ($release in @($Releases)) {
         # Since 1.13.1 a release is tagged with its public version (v1.13.1); an
@@ -83,7 +90,7 @@ function Select-Update($Releases, [string]$GameHash, [string]$MetadataHash) {
             # an arbitrary asset URL or silently accept an absent digest.
             if (!$asset.PSObject.Properties['digest'] -or $asset.digest -cnotmatch '^sha256:[a-f0-9]{64}$') { continue }
             $expected = $null
-            foreach ($repository in $script:AssetRepositories) {
+            foreach ($repository in $Repositories) {
                 $candidate = "https://github.com/$repository/releases/download/$tag/$($asset.name)"
                 if ($asset.browser_download_url -ceq $candidate) { $expected = $candidate }
             }
@@ -199,6 +206,21 @@ function Install-Archive([string]$Archive, [string]$Stage, [string]$Root,
     return 'INSTALLED'
 }
 
+function Find-SourceUpdate($Source, [string]$Folder, [string]$GameHash, [string]$MetadataHash,
+    [Threading.CancellationToken]$Cancellation) {
+    $listing = Join-Path $Folder 'releases.json'
+    Get-TrustedDownload "https://api.github.com/repos/$($Source.Name)/releases?per_page=100" $listing 4MB $Cancellation
+    $releases = [IO.File]::ReadAllText($listing) | ConvertFrom-Json
+    if (@($releases).Count -ne 0) { return Select-Update $releases $GameHash $MetadataHash $Source.Assets }
+    # A degraded GitHub can answer the listing with an empty page (seen on
+    # 2026-10-22); the newest published release has its own endpoint. A listing
+    # with releases but none compatible stays a definitive answer.
+    Write-Output 'UPDATE_LISTING_EMPTY'
+    $newest = Join-Path $Folder 'latest.json'
+    Get-TrustedDownload "https://api.github.com/repos/$($Source.Name)/releases/latest" $newest 1MB $Cancellation
+    return Select-Update ([IO.File]::ReadAllText($newest) | ConvertFrom-Json) $GameHash $MetadataHash $Source.Assets
+}
+
 function Invoke-GitHubUpdate([string]$Root, [string]$Exe) {
     if (![IO.Path]::IsPathRooted($Root) -or ![IO.Path]::IsPathRooted($Exe) -or
         [IO.Path]::GetFileName($Exe) -ine 'Dofus.exe') { throw 'Absolute installation and client paths required' }
@@ -211,40 +233,58 @@ function Invoke-GitHubUpdate([string]$Root, [string]$Exe) {
     $stage = Join-Path $Root ('.dofus-update-' + [Guid]::NewGuid().ToString('N'))
     $null = [IO.Directory]::CreateDirectory($stage)
     $cancellation = New-Object Threading.CancellationTokenSource
-    $cancellation.CancelAfter(35000)
+    # The loader kills this worker after 45 seconds: a silent source keeps time
+    # for the next one and for the download.
+    $cancellation.CancelAfter(40000)
     try {
-        $listing = Join-Path $stage 'releases.json'
-        Get-TrustedDownload "https://api.github.com/repos/$script:Repository/releases?per_page=100" $listing 4MB $cancellation.Token
-        $releases = [IO.File]::ReadAllText($listing) | ConvertFrom-Json
-        $update = Select-Update $releases $gameHash $metadataHash
-        if (@($releases).Count -eq 0) {
-            # A degraded GitHub can answer the listing with an empty page (seen on
-            # 2026-10-22); the newest published release has its own endpoint. A
-            # listing with releases but none compatible stays a definitive answer.
-            Write-Output 'UPDATE_LISTING_EMPTY'
-            $newest = Join-Path $stage 'latest.json'
-            Get-TrustedDownload "https://api.github.com/repos/$script:Repository/releases/latest" $newest 1MB $cancellation.Token
-            $update = Select-Update ([IO.File]::ReadAllText($newest) | ConvertFrom-Json) $gameHash $metadataHash
-        }
-        if (!$update) { Write-Output 'UPDATE_NO_COMPATIBLE_RELEASE'; return }
-        $destination = Join-Path $Root "$script:Family$($update.revision)"
-        if (Test-Path -LiteralPath $destination) {
-            Test-Package $destination $update.revision $gameHash $metadataHash
-            Write-Output "UPDATE_ALREADY_INSTALLED r$($update.revision)"
-            return
-        }
-        # Never download a downgrade over a newer compatible local release.
+        # Only a release that verifies against the installed Dofus counts: an
+        # incompatible sibling is not a fallback.
+        $localRevision = 0
         foreach ($directory in Get-ChildItem -LiteralPath $Root -Directory) {
             if ($directory.Name -cmatch '^DofusMiniatures-3\.7\.11\.11-r([1-9][0-9]{0,5})$') {
-                $localRevision = [int]$Matches[1]
-                if ($localRevision -gt $update.revision) {
+                $revision = [int]$Matches[1]
+                if ($revision -gt $localRevision) {
                     try {
-                        Test-Package $directory.FullName $localRevision $gameHash $metadataHash
-                        Write-Output "UPDATE_LOCAL_NEWER r$localRevision"
-                        return
-                    } catch { } # An incompatible sibling is not a fallback.
+                        Test-Package $directory.FullName $revision $gameHash $metadataHash
+                        $localRevision = $revision
+                    } catch { }
                 }
             }
+        }
+        $update = $null
+        $known = $null
+        $failure = $null
+        $answered = $false
+        foreach ($source in $script:Sources) {
+            $sourceLimit = [Threading.CancellationTokenSource]::CreateLinkedTokenSource($cancellation.Token)
+            $sourceLimit.CancelAfter(14000)
+            $folder = Join-Path $stage ([Guid]::NewGuid().ToString('N'))
+            $null = [IO.Directory]::CreateDirectory($folder)
+            try {
+                $found = @(Find-SourceUpdate $source $folder $gameHash $metadataHash $sourceLimit.Token)
+                $answered = $true
+            } catch {
+                # A silent source must not hide the next one. If none answers,
+                # the failure is reported and the local release stays in use.
+                $failure = $_
+                Write-Output "UPDATE_SOURCE_UNAVAILABLE $($source.Name) $($_.Exception.Message)"
+                continue
+            } finally { $sourceLimit.Dispose() }
+            $candidate = $null
+            foreach ($entry in $found) {
+                if ($entry -is [string]) { Write-Output $entry } elseif ($entry) { $candidate = $entry }
+            }
+            if ($candidate) {
+                if (!$known -or $candidate.revision -gt $known.revision) { $known = $candidate }
+                if ($candidate.revision -gt $localRevision) { $update = $candidate; break }
+            }
+        }
+        if (!$answered) { throw $failure }
+        if (!$known) { Write-Output 'UPDATE_NO_COMPATIBLE_RELEASE'; return }
+        if (!$update) {
+            if ($known.revision -eq $localRevision) { Write-Output "UPDATE_ALREADY_INSTALLED r$localRevision" }
+            else { Write-Output "UPDATE_LOCAL_NEWER r$localRevision" }
+            return
         }
         $archive = Join-Path $stage 'package.zip'
         Get-TrustedDownload $update.url $archive $update.size $cancellation.Token

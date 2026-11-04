@@ -197,20 +197,20 @@ void InstallLayout() {
     using namespace layout_detail;
     if (state.installed) return;
     auto cached = api.Class("Core.dll", "Core.Services.Player.OptionsService", "CachedDataService");
-    api.Native(api.Find(cached, "get_uiPresetOptionsContainer", 0), 0x7E0890);
-    api.Native(api.Find(cached, "get_noOptionSave", 0), 0x752E10);
-    api.Native(api.Find(cached, "RequestSaveUi", 1), 0x18B6B80);
+    api.Native(api.Find(cached, "get_uiPresetOptionsContainer", 0), 0x7D76E0);
+    api.Native(api.Find(cached, "get_noOptionSave", 0), 0x750E40);
+    api.Native(api.Find(cached, "RequestSaveUi", 1), 0x18B2DB0);
     auto container = api.Class("Core.dll", "Core.Engine.Options.OptionsContainers", "UiPresetOptionsContainer");
-    api.Native(api.Find(container, "get_currentContextualPreset", 0), 0x20938A0);
-    api.Native(api.Find(container, "get_currentContextualPresetData", 0), 0x20937C0);
-    api.Native(api.Find(container, "LoadUiPositionById", 1), 0x2091B60);
-    api.Native(api.Find(container, "SaveUiPositionById", 4), 0x2092DE0);
-    api.Native(api.Find(container, "SetResetUiPosition", 0), 0x2092E50);
-    api.Native(api.Find(api.Class("Core.dll", "Core.UI", "UICoordinates"), ".ctor", 2), 0x14F8840);
-    AddHook(api.Find(container, "ClearAllSavedUi", 0), 0x2091060,
+    api.Native(api.Find(container, "get_currentContextualPreset", 0), 0x2067970);
+    api.Native(api.Find(container, "get_currentContextualPresetData", 0), 0x2067890);
+    api.Native(api.Find(container, "LoadUiPositionById", 1), 0x2065C30);
+    api.Native(api.Find(container, "SaveUiPositionById", 4), 0x2066EB0);
+    api.Native(api.Find(container, "SetResetUiPosition", 0), 0x2066F20);
+    api.Native(api.Find(api.Class("Core.dll", "Core.UI", "UICoordinates"), ".ctor", 2), 0x14F3040);
+    AddHook(api.Find(container, "ClearAllSavedUi", 0), 0x2065130,
         reinterpret_cast<void*>(&ClearHook), reinterpret_cast<void**>(&originalClear));
     auto preset = api.Class("Core.dll", "Core.Engine.Options", "PresetData");
-    AddHook(api.Find(preset, "bmce", 1), 0x207F0C0,
+    AddHook(api.Find(preset, "bmce", 1), 0x20520B0,
         reinterpret_cast<void*>(&CloneHook), reinterpret_cast<void**>(&originalClone));
     state.installed = true;
 }

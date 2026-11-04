@@ -257,23 +257,23 @@ void InstallSpousePartyMenu() {
             {player, "m_playerId", size_t(0xB8)}})
         if (api.field_get_offset(api.FieldInfo(type, name)) != offset)
             throw std::runtime_error(std::string("Spouse party field layout: ") + name);
-    getSpouse = api.FindVerified(socialClass, "bfou", 0, 0x752E20);
-    getMembers = api.FindVerified(partyClass, "bfmh", 0, 0x752E20);
+    getSpouse = api.FindVerified(socialClass, "bfou", 0, 0x750E50);
+    getMembers = api.FindVerified(partyClass, "bfmh", 0, 0x750E50);
     memberId = api.FindVerified(memberClass, "oab", 0, 0x68D2B0);
     characterClass = api.Class("Core.dll", "", "esg");
     mapClass = api.Class("Core.dll", "", "tk");
-    currentMap = api.FindVerified(characterClass, "zeo", 0, 0x185C1E0);
+    currentMap = api.FindVerified(characterClass, "zeo", 0, 0x1854C30);
     constexpr const char* dataImage = "Ankama.Dofus.Core.DataCenter.dll", *dataSpace = "Core.DataCenter.Metadata.World";
     mapInfoClass = api.Class(dataImage, dataSpace, "MapInformationData");
     subareaClass = api.Class(dataImage, dataSpace, "SubAreaData");
-    mapInfo = api.FindVerified(mapInfoClass, "GetMapInformationById", 1, 0x7C4200);
-    subarea = api.FindVerified(mapInfoClass, "get_subArea", 0, 0x7C44B0);
-    world = api.FindVerified(subareaClass, "get_worldmapId", 0, 0x7D1040);
-    joinSpouse = api.FindVerified(player, "OnJoinSpouse", 0, 0x16F0DF0);
-    playerCtor = api.FindVerified(player, ".ctor", 13, 0x16F3950);
+    mapInfo = api.FindVerified(mapInfoClass, "GetMapInformationById", 1, 0x7BB050);
+    subarea = api.FindVerified(mapInfoClass, "get_subArea", 0, 0x7BB300);
+    world = api.FindVerified(subareaClass, "get_worldmapId", 0, 0x7C7E90);
+    joinSpouse = api.FindVerified(player, "OnJoinSpouse", 0, 0x16EA880);
+    playerCtor = api.FindVerified(player, ".ctor", 13, 0x16ED3E0);
     append = api.FindVerified(api.Class("Core.dll", "Core.UILogic.Components.ContextMenu", "DofusContextualMenu"),
-        "AppendDefaultItem", 13, 0x16D6C60);
-    auto create = api.FindVerified(player, "CreateMenu", 0, 0x16ECE90);
-    AddHook(create, 0x16ECE90, reinterpret_cast<void*>(&CreateHook), reinterpret_cast<void**>(&originalCreate));
+        "AppendDefaultItem", 13, 0x16D06F0);
+    auto create = api.FindVerified(player, "CreateMenu", 0, 0x16E6920);
+    AddHook(create, 0x16E6920, reinterpret_cast<void*>(&CreateHook), reinterpret_cast<void**>(&originalCreate));
     installed = true;
 }

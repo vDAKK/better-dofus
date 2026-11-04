@@ -6,7 +6,7 @@ namespace reloginGuard {
 namespace {
 using namespace managed;
 // pw.phz(cvg): the login screen's handler of the launcher's account-details reply.
-constexpr uintptr_t HandlerRva = 0x19F22F0;
+constexpr uintptr_t HandlerRva = 0x19F3650;
 // cvf..ctor: the shared empty constructor (no field initializer).
 constexpr uintptr_t DetailsCtorRva = 0x65AD00;
 // cvg: dhzm the launcher's error code, dhzn the account details parsed from its answer.

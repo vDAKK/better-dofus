@@ -102,9 +102,9 @@ inline unsigned MiniatureCategoryMask(const Settings& settings) {
 enum class SpellEffectsRead { Other, EffectSteps, CasterAnimation };
 inline SpellEffectsRead ClassifySpellEffectsRead(uintptr_t callerRva) {
     switch (callerRva) {
-    case 0x1ECE82C: return SpellEffectsRead::EffectSteps;     // FightSequence.biwv
-    case 0x272E250:                                            // dyq.uus
-    case 0x2744303: return SpellEffectsRead::CasterAnimation; // dzj.uxg
+    case 0x1E7EC30: return SpellEffectsRead::EffectSteps;     // FightSequence.biwv
+    case 0x26E172D:                                            // dyq.uus
+    case 0x26F2D12: return SpellEffectsRead::CasterAnimation; // dzj.uxg
     default: return SpellEffectsRead::Other;
     }
 }

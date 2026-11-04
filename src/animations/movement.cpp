@@ -100,8 +100,8 @@ bool CheckedLandingOverride(Obj behavior, Obj state) {
 bool LandingAt(int bone, Method method, uintptr_t caller) {
     const auto scope = LandingScope::current;
     if (scope && scope->allowed &&
-        (caller == gameBase + 0x263F03C || caller == gameBase + 0x263FB17)) {
-        if (caller == gameBase + 0x263F03C) scope->frame->committed = true;
+        (caller == gameBase + 0x25F63BC || caller == gameBase + 0x25F6E97)) {
+        if (caller == gameBase + 0x25F63BC) scope->frame->committed = true;
         return false;
     }
     return originalLanding(bone, method);
@@ -214,16 +214,16 @@ void InstallInstantMovement() {
     auto entityClass = api.Class("Core.dll", "Core.Rendering.Entity.CoreAnimatedEntity", "AnimatedEntity");
     auto animatedClass = api.Class("Ankama.Dofus.Core.Characters.dll", "CoreAnimated", "Animated");
     auto appearancesClass = api.Class("Ankama.Dofus.Core.Characters.dll", "", "mig");
-    api.Native(api.Find(walkClass, "rjn", 8), 0x263E860);
-    finishCell = reinterpret_cast<PositionFn>(api.Native(api.Find(entityClass, "rfv", 3), 0x2616050));
-    api.Native(api.Find(walkClass, "rjr", 2), 0x263EE10);
-    api.Native(api.Find(walkClass, "rjw", 1), 0x263FA00);
-    appearanceBone = reinterpret_cast<AppearanceFn>(api.Native(api.Find(animatedClass, "daxp", 0), 0x781A20));
-    api.Native(api.Find(appearancesClass, "dbdk", 1), 0x78F5D0);
-    api.NativeAt(0x263F037);
-    api.NativeAt(0x263FB12);
-    AddNativeHook(0x78F5D0, reinterpret_cast<void*>(LandingHook), reinterpret_cast<void**>(&originalLanding));
-    AddNativeHook(0x263EE10, reinterpret_cast<void*>(NextHook), reinterpret_cast<void**>(&originalNext));
-    AddNativeHook(0x263FA00, reinterpret_cast<void*>(FinishHook), reinterpret_cast<void**>(&originalFinish));
-    AddNativeHook(0x263E860, reinterpret_cast<void*>(StartHook), reinterpret_cast<void**>(&originalStart));
+    api.Native(api.Find(walkClass, "rjn", 8), 0x25F5BE0);
+    finishCell = reinterpret_cast<PositionFn>(api.Native(api.Find(entityClass, "rfv", 3), 0x25CD4F0));
+    api.Native(api.Find(walkClass, "rjr", 2), 0x25F6190);
+    api.Native(api.Find(walkClass, "rjw", 1), 0x25F6D80);
+    appearanceBone = reinterpret_cast<AppearanceFn>(api.Native(api.Find(animatedClass, "daxp", 0), 0x75F3A0));
+    api.Native(api.Find(appearancesClass, "dbdk", 1), 0x790CB0);
+    api.NativeAt(0x25F63B7);
+    api.NativeAt(0x25F6E92);
+    AddNativeHook(0x790CB0, reinterpret_cast<void*>(LandingHook), reinterpret_cast<void**>(&originalLanding));
+    AddNativeHook(0x25F6190, reinterpret_cast<void*>(NextHook), reinterpret_cast<void**>(&originalNext));
+    AddNativeHook(0x25F6D80, reinterpret_cast<void*>(FinishHook), reinterpret_cast<void**>(&originalFinish));
+    AddNativeHook(0x25F5BE0, reinterpret_cast<void*>(StartHook), reinterpret_cast<void**>(&originalStart));
 }

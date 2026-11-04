@@ -464,39 +464,39 @@ void InstallRender() {
     auto baseMarker=api.Class("Core.dll","","fgh"); // fgm : fgg : fgh owns the root element field.
     RequireField(baseMarker,"<dtwe>k__BackingField",0x10);
     RequireField(manager,"dttw",0x10); RequireField(manager,"dttx",0x18); RequireField(manager,"dtty",0x20);
-    methods.centerPlayer=api.FindVerified(methods.view,"beus",1,0x1BFA370);
+    methods.centerPlayer=api.FindVerified(methods.view,"beus",1,0x1BF2E00);
     // The game's hint geometry: the layer of a hint category (created on
     // demand) and the hint size its own markers get.
-    methods.layer=api.FindVerified(methods.view,"bexb",1,0x1C04C70);
-    methods.hintSize=api.FindVerified(methods.view,"bedd",0,0x1B92EF0);
+    methods.layer=api.FindVerified(methods.view,"bexb",1,0x1BFD700);
+    methods.hintSize=api.FindVerified(methods.view,"bedd",0,0x1B74F60);
     // Icon marker (fgm): native item image, position group opt-in, and its
     // overrides of the base marker's placement and disposal.
-    methods.markerCtor=api.FindVerified(methods.marker,".ctor",15,0x1C40D70);
-    methods.position=api.FindVerified(methods.marker,"beft",3,0x1C410D0);
-    methods.dispose=api.FindVerified(methods.marker,"begd",0,0x1C411D0);
-    methods.find=api.FindVerified(manager,"beec",2,0x1B9EAE0);
-    methods.enableGroup=api.FindVerified(manager,"beem",1,0x1B9F530);
+    methods.markerCtor=api.FindVerified(methods.marker,".ctor",15,0x1BDF3F0);
+    methods.position=api.FindVerified(methods.marker,"beft",3,0x1BDF750);
+    methods.dispose=api.FindVerified(methods.marker,"begd",0,0x1BDF850);
+    methods.find=api.FindVerified(manager,"beec",2,0x1BCB4D0);
+    methods.enableGroup=api.FindVerified(manager,"beem",1,0x1BCBF90);
     // Position groups keyed by map coordinates: the same calls the game makes
     // for its hints; the view's own mouse-move handler spreads a hovered group.
-    methods.cluster=api.FindVerified(manager,"bedx",3,0x1B9E370);
-    methods.uncluster=api.FindVerified(manager,"bedy",1,0x1B9E5C0);
+    methods.cluster=api.FindVerified(manager,"bedx",3,0x1BCACF0);
+    methods.uncluster=api.FindVerified(manager,"bedy",1,0x1BCAF40);
     // The group of a cell (fgk): spread flag and the native count badge.
-    methods.group=api.FindVerified(manager,"bedz",1,0x1B9E780);
+    methods.group=api.FindVerified(manager,"bedz",1,0x1BCB140);
     auto groupClass=api.Class("Core.dll","","fgk");
     RequireField(groupClass,"<dtww>k__BackingField",0x2C8); RequireField(groupClass,"<dtwx>k__BackingField",0x2D0); RequireField(groupClass,"dtwz",0x2D8);
     auto conversion=api.Class("Core.dll","","fhl");
-    methods.mapToPixel=api.FindVerified(conversion,"bepx",4,0x1C4EB30);
-    methods.pixelToMap=api.FindVerified(conversion,"bepv",3,0x1C4E8D0);
+    methods.mapToPixel=api.FindVerified(conversion,"bepx",4,0x1C3A3F0);
+    methods.pixelToMap=api.FindVerified(conversion,"bepv",3,0x1C3A190);
     auto extensions=api.Class(UiAssembly,UiSpace,"VisualElementExtensions");
-    methods.toWorld=api.FindVerified(extensions,"LocalToWorld",2,0x56766A0);
-    methods.toLocal=api.FindVerified(extensions,"WorldToLocal",2,0x56776A0);
-    api.FindVerified(methods.label,".ctor",0,0x5729760);
+    methods.toWorld=api.FindVerified(extensions,"LocalToWorld",2,0x563B9E0);
+    methods.toLocal=api.FindVerified(extensions,"WorldToLocal",2,0x563C9E0);
+    api.FindVerified(methods.label,".ctor",0,0x56EEAA0);
     struct Guard {const char* name;int argc;uintptr_t rva;};
-    for(const auto& g:std::array<Guard,15>{{{".ctor",0,0x55F50B0},{"Add",1,0x55DFAD0},{"Insert",2,0x55E5710},{"IndexOf",1,0x55E55B0},
-        {"RemoveFromHierarchy",0,0x55E7BD0},
-        {"get_contentContainer",0,0x3153690},{"get_panel",0,0x55F7170},{"get_parent",0,0x55F7180},{"get_worldBound",0,0x55F7CC0},{"get_worldClip",0,0x55F7EE0},
-        {"get_visible",0,0x55F7BC0},{"get_resolvedStyle",0,0x55F72E0},{"set_name",1,0x55F9670},
-        {"set_pickingMode",1,0x55F97B0},{"get_style",0,0x55F74A0}}}) api.FindVerified(methods.element,g.name,g.argc,g.rva);
+    for(const auto& g:std::array<Guard,15>{{{".ctor",0,0x55BA3F0},{"Add",1,0x55A4E10},{"Insert",2,0x55AAA50},{"IndexOf",1,0x55AA8F0},
+        {"RemoveFromHierarchy",0,0x55ACF10},
+        {"get_contentContainer",0,0x3116A10},{"get_panel",0,0x55BC4B0},{"get_parent",0,0x55BC4C0},{"get_worldBound",0,0x55BD000},{"get_worldClip",0,0x55BD220},
+        {"get_visible",0,0x55BCF00},{"get_resolvedStyle",0,0x55BC620},{"set_name",1,0x55BE9B0},
+        {"set_pickingMode",1,0x55BEAF0},{"get_style",0,0x55BC7E0}}}) api.FindVerified(methods.element,g.name,g.argc,g.rva);
     installed=true;
 }
 bool RenderCleanupPending() {

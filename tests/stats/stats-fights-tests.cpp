@@ -249,8 +249,8 @@ Method Api::FindVerified(Klass klass, const char* name, int argc, uintptr_t rva)
     auto& type = *static_cast<fake::Class*>(klass);
     const auto key = type.name + "." + name;
     static const std::map<std::string, std::pair<int, uintptr_t>> expected{
-        {"mc.mzb", {0, 0x2AAC720}}, {"mc.myo", {0, 0x861E70}}, {"DataCenterModule.get_dungeonsDataRoot", {0, 0x7BC7C0}},
-        {"DungeonsDataRoot.GetDungeonByMapId", {1, 0x7C26B0}}, {"gau.bixl", {1, 0x1EA0910}}};
+        {"mc.mzb", {0, 0x2A69C90}}, {"mc.myo", {0, 0x858AF0}}, {"DataCenterModule.get_dungeonsDataRoot", {0, 0x7B3610}},
+        {"DungeonsDataRoot.GetDungeonByMapId", {1, 0x7B9500}}, {"gau.bixl", {1, 0x1E90220}}};
     if (key == fake::fail) throw std::runtime_error("Verified method unavailable");
     const auto found = expected.find(key);
     fake::Check(found != expected.end() && found->second == std::pair(argc, rva), "Statistics native outside the pinned contract");
@@ -305,7 +305,7 @@ void Log(const std::string& line) { fake::logs.push_back(line); }
 void AddHook(managed::Method method, uintptr_t rva, void* replacement, void** original) {
     using namespace fake;
     const auto& m = *static_cast<const MethodInfo*>(method);
-    Check(rva == 0x1EA0910 && m.klass->name == "gau" && m.name == "bixl" && m.argc == 1, "Only gau.bixl, through its verified method");
+    Check(rva == 0x1E90220 && m.klass->name == "gau" && m.name == "bixl" && m.argc == 1, "Only gau.bixl, through its verified method");
     if (failHook) throw std::runtime_error("Injected hook failure");
     ++hooks;
     listener = method;
@@ -414,7 +414,7 @@ void InstallContract() {
         "fze.dwqd", "fzg.dwqv", "dt.dcbc", "dt.dcbd", "dt.dcbg", "esg.dqab", "WorldPoint.m_mapId", "DungeonData.id",
         "DungeonData.bosses", "jsq.ercs", "jsq.ered", "jsq.eree", "jrw.eqwy", "jrw.eqxm", "jrw.eqxn", "jrq.eqvk", "jrz.eqyd", "jsd.eqyu", "jsd.eqyz",
         "jsd.eqzd", "jsd.eqzf", "jsd.eqzh"}, "Every field read has its pinned offset checked by name, never the fight's experience");
-    Check(guarded == std::set<uintptr_t>{0x2AAC720, 0x861E70, 0x7BC7C0, 0x7C26B0, 0x1EA0910},
+    Check(guarded == std::set<uintptr_t>{0x2A69C90, 0x858AF0, 0x7B3610, 0x7B9500, 0x1E90220},
           "Exactly the item accessors, the dungeon lookups and gau.bixl, each behind a signature guard");
     const auto verified = verifications;
     InstallStatsFights();

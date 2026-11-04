@@ -435,50 +435,50 @@ void InstallStatsWindow() {
     // window itself, its header, drag and input contracts are the soul
     // panel's, checked by InstallSoulHelper first.
     auto tab = api.Class("Core.dll", Figma, "DofusTab");
-    api.FindVerified(tab, ".ctor", 0, 0x1712DC0); api.FindVerified(tab, "set_text", 1, 0x17136F0); api.FindVerified(tab, "set_size", 1, 0x1713550);
-    api.FindVerified(tab, "set_fontCase", 1, 0x1712FC0); api.FindVerified(tab, "get_isOn", 0, 0x1712F50); api.FindVerified(tab, "SetValueWithoutNotify", 1, 0x1711970);
+    api.FindVerified(tab, ".ctor", 0, 0x170C850); api.FindVerified(tab, "set_text", 1, 0x170D180); api.FindVerified(tab, "set_size", 1, 0x170CFE0);
+    api.FindVerified(tab, "set_fontCase", 1, 0x170CA50); api.FindVerified(tab, "get_isOn", 0, 0x170C9E0); api.FindVerified(tab, "SetValueWithoutNotify", 1, 0x170B400);
     auto button = api.Class("Core.dll", Figma, "DofusButtonCustom");
-    api.FindVerified(button, ".ctor", 0, 0x170D6F0); api.FindVerified(button, "set_icon", 1, 0x170DFE0); api.FindVerified(button, "set_text", 1, 0x170E5F0);
-    api.FindVerified(button, "set_mainStyle", 1, 0x170E210); api.FindVerified(button, "set_size", 1, 0x170E330); api.FindVerified(button, "set_status", 1, 0x170E400);
+    api.FindVerified(button, ".ctor", 0, 0x1707180); api.FindVerified(button, "set_icon", 1, 0x1707A70); api.FindVerified(button, "set_text", 1, 0x1708080);
+    api.FindVerified(button, "set_mainStyle", 1, 0x1707CA0); api.FindVerified(button, "set_size", 1, 0x1707DC0); api.FindVerified(button, "set_status", 1, 0x1707E90);
     auto section = api.Class("Core.dll", Figma, "SectionHeader");
-    api.FindVerified(section, ".ctor", 5, 0x1745F00); api.FindVerified(section, "set_title", 1, 0x17467B0); api.FindVerified(section, "set_icon", 1, 0x1746200);
-    api.FindVerified(section, "set_isOpen", 1, 0x17462F0); api.FindVerified(section, "set_canBeOpened", 1, 0x1746090); api.FindVerified(section, "AddSubContent", 1, 0x1744360);
+    api.FindVerified(section, ".ctor", 5, 0x173F9D0); api.FindVerified(section, "set_title", 1, 0x1740280); api.FindVerified(section, "set_icon", 1, 0x173FCD0);
+    api.FindVerified(section, "set_isOpen", 1, 0x173FDC0); api.FindVerified(section, "set_canBeOpened", 1, 0x173FB60); api.FindVerified(section, "AddSubContent", 1, 0x173DE30);
     auto divider = api.Class("Core.dll", Figma, "Divider");
-    api.FindVerified(divider, ".ctor", 0, 0x170BC10); api.FindVerified(divider, "set_componentStyle", 1, 0x170BDC0); api.FindVerified(divider, "set_orientation", 1, 0x170C160);
-    api.FindVerified(api.Class("Core.dll", Components, "ResizableWindow"), "set_headerShowCloseButton", 1, 0x15BFB50);
+    api.FindVerified(divider, ".ctor", 0, 0x17056A0); api.FindVerified(divider, "set_componentStyle", 1, 0x1705850); api.FindVerified(divider, "set_orientation", 1, 0x1705BF0);
+    api.FindVerified(api.Class("Core.dll", Components, "ResizableWindow"), "set_headerShowCloseButton", 1, 0x15B95F0);
     auto element = api.Class(Ui, UiSpace, "VisualElement");
-    api.FindVerified(element, ".ctor", 0, 0x55F50B0); api.FindVerified(element, "Add", 1, 0x55DFAD0); api.FindVerified(element, "RemoveFromHierarchy", 0, 0x55E7BD0);
-    api.FindVerified(element, "BringToFront", 0, 0x55E08E0); api.FindVerified(element, "get_parent", 0, 0x55F7180); api.FindVerified(element, "get_panel", 0, 0x55F7170);
-    api.FindVerified(element, "get_style", 0, 0x55F74A0); api.FindVerified(element, "get_resolvedStyle", 0, 0x55F72E0);
-    api.FindVerified(element, "set_name", 1, 0x55F9670); api.FindVerified(element, "set_tooltip", 1, 0x55F9AB0);
-    api.FindVerified(api.Class(Ui, UiSpace, "Label"), ".ctor", 0, 0x5729760);
+    api.FindVerified(element, ".ctor", 0, 0x55BA3F0); api.FindVerified(element, "Add", 1, 0x55A4E10); api.FindVerified(element, "RemoveFromHierarchy", 0, 0x55ACF10);
+    api.FindVerified(element, "BringToFront", 0, 0x55A5C20); api.FindVerified(element, "get_parent", 0, 0x55BC4C0); api.FindVerified(element, "get_panel", 0, 0x55BC4B0);
+    api.FindVerified(element, "get_style", 0, 0x55BC7E0); api.FindVerified(element, "get_resolvedStyle", 0, 0x55BC620);
+    api.FindVerified(element, "set_name", 1, 0x55BE9B0); api.FindVerified(element, "set_tooltip", 1, 0x55BEDF0);
+    api.FindVerified(api.Class(Ui, UiSpace, "Label"), ".ctor", 0, 0x56EEAA0);
     auto text = api.Class(Ui, UiSpace, "TextElement");
-    api.FindVerified(text, "set_text", 1, 0x564B780); api.FindVerified(text, "set_enableRichText", 1, 0x564B1E0);
-    api.FindVerified(api.Class(Ui, UiSpace, "ResolvedStyleAccess"), "get_width", 0, 0x55DA460);
+    api.FindVerified(text, "set_text", 1, 0x5610AC0); api.FindVerified(text, "set_enableRichText", 1, 0x5610520);
+    api.FindVerified(api.Class(Ui, UiSpace, "ResolvedStyleAccess"), "get_width", 0, 0x559F7A0);
     // The inline styles written: each property's getter (its current value) and setter.
     auto styleAccess = api.Class(Ui, UiSpace, "InlineStyleAccess");
     const struct { const char* name; int argc; uintptr_t rva; } styles[] = {
-        {"UnityEngine.UIElements.IStyle.get_display", 0, 0x55D1270}, {"UnityEngine.UIElements.IStyle.set_display", 1, 0x55D37F0},
-        {"UnityEngine.UIElements.IStyle.get_flexDirection", 0, 0x55D13C0}, {"UnityEngine.UIElements.IStyle.set_flexDirection", 1, 0x55D3A80},
-        {"UnityEngine.UIElements.IStyle.get_alignItems", 0, 0x55D0C60}, {"UnityEngine.UIElements.IStyle.set_alignItems", 1, 0x55D2870},
-        {"UnityEngine.UIElements.IStyle.get_justifyContent", 0, 0x55D1580}, {"UnityEngine.UIElements.IStyle.set_justifyContent", 1, 0x55D3E00},
-        {"UnityEngine.UIElements.IStyle.get_flexWrap", 0, 0x55D1470}, {"UnityEngine.UIElements.IStyle.set_flexWrap", 1, 0x55D3C50},
-        {"UnityEngine.UIElements.IStyle.get_whiteSpace", 0, 0x55D26B0}, {"UnityEngine.UIElements.IStyle.set_whiteSpace", 1, 0x55D6370},
-        {"UnityEngine.UIElements.IStyle.get_unityTextAlign", 0, 0x55D23B0}, {"UnityEngine.UIElements.IStyle.set_unityTextAlign", 1, 0x55D5ED0},
-        {"UnityEngine.UIElements.IStyle.get_position", 0, 0x55D1A30}, {"UnityEngine.UIElements.IStyle.set_position", 1, 0x55D48B0},
-        {"UnityEngine.UIElements.IStyle.get_flexGrow", 0, 0x55D1450}, {"UnityEngine.UIElements.IStyle.set_flexGrow", 1, 0x55D3B30},
-        {"UnityEngine.UIElements.IStyle.get_flexShrink", 0, 0x55D1460}, {"UnityEngine.UIElements.IStyle.set_flexShrink", 1, 0x55D3BC0},
-        {"UnityEngine.UIElements.IStyle.get_fontSize", 0, 0x55D1500}, {"UnityEngine.UIElements.IStyle.set_fontSize", 1, 0x55D3D00},
-        {"UnityEngine.UIElements.IStyle.get_color", 0, 0x55D11D0}, {"UnityEngine.UIElements.IStyle.set_color", 1, 0x55D35D0},
-        {"UnityEngine.UIElements.IStyle.get_width", 0, 0x55D2740}, {"UnityEngine.UIElements.IStyle.set_width", 1, 0x55D63F0},
-        {"UnityEngine.UIElements.IStyle.get_minWidth", 0, 0x55D1850}, {"UnityEngine.UIElements.IStyle.set_minWidth", 1, 0x55D4410},
-        {"UnityEngine.UIElements.IStyle.get_minHeight", 0, 0x55D1810}, {"UnityEngine.UIElements.IStyle.set_minHeight", 1, 0x55D4370},
-        {"UnityEngine.UIElements.IStyle.get_paddingLeft", 0, 0x55D1970}, {"UnityEngine.UIElements.IStyle.set_paddingLeft", 1, 0x55D46D0},
-        {"UnityEngine.UIElements.IStyle.get_paddingRight", 0, 0x55D19B0}, {"UnityEngine.UIElements.IStyle.set_paddingRight", 1, 0x55D4770},
-        {"UnityEngine.UIElements.IStyle.get_paddingTop", 0, 0x55D19F0}, {"UnityEngine.UIElements.IStyle.set_paddingTop", 1, 0x55D4810},
-        {"UnityEngine.UIElements.IStyle.get_paddingBottom", 0, 0x55D1930}, {"UnityEngine.UIElements.IStyle.set_paddingBottom", 1, 0x55D4630}};
+        {"UnityEngine.UIElements.IStyle.get_display", 0, 0x55965B0}, {"UnityEngine.UIElements.IStyle.set_display", 1, 0x5598B30},
+        {"UnityEngine.UIElements.IStyle.get_flexDirection", 0, 0x5596700}, {"UnityEngine.UIElements.IStyle.set_flexDirection", 1, 0x5598DC0},
+        {"UnityEngine.UIElements.IStyle.get_alignItems", 0, 0x5595FA0}, {"UnityEngine.UIElements.IStyle.set_alignItems", 1, 0x5597BB0},
+        {"UnityEngine.UIElements.IStyle.get_justifyContent", 0, 0x55968C0}, {"UnityEngine.UIElements.IStyle.set_justifyContent", 1, 0x5599140},
+        {"UnityEngine.UIElements.IStyle.get_flexWrap", 0, 0x55967B0}, {"UnityEngine.UIElements.IStyle.set_flexWrap", 1, 0x5598F90},
+        {"UnityEngine.UIElements.IStyle.get_whiteSpace", 0, 0x55979F0}, {"UnityEngine.UIElements.IStyle.set_whiteSpace", 1, 0x559B6B0},
+        {"UnityEngine.UIElements.IStyle.get_unityTextAlign", 0, 0x55976F0}, {"UnityEngine.UIElements.IStyle.set_unityTextAlign", 1, 0x559B210},
+        {"UnityEngine.UIElements.IStyle.get_position", 0, 0x5596D70}, {"UnityEngine.UIElements.IStyle.set_position", 1, 0x5599BF0},
+        {"UnityEngine.UIElements.IStyle.get_flexGrow", 0, 0x5596790}, {"UnityEngine.UIElements.IStyle.set_flexGrow", 1, 0x5598E70},
+        {"UnityEngine.UIElements.IStyle.get_flexShrink", 0, 0x55967A0}, {"UnityEngine.UIElements.IStyle.set_flexShrink", 1, 0x5598F00},
+        {"UnityEngine.UIElements.IStyle.get_fontSize", 0, 0x5596840}, {"UnityEngine.UIElements.IStyle.set_fontSize", 1, 0x5599040},
+        {"UnityEngine.UIElements.IStyle.get_color", 0, 0x5596510}, {"UnityEngine.UIElements.IStyle.set_color", 1, 0x5598910},
+        {"UnityEngine.UIElements.IStyle.get_width", 0, 0x5597A80}, {"UnityEngine.UIElements.IStyle.set_width", 1, 0x559B730},
+        {"UnityEngine.UIElements.IStyle.get_minWidth", 0, 0x5596B90}, {"UnityEngine.UIElements.IStyle.set_minWidth", 1, 0x5599750},
+        {"UnityEngine.UIElements.IStyle.get_minHeight", 0, 0x5596B50}, {"UnityEngine.UIElements.IStyle.set_minHeight", 1, 0x55996B0},
+        {"UnityEngine.UIElements.IStyle.get_paddingLeft", 0, 0x5596CB0}, {"UnityEngine.UIElements.IStyle.set_paddingLeft", 1, 0x5599A10},
+        {"UnityEngine.UIElements.IStyle.get_paddingRight", 0, 0x5596CF0}, {"UnityEngine.UIElements.IStyle.set_paddingRight", 1, 0x5599AB0},
+        {"UnityEngine.UIElements.IStyle.get_paddingTop", 0, 0x5596D30}, {"UnityEngine.UIElements.IStyle.set_paddingTop", 1, 0x5599B50},
+        {"UnityEngine.UIElements.IStyle.get_paddingBottom", 0, 0x5596C70}, {"UnityEngine.UIElements.IStyle.set_paddingBottom", 1, 0x5599970}};
     for (const auto& style : styles) api.FindVerified(styleAccess, style.name, style.argc, style.rva);
-    unsubscribe = api.FindVerified(api.Class("Core.dll", "Core.Engine.Inputs.Events", "InputCustomEvent"), "UnSubscribe", 1, 0x20FF620);
+    unsubscribe = api.FindVerified(api.Class("Core.dll", "Core.Engine.Inputs.Events", "InputCustomEvent"), "UnSubscribe", 1, 0x2097300);
     nativeClick::AddHandler(Action);
     // The top-bar button, after the notebook's, while « Bouton dans la barre
     // du haut » is ticked; the ⋯ menu's « Masquer le module » closes the window.
@@ -505,7 +505,7 @@ void RestoreStatsWindow() {
             *static_cast<bool*>(api.FieldAddress(state.dragger.get(), "m_active")) = false;
             api.Invoke(api.Find(mouse, "ReleaseMouse", 1), nullptr, {state.header.get()});
             // Only the window that still owns capture may clear the drag flag.
-            reinterpret_cast<void(*)(bool, Method)>(api.NativeAt(0x166DF30))(false, nullptr);
+            reinterpret_cast<void(*)(bool, Method)>(api.NativeAt(0x16679C0))(false, nullptr);
         }
         if (state.dragger.get()) api.Call(state.dragger.get(), "RemoveSnapPreview");
         bool locked = true; int none = 0;

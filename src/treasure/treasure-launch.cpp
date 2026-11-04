@@ -376,29 +376,29 @@ void Create(Obj root) {
 }
 void InstallTreasurePanel() {
     auto input=api.Class("Core.dll",Figma,"TextInput");
-    api.FindVerified(input,".ctor",0,0x178DC90);
-    api.FindVerified(input,"get_text",0,0x178DDA0);
-    api.FindVerified(input,"set_text",1,0x178EC50);
-    api.FindVerified(input,"set_placeholderText",1,0x178EAA0);
-    api.FindVerified(input,"set_maxLength",1,0x178E9B0);
-    api.FindVerified(api.Class(Ui,UiSpace,"VisualElement"),"BringToFront",0,0x55E08E0);
-    api.FindVerified(api.Class("Core.dll","Core.UILogic.Components","DofusLabel"),"set_isSingleLine",1,0x1593FB0);
-    api.FindVerified(api.Class(Ui,UiSpace,"TextElement"),"set_enableRichText",1,0x564B1E0);
-    unsubscribe=api.FindVerified(api.Class("Core.dll","Core.Engine.Inputs.Events","InputCustomEvent"),"UnSubscribe",1,0x20FF620);
+    api.FindVerified(input,".ctor",0,0x1787B20);
+    api.FindVerified(input,"get_text",0,0x1787C30);
+    api.FindVerified(input,"set_text",1,0x1788AE0);
+    api.FindVerified(input,"set_placeholderText",1,0x1788930);
+    api.FindVerified(input,"set_maxLength",1,0x1788840);
+    api.FindVerified(api.Class(Ui,UiSpace,"VisualElement"),"BringToFront",0,0x55A5C20);
+    api.FindVerified(api.Class("Core.dll","Core.UILogic.Components","DofusLabel"),"set_isSingleLine",1,0x158DA50);
+    api.FindVerified(api.Class(Ui,UiSpace,"TextElement"),"set_enableRichText",1,0x5610520);
+    unsubscribe=api.FindVerified(api.Class("Core.dll","Core.Engine.Inputs.Events","InputCustomEvent"),"UnSubscribe",1,0x2097300);
     // The same native components as the notebook (verified once more here).
     auto tab=api.Class("Core.dll",Figma,"DofusTab");
-    api.FindVerified(tab,".ctor",0,0x1712DC0);api.FindVerified(tab,"set_text",1,0x17136F0);api.FindVerified(tab,"set_size",1,0x1713550);
-    api.FindVerified(tab,"set_fontCase",1,0x1712FC0);api.FindVerified(tab,"get_isOn",0,0x1712F50);api.FindVerified(tab,"SetValueWithoutNotify",1,0x1711970);
+    api.FindVerified(tab,".ctor",0,0x170C850);api.FindVerified(tab,"set_text",1,0x170D180);api.FindVerified(tab,"set_size",1,0x170CFE0);
+    api.FindVerified(tab,"set_fontCase",1,0x170CA50);api.FindVerified(tab,"get_isOn",0,0x170C9E0);api.FindVerified(tab,"SetValueWithoutNotify",1,0x170B400);
     auto button=api.Class("Core.dll",Figma,"DofusButtonCustom");
-    api.FindVerified(button,".ctor",0,0x170D6F0);api.FindVerified(button,"set_icon",1,0x170DFE0);api.FindVerified(button,"set_text",1,0x170E5F0);
-    api.FindVerified(button,"set_mainStyle",1,0x170E210);api.FindVerified(button,"set_size",1,0x170E330);api.FindVerified(button,"set_status",1,0x170E400);
+    api.FindVerified(button,".ctor",0,0x1707180);api.FindVerified(button,"set_icon",1,0x1707A70);api.FindVerified(button,"set_text",1,0x1708080);
+    api.FindVerified(button,"set_mainStyle",1,0x1707CA0);api.FindVerified(button,"set_size",1,0x1707DC0);api.FindVerified(button,"set_status",1,0x1707E90);
     auto section=api.Class("Core.dll",Figma,"SectionHeader");
-    api.FindVerified(section,".ctor",5,0x1745F00);api.FindVerified(section,"set_title",1,0x17467B0);api.FindVerified(section,"set_icon",1,0x1746200);
-    api.FindVerified(section,"set_isOpen",1,0x17462F0);api.FindVerified(section,"set_canBeOpened",1,0x1746090);api.FindVerified(section,"AddSubContent",1,0x1744360);
+    api.FindVerified(section,".ctor",5,0x173F9D0);api.FindVerified(section,"set_title",1,0x1740280);api.FindVerified(section,"set_icon",1,0x173FCD0);
+    api.FindVerified(section,"set_isOpen",1,0x173FDC0);api.FindVerified(section,"set_canBeOpened",1,0x173FB60);api.FindVerified(section,"AddSubContent",1,0x173DE30);
     auto listElement=api.Class("Core.dll",Figma,"ListElementBase");
-    api.FindVerified(listElement,"set_icon",1,0x1733BD0);
-    api.FindVerified(api.Class("Core.dll",Figma,"ListElementBasic"),"set_listElementStyle",1,0x1734700);
-    api.FindVerified(api.Class("Core.dll","Core.UILogic.Components","ResizableWindow"),"set_headerShowCloseButton",1,0x15BFB50);
+    api.FindVerified(listElement,"set_icon",1,0x172D6A0);
+    api.FindVerified(api.Class("Core.dll",Figma,"ListElementBasic"),"set_listElementStyle",1,0x172E1D0);
+    api.FindVerified(api.Class("Core.dll","Core.UILogic.Components","ResizableWindow"),"set_headerShowCloseButton",1,0x15B95F0);
     // Shared window/control contracts are verified by InstallSoulHelper first.
     soul::SetAuxiliaryPanelAction(Action); nativeClick::AddHandler(Action);
     // Its top-bar button, the panel's only shortcut, follows treasureButton
@@ -424,7 +424,7 @@ void RestoreTreasurePanel() {
             *static_cast<bool*>(api.FieldAddress(state.dragger.get(),"m_active"))=false;
             api.Invoke(api.Find(mouse,"ReleaseMouse",1),nullptr,{state.header.get()});
             // Only the window that still owns capture may clear the drag flag.
-            reinterpret_cast<void(*)(bool,Method)>(api.NativeAt(0x166DF30))(false,nullptr);
+            reinterpret_cast<void(*)(bool,Method)>(api.NativeAt(0x16679C0))(false,nullptr);
         }
         if(state.dragger.get()) api.Call(state.dragger.get(),"RemoveSnapPreview");
         bool locked=true; int none=0;

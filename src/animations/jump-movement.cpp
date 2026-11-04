@@ -170,12 +170,12 @@ void StartHook(Obj behavior, Obj entity, float speed, Obj route, Obj callback,
 void InstallInstantJumpMovement() {
     jumpClass = api.Class("Core.dll", "", "xu");
     routeClass = api.Class("Core.dll", "", "enw");
-    api.Native(api.Find(jumpClass, "rjn", 8), 0x2643FE0);
-    api.Native(api.Find(jumpClass, "rkj", 1), 0x2644790);
-    advanceJump = reinterpret_cast<AdvanceFn>(api.Native(api.Find(jumpClass, "rko", 1), 0x2644F50));
+    api.Native(api.Find(jumpClass, "rjn", 8), 0x25FCB00);
+    api.Native(api.Find(jumpClass, "rkj", 1), 0x25FD2B0);
+    advanceJump = reinterpret_cast<AdvanceFn>(api.Native(api.Find(jumpClass, "rko", 1), 0x25FDA70));
     // ILSpy omits this shared static clock declaration; rkj calls the guarded
     // native body directly. Its ABI is UInt64(MethodInfo*).
-    clockMilliseconds = reinterpret_cast<ClockFn>(api.NativeAt(0x263E800));
-    AddNativeHook(0x2644790, reinterpret_cast<void*>(NextHook), reinterpret_cast<void**>(&originalNext));
-    AddNativeHook(0x2643FE0, reinterpret_cast<void*>(StartHook), reinterpret_cast<void**>(&originalStart));
+    clockMilliseconds = reinterpret_cast<ClockFn>(api.NativeAt(0x25F5B80));
+    AddNativeHook(0x25FD2B0, reinterpret_cast<void*>(NextHook), reinterpret_cast<void**>(&originalNext));
+    AddNativeHook(0x25FCB00, reinterpret_cast<void*>(StartHook), reinterpret_cast<void**>(&originalStart));
 }

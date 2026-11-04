@@ -145,13 +145,13 @@ void Features::InstallAnimation() {
     entityRegistryClass = api.Class("Core.dll", "", "ebm");
     fighterRegistryClass = api.Class("Core.dll", "", "evv");
     renderedEntityGet = api.Find(entityRegistryClass, "vkq", 1);
-    api.Native(renderedEntityGet, 0x27695E0);
-    completeAnimationStep = reinterpret_cast<AnimationStepFn>(api.NativeAt(0x205E360));
+    api.Native(renderedEntityGet, 0x271D7E0);
+    completeAnimationStep = reinterpret_cast<AnimationStepFn>(api.NativeAt(0x2033030));
     // Install the verified shared body directly: open generic metadata need not
     // have an inflated method pointer before the account options are discovered.
-    AddNativeHook(0x39005D0, reinterpret_cast<void*>(OptionGetterHook),
+    AddNativeHook(0x38C3960, reinterpret_cast<void*>(OptionGetterHook),
                   reinterpret_cast<void**>(&originalOptionGetter));
-    AddNativeHook(0x20853E0, reinterpret_cast<void*>(AnimationStartHook),
+    AddNativeHook(0x20580F0, reinterpret_cast<void*>(AnimationStartHook),
                   reinterpret_cast<void**>(&originalAnimationStart));
     InstallMovementDispatch();
     InstallInstantMovement();

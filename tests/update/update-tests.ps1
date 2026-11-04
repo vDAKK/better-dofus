@@ -186,7 +186,8 @@ try {
     $result = Invoke-GitHubUpdate $root (Join-Path $client 'Dofus.exe')
     Check ($result -eq 'UPDATE_INSTALLED r78' -and $script:requests -eq 2) 'Full staged update failed'
     $result = Invoke-GitHubUpdate $root (Join-Path $client 'Dofus.exe')
-    Check ($result -eq 'UPDATE_ALREADY_INSTALLED r78' -and $script:requests -eq 3) 'Unnecessary repeated archive download'
+    # Nothing new on Altansar's repository: the fork is asked too, no archive is fetched.
+    Check ($result -eq 'UPDATE_ALREADY_INSTALLED r78' -and $script:requests -eq 4) 'Unnecessary repeated archive download'
     Check (@(Get-ChildItem -LiteralPath $root -Force -Directory | Where-Object Name -Like '.dofus-update-*').Count -eq 0) 'Staging cleanup failed'
     # A degraded GitHub answers the listing with an empty page: the newest
     # release endpoint still finds the compatible package.
@@ -206,7 +207,7 @@ try {
     $script:testRelease = Asset 80 ('d' * 64) $metadataHash $digest
     $script:requested = @()
     $result = @(Invoke-GitHubUpdate $root (Join-Path $client 'Dofus.exe'))
-    Check (($result -join '|') -eq 'UPDATE_LISTING_EMPTY|UPDATE_NO_COMPATIBLE_RELEASE' -and $script:requested.Count -eq 2) 'An incompatible newest release must not be downloaded'
+    Check (($result -join '|') -eq 'UPDATE_LISTING_EMPTY|UPDATE_LISTING_EMPTY|UPDATE_NO_COMPATIBLE_RELEASE' -and $script:requested.Count -eq 4) 'An incompatible newest release must not be downloaded'
     # Releases without a compatible one are a definitive answer: no second request.
     $script:requested = @()
     function Get-TrustedDownload([string]$Url, [string]$Destination, [long]$Limit, [Threading.CancellationToken]$Cancellation) {
@@ -214,12 +215,77 @@ try {
         Write-Text $Destination (ConvertTo-Json -InputObject @($script:testRelease) -Depth 6)
     }
     $result = @(Invoke-GitHubUpdate $root (Join-Path $client 'Dofus.exe'))
-    Check (($result -join '|') -eq 'UPDATE_NO_COMPATIBLE_RELEASE' -and $script:requested.Count -eq 1) 'A listing without a compatible release must not query the newest release'
+    Check (($result -join '|') -eq 'UPDATE_NO_COMPATIBLE_RELEASE' -and $script:requested.Count -eq 2) 'A listing without a compatible release must not query the newest release'
     Check (@(Get-ChildItem -LiteralPath $root -Force -Directory | Where-Object Name -Like '.dofus-update-*').Count -eq 0) 'Staging cleanup failed after the fallback'
     function Get-TrustedDownload { throw 'simulated offline' }
     Reject { Invoke-GitHubUpdate $root (Join-Path $client 'Dofus.exe') } 'Network failure must be reported'
     Test-Package (Join-Path $root "$script:Family`78") 78 $gameHash $metadataHash
-    Write-Output 'PASS: stable compatible selection, version and revision tags, trusted assets, atomic install, no overwrite, no traversal, integrity, idempotence, future client, empty-listing fallback to the newest release, renamed repository assets, offline retention; fixtures only'
+    # The fork: asked in second, for its own assets only.
+    $forkName = 'vDAKK/dofus-enhanced'
+    function Fork-Release([int]$Revision, [string]$Repository, [string]$Archive) {
+        $release = Asset $Revision $gameHash $metadataHash (Get-FileHash -LiteralPath $Archive).Hash.ToLowerInvariant()
+        $release.assets[0].size = (Get-Item -LiteralPath $Archive).Length
+        $release.assets[0].browser_download_url = "https://github.com/$Repository/releases/download/r$Revision/$($release.assets[0].name)"
+        return $release
+    }
+    function Get-TrustedDownload([string]$Url, [string]$Destination, [long]$Limit, [Threading.CancellationToken]$Cancellation) {
+        $script:requested += $Url
+        if ($Url.StartsWith("https://api.github.com/repos/$script:Repository/")) {
+            if ($script:primaryOffline) { throw 'simulated offline primary' }
+            Write-Text $Destination (ConvertTo-Json -InputObject @($script:primaryReleases) -Depth 6)
+        } elseif ($Url.StartsWith("https://api.github.com/repos/$forkName/")) {
+            if ($script:forkOffline) { throw 'simulated offline fork' }
+            Write-Text $Destination (ConvertTo-Json -InputObject @($script:forkReleases) -Depth 6)
+        } else { [IO.File]::Copy($script:forkArchive, $Destination) }
+    }
+    $listingsOf = { @($script:requested | Where-Object { $_.StartsWith('https://api.github.com/') }).Count }
+    # Nothing new on Altansar's repository: the fork's newer release is installed.
+    $script:forkArchive = Make-Package 'fork81' 81
+    $script:primaryReleases = @(Fork-Release 79 $script:Repository $script:forkArchive)
+    $script:forkReleases = @(Fork-Release 81 $forkName $script:forkArchive)
+    $script:primaryOffline = $false; $script:forkOffline = $false; $script:requested = @()
+    $result = @(Invoke-GitHubUpdate $root (Join-Path $client 'Dofus.exe'))
+    Check (($result -join '|') -ceq 'UPDATE_INSTALLED r81' -and $script:requested[-1].StartsWith("https://github.com/$forkName/")) 'The fork was not used when the first repository had nothing new'
+    Test-Package (Join-Path $root "$script:Family`81") 81 $gameHash $metadataHash
+    # Altansar's repository has something new: the fork is not even asked.
+    $script:forkArchive = Make-Package 'primary82' 82
+    $script:primaryReleases = @(Fork-Release 82 $script:Repository $script:forkArchive)
+    $script:forkReleases = @(Fork-Release 83 $forkName $script:forkArchive)
+    $script:requested = @()
+    $result = @(Invoke-GitHubUpdate $root (Join-Path $client 'Dofus.exe'))
+    Check (($result -join '|') -ceq 'UPDATE_INSTALLED r82' -and (& $listingsOf) -eq 1) 'A new release of the first repository must win without asking the fork'
+    # A listing cannot designate another source's asset, in either direction.
+    $script:forkArchive = Make-Package 'crossed84' 84
+    $script:primaryReleases = @(Fork-Release 84 $forkName $script:forkArchive)
+    $script:forkReleases = @(Fork-Release 84 $script:Repository $script:forkArchive)
+    $script:requested = @()
+    $result = @(Invoke-GitHubUpdate $root (Join-Path $client 'Dofus.exe'))
+    Check (($result -join '|') -ceq 'UPDATE_NO_COMPATIBLE_RELEASE' -and !(Test-Path -LiteralPath (Join-Path $root "$script:Family`84"))) 'An asset of another source was accepted'
+    # A silent first repository does not hide the fork; the failure stays visible.
+    $script:forkArchive = Make-Package 'fork85' 85
+    $script:forkReleases = @(Fork-Release 85 $forkName $script:forkArchive)
+    $script:primaryOffline = $true; $script:requested = @()
+    $result = @(Invoke-GitHubUpdate $root (Join-Path $client 'Dofus.exe'))
+    Check ($result[-1] -ceq 'UPDATE_INSTALLED r85' -and $result[0] -clike "UPDATE_SOURCE_UNAVAILABLE $script:Repository *") 'An offline first repository hid the fork'
+    # A silent fork changes nothing when the first repository answered.
+    $script:primaryOffline = $false; $script:forkOffline = $true
+    $script:primaryReleases = @(Fork-Release 85 $script:Repository $script:forkArchive)
+    $result = @(Invoke-GitHubUpdate $root (Join-Path $client 'Dofus.exe'))
+    Check ($result[-1] -ceq 'UPDATE_ALREADY_INSTALLED r85') 'An offline fork made an answered check fail'
+    # The fork's archive gets the same checks: a wrong digest installs nothing.
+    $script:forkOffline = $false
+    $script:forkArchive = Make-Package 'fork86' 86
+    $tampered = Fork-Release 86 $forkName $script:forkArchive
+    $tampered.assets[0].digest = 'sha256:' + ('0' * 64)
+    $script:forkReleases = @($tampered)
+    Reject { Invoke-GitHubUpdate $root (Join-Path $client 'Dofus.exe') } 'A corrupt fork archive was accepted'
+    Check (!(Test-Path -LiteralPath (Join-Path $root "$script:Family`86"))) 'A corrupt fork archive left a release'
+    # Offline on both: reported, every local release kept.
+    $script:primaryOffline = $true; $script:forkOffline = $true
+    Reject { Invoke-GitHubUpdate $root (Join-Path $client 'Dofus.exe') } 'Both sources offline must be reported'
+    Test-Package (Join-Path $root "$script:Family`85") 85 $gameHash $metadataHash
+    Check (@(Get-ChildItem -LiteralPath $root -Force -Directory | Where-Object Name -Like '.dofus-update-*').Count -eq 0) 'Staging cleanup failed after the fork checks'
+    Write-Output 'PASS: stable compatible selection, version and revision tags, trusted assets, atomic install, no overwrite, no traversal, integrity, idempotence, future client, empty-listing fallback to the newest release, renamed repository assets, fork fallback scoped to its own assets, offline retention; fixtures only'
 } finally {
     if ([IO.Path]::GetDirectoryName([IO.Path]::GetFullPath($fixture)) -ne [IO.Path]::GetFullPath($build) -or
         [IO.Path]::GetFileName($fixture) -notmatch '^update-fixtures-[a-f0-9]{32}$') { throw 'Invalid fixture cleanup target' }

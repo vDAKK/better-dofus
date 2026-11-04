@@ -749,18 +749,18 @@ void InstallNoHooks() {
     InstallArchiZones();
     Check(archiZones::installed && hooks == 0, "Installed without any hook of its own");
     Check(buttonHandler == archiZones::ButtonClick && rowHandler == archiZones::RowClick, "Clicks come from the shared native click handlers");
-    Check(guards.at("fhw.besn") == 0x1BF0FE0 && guards.at("fhi.bejv") == 0x1BB4090 && guards.at("fhi.beki") == 0x1BB5E70 &&
-        guards.at("fhi.belb") == 0x1BB8D40 && guards.at("CartographyMapUIBinding.get_btn_conquest") == 0x2EA0A00 &&
-        guards.at("CartographyMapUIBinding.get_ctr_worldmapButtons") == 0x2EA2830 && guards.at("fgg.bege") == 0x1BAE1D0 &&
-        guards.at("fgg.begd") == 0x1BAE0A0 && guards.at("fgf.befi") == 0x1BAC490 && guards.at("fgf.befk") == 0x1BAC570 &&
-        guards.at("fgf.befo") == 0x1BAC7A0 && guards.at("SubAreasDataRoot.GetSubAreaById") == 0x7D1060 &&
-        guards.at("MonsterData.GetById") == 0x7E76B0 && guards.at("WindowFigma.get_closeButton") == 0x1798CF0 &&
-        guards.at("TableColumnHeader.set_state") == 0x1785650, "Exact verified native contracts");
-    Check(guards.at("fgh.begr") == 0x1C3D3C0 && guards.at("VisualElement.MarkDirtyRepaint") == 0x55E5BA0 &&
-        guards.at("VisualElement.get_worldBound") == 0x55F7CC0 && !guards.contains("VisualElement.get_childCount") &&
-        guards.at("DofusIcon..ctor") == 0x170EBD0 && guards.at("DofusIcon.set_icon") == 0x170F480 &&
-        guards.at("VisualElement.get_resolvedStyle") == 0x55F72E0 && guards.at("ResolvedStyleAccess.get_display") == 0x55D9890 &&
-        guards.at("ResolvedStyleAccess.get_opacity") == 0x55D9CD0,
+    Check(guards.at("fhw.besn") == 0x1BE9CE0 && guards.at("fhi.bejv") == 0x1B94860 && guards.at("fhi.beki") == 0x1B96640 &&
+        guards.at("fhi.belb") == 0x1B99520 && guards.at("CartographyMapUIBinding.get_btn_conquest") == 0x2E63D60 &&
+        guards.at("CartographyMapUIBinding.get_ctr_worldmapButtons") == 0x2E65B90 && guards.at("fgg.bege") == 0x1BD94B0 &&
+        guards.at("fgg.begd") == 0x1BD92C0 && guards.at("fgf.befi") == 0x1BD7AC0 && guards.at("fgf.befk") == 0x1BD7BA0 &&
+        guards.at("fgf.befo") == 0x1BD7DD0 && guards.at("SubAreasDataRoot.GetSubAreaById") == 0x7C7EB0 &&
+        guards.at("MonsterData.GetById") == 0x7DE500 && guards.at("WindowFigma.get_closeButton") == 0x1792B80 &&
+        guards.at("TableColumnHeader.set_state") == 0x177F4E0, "Exact verified native contracts");
+    Check(guards.at("fgh.begr") == 0x1BDA8A0 && guards.at("VisualElement.MarkDirtyRepaint") == 0x55AAEE0 &&
+        guards.at("VisualElement.get_worldBound") == 0x55BD000 && !guards.contains("VisualElement.get_childCount") &&
+        guards.at("DofusIcon..ctor") == 0x1708660 && guards.at("DofusIcon.set_icon") == 0x1708F10 &&
+        guards.at("VisualElement.get_resolvedStyle") == 0x55BC620 && guards.at("ResolvedStyleAccess.get_display") == 0x559EBD0 &&
+        guards.at("ResolvedStyleAccess.get_opacity") == 0x559F010,
         "The reveal, the repaint, the probe and the detail's icons are verified too");
     // Every RVA verified here has a 16-byte guard in the shared table.
     for (const auto& [name, rva] : guards)

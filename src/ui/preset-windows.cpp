@@ -366,34 +366,34 @@ void HandleEvent(const Pending& event, Obj container) {
 void InstallPresetWindows() {
     try {
         auto cached = api.Class(CoreImage, "Core.Services.Player.OptionsService", "CachedDataService");
-        n.presetContainer = api.FindVerified(cached, "get_uiPresetOptionsContainer", 0, 0x7E0890);
+        n.presetContainer = api.FindVerified(cached, "get_uiPresetOptionsContainer", 0, 0x7D76E0);
         auto presets = api.Class(CoreImage, "Core.Engine.Options.OptionsContainers", "UiPresetOptionsContainer");
         n.fightPresetId = RequireField(presets, "fightPresetId", 0x30);
         n.savedPresets = RequireField(presets, "savedPresets", 0x48);
         auto data = api.Class(CoreImage, "Core.Engine.Options", "PresetData");
         n.name = RequireField(data, "presetName", 0x18);
         n.uid = RequireField(data, "uid", 0xA8);
-        n.usingFight = api.FindVerified(presets, "get_isUsingFightPreset", 0, 0x20939D0);
+        n.usingFight = api.FindVerified(presets, "get_isUsingFightPreset", 0, 0x2067AA0);
         auto element = api.Class(UiImage, UiSpace, "VisualElement");
-        n.parent = api.FindVerified(element, "get_parent", 0, 0x55F7180);
-        n.layout = api.FindVerified(element, "get_layout", 0, 0x55F6930);
-        n.getStyle = api.FindVerified(element, "get_style", 0, 0x55F74A0);
+        n.parent = api.FindVerified(element, "get_parent", 0, 0x55BC4C0);
+        n.layout = api.FindVerified(element, "get_layout", 0, 0x55BBC70);
+        n.getStyle = api.FindVerified(element, "get_style", 0, 0x55BC7E0);
         auto style = api.Class(UiImage, UiSpace, "InlineStyleAccess");
         const struct { const char* name; uintptr_t get, set; } accessors[PropertyCount] = {
-            {"left", 0x55D1610, 0x55D3EB0}, {"top", 0x55D1CD0, 0x55D4F70}, {"width", 0x55D2740, 0x55D63F0}, {"height", 0x55D1540, 0x55D3D60}};
+            {"left", 0x5596950, 0x55991F0}, {"top", 0x5597010, 0x559A2B0}, {"width", 0x5597A80, 0x559B730}, {"height", 0x5596880, 0x55990A0}};
         for (size_t i = 0; i < PropertyCount; ++i) {
             n.get[i] = api.FindVerified(style, (std::string("UnityEngine.UIElements.IStyle.get_") + accessors[i].name).c_str(), 0, accessors[i].get);
             n.set[i] = api.FindVerified(style, (std::string("UnityEngine.UIElements.IStyle.set_") + accessors[i].name).c_str(), 1, accessors[i].set);
         }
         n.length = api.Class(UiImage, UiSpace, "Length");
-        api.FindVerified(n.length, ".ctor", 2, 0x561D3D0);
-        n.setLength = api.FindVerified(api.Class(UiImage, UiSpace, "StyleLength"), "set_value", 1, 0x5623940);
+        api.FindVerified(n.length, ".ctor", 2, 0x55E2710);
+        n.setLength = api.FindVerified(api.Class(UiImage, UiSpace, "StyleLength"), "set_value", 1, 0x55E8C80);
         // Last: the detours, each running the game's own first.
-        ::AddHook(api.FindVerified(presets, "SavePreset", 1, 0x20926E0), 0x20926E0, reinterpret_cast<void*>(&SaveHook), reinterpret_cast<void**>(&originalSave));
-        ::AddHook(api.FindVerified(presets, "AddPreset", 1, 0x2090D40), 0x2090D40, reinterpret_cast<void*>(&AddPresetHook), reinterpret_cast<void**>(&originalAdd));
-        ::AddHook(api.FindVerified(presets, "RemovePreset", 1, 0x2091F60), 0x2091F60, reinterpret_cast<void*>(&RemoveHook), reinterpret_cast<void**>(&originalRemove));
-        ::AddHook(api.FindVerified(presets, "ApplyPreset", 1, 0x2090E40), 0x2090E40, reinterpret_cast<void*>(&ApplyHook), reinterpret_cast<void**>(&originalApply));
-        ::AddHook(api.FindVerified(presets, "EditPreset", 3, 0x20916A0), 0x20916A0, reinterpret_cast<void*>(&EditHook), reinterpret_cast<void**>(&originalEdit));
+        ::AddHook(api.FindVerified(presets, "SavePreset", 1, 0x20667B0), 0x20667B0, reinterpret_cast<void*>(&SaveHook), reinterpret_cast<void**>(&originalSave));
+        ::AddHook(api.FindVerified(presets, "AddPreset", 1, 0x2064E10), 0x2064E10, reinterpret_cast<void*>(&AddPresetHook), reinterpret_cast<void**>(&originalAdd));
+        ::AddHook(api.FindVerified(presets, "RemovePreset", 1, 0x2066030), 0x2066030, reinterpret_cast<void*>(&RemoveHook), reinterpret_cast<void**>(&originalRemove));
+        ::AddHook(api.FindVerified(presets, "ApplyPreset", 1, 0x2064F10), 0x2064F10, reinterpret_cast<void*>(&ApplyHook), reinterpret_cast<void**>(&originalApply));
+        ::AddHook(api.FindVerified(presets, "EditPreset", 3, 0x2065770), 0x2065770, reinterpret_cast<void*>(&EditHook), reinterpret_cast<void**>(&originalEdit));
         state.installed = true;
         Log("PRESET_WINDOWS_READY hooks=5");
     } catch (const std::exception& error) {

@@ -10,7 +10,15 @@ all game rights belong to Ankama. I do not know whether using this mod is
 allowed by Ankama's terms: a ban cannot be completely ruled out. Use it at
 your own risk; the software is provided "as is", without any warranty.
 
-DOFUS ENHANCED — Dofus Unity 3.7.12.12 — VERSION 1.20.2
+DOFUS ENHANCED — Dofus Unity 3.7.13.17 — VERSION 1.20.3
+
+VERSION 1.20.3 : DOFUS 3.7.13.17
+- Le mod suit la mise à jour de Dofus du 3 novembre 2026 (3.7.13.17). Aucune
+  nouvelle fonction : les adresses, les signatures et les empreintes du jeu
+  sont celles de ce build.
+- Mises à jour GitHub : si Altansar69/dofus-enhanced n’a rien de nouveau, ou ne
+  répond pas, le mod regarde aussi le fork vDAKK/dofus-enhanced. Une version du
+  fork passe par les mêmes vérifications d’intégrité et de compatibilité.
 
 VERSION 1.20.2 : DÉCONNEXION ET RECONNEXION
 - Déconnexion : à une déconnexion ou un retour à l’écran de connexion,

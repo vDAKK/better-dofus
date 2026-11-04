@@ -145,10 +145,10 @@ Obj Api::Call(Obj owner, const char* rawName, std::initializer_list<void*> value
 void* Api::Native(Method method, uintptr_t rva) const {
     const auto& value = *static_cast<const fake::MethodInfo*>(method);
     const std::map<uintptr_t,std::pair<std::string,int>> expected = {
-        {0x7E0890,{"get_uiPresetOptionsContainer",0}},{0x752E10,{"get_noOptionSave",0}},{0x18B6B80,{"RequestSaveUi",1}},
-        {0x20938A0,{"get_currentContextualPreset",0}},{0x20937C0,{"get_currentContextualPresetData",0}},
-        {0x2091B60,{"LoadUiPositionById",1}},{0x2092DE0,{"SaveUiPositionById",4}},{0x2092E50,{"SetResetUiPosition",0}},
-        {0x14F8840,{".ctor",2}}};
+        {0x7D76E0,{"get_uiPresetOptionsContainer",0}},{0x750E40,{"get_noOptionSave",0}},{0x18B2DB0,{"RequestSaveUi",1}},
+        {0x2067970,{"get_currentContextualPreset",0}},{0x2067890,{"get_currentContextualPresetData",0}},
+        {0x2065C30,{"LoadUiPositionById",1}},{0x2066EB0,{"SaveUiPositionById",4}},{0x2066F20,{"SetResetUiPosition",0}},
+        {0x14F3040,{".ctor",2}}};
     const auto& target = expected.at(rva); fake::Check(value.name == target.first && value.argc == target.second, "Native guard ABI");
     return reinterpret_cast<void*>(rva);
 }
@@ -159,11 +159,11 @@ managed::Obj Module::FindService(const char* name) const { fake::Check(std::stri
 void Log(const std::string& message) { fake::logs.push_back(message); }
 void AddHook(managed::Method method, uintptr_t rva, void* replacement, void** original) {
     const auto& value = *static_cast<const fake::MethodInfo*>(method);
-    if (rva==0x207F0C0) {
+    if (rva==0x20520B0) {
         fake::Check(value.name=="bmce" && value.argc==1,"Native disposition clone hook ABI");
         fake::cloneHook=reinterpret_cast<fake::CloneFn>(replacement);*original=reinterpret_cast<void*>(&fake::OriginalClone);
     } else {
-        fake::Check(rva == 0x2091060 && value.name == "ClearAllSavedUi" && value.argc == 0, "Native reset hook ABI");
+        fake::Check(rva == 0x2065130 && value.name == "ClearAllSavedUi" && value.argc == 0, "Native reset hook ABI");
         fake::clearHook = reinterpret_cast<fake::ClearFn>(replacement); *original = reinterpret_cast<void*>(&fake::OriginalClear);
     }
 }

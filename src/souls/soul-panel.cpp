@@ -513,7 +513,7 @@ managed::Obj GetUiRoot() {
     using namespace managed;
     const auto klass = managed::api.Class("Core.dll", "", "pq");
     const auto method = managed::api.Find(klass, "pbs", 0);
-    managed::api.Native(method, 0x2E93CC0);
+    managed::api.Native(method, 0x2E57130);
     Ref document(api.Invoke(method, nullptr));
     Ref service(module ? module->FindService("fqp") : nullptr);
     if (!document.get() || !service.get() || api.object_get_class(service.get())!=api.Class("Core.dll","","gmo")) return nullptr;
@@ -538,65 +538,65 @@ void Panel::Install(void (*equip)(), void (*positionChanged)(int, int, uint64_t)
     if (!state.installed) {
         InstallItemView();
         auto slot=api.Class("Core.dll","Core.UILogic.Components.Slots","Slot");
-        api.Native(api.Find(slot,"get_slotType",0),0x1597E90);
-        api.Native(api.Find(slot,"get_slotSize",0),0x165EC30);
+        api.Native(api.Find(slot,"get_slotType",0),0x1591930);
+        api.Native(api.Find(slot,"get_slotSize",0),0x16586C0);
         auto window = api.Class("Core.dll", WindowSpace, "MagneticDragWindow");
-        api.Native(api.Find(window, ".ctor", 0), 0x15B2DE0);
-        api.Native(api.Find(window, "Init", 1), 0x15B2010);
-        api.Native(api.Find(window, "set_hasBackground", 1), 0x15B3440);
+        api.Native(api.Find(window, ".ctor", 0), 0x15AC880);
+        api.Native(api.Find(window, "Init", 1), 0x15ABAB0);
+        api.Native(api.Find(window, "set_hasBackground", 1), 0x15ACEE0);
         auto base = api.Class("Core.dll", WindowSpace, "ResizableWindow");
         const std::pair<const char*,uintptr_t> setters[] = {
-            {"set_headerTitle",0x15BFC00},{"set_headerIcon",0x15BFB10},{"set_headerSize",0x15BFB80},
-            {"set_headerIconRight",0x15BFAD0},
-            {"set_headerShowCloseButton",0x15BFB50},{"set_verticalResizable",0x15BFCF0},
-            {"set_horizontalResizable",0x15BFC40},{"set_cornerResizable",0x15BF930},
-            {"set_dragPosition",0x15BF9D0},{"set_isUILocked",0x15BFC60}};
+            {"set_headerTitle",0x15B96A0},{"set_headerIcon",0x15B95B0},{"set_headerSize",0x15B9620},
+            {"set_headerIconRight",0x15B9570},
+            {"set_headerShowCloseButton",0x15B95F0},{"set_verticalResizable",0x15B9790},
+            {"set_horizontalResizable",0x15B96E0},{"set_cornerResizable",0x15B93D0},
+            {"set_dragPosition",0x15B9470},{"set_isUILocked",0x15B9700}};
         for (auto [name,rva] : setters) api.Native(api.Find(base,name,1),rva);
-        api.FindVerified(api.Class("Core.dll", FigmaSpace, "HeaderWidget"), "set_showRightButton", 1, 0x172DB70);
+        api.FindVerified(api.Class("Core.dll", FigmaSpace, "HeaderWidget"), "set_showRightButton", 1, 0x1727640);
         constexpr const char* menus = "Core.UILogic.Components.ContextMenu";
         auto manipulator = api.Class("Core.dll", menus, "DofusContextualMenuManipulator");
-        api.FindVerified(manipulator, ".ctor", 4, 0x16D0BB0);
-        AddHook(api.FindVerified(manipulator, "OnContextualMenuEvent", 1, 0x16D04D0), 0x16D04D0,
+        api.FindVerified(manipulator, ".ctor", 4, 0x16CA640);
+        AddHook(api.FindVerified(manipulator, "OnContextualMenuEvent", 1, 0x16C9F60), 0x16C9F60,
             reinterpret_cast<void*>(&PopulateMenuHook), reinterpret_cast<void**>(&originalPopulate));
         populateHooked = true;
         auto menuClass = api.Class("Core.dll", menus, "DofusContextualMenu");
-        state.appendTitle = api.FindVerified(menuClass, "AppendTitle", 1, 0x16D7F70);
-        state.appendSeparator = api.FindVerified(menuClass, "AppendSeparator", 0, 0x16D76E0);
-        state.appendMenu = api.FindVerified(api.Class("Core.dll", menus, "DofusContextualMenu"), "AppendDefaultItem", 13, 0x16D6C60);
-        api.FindVerified(api.Class("Core.dll", menus, "DofusContextualMenuPopulateEvent"), "get_menu", 0, 0x11E7EC0);
+        state.appendTitle = api.FindVerified(menuClass, "AppendTitle", 1, 0x16D1A00);
+        state.appendSeparator = api.FindVerified(menuClass, "AppendSeparator", 0, 0x16D1170);
+        state.appendMenu = api.FindVerified(api.Class("Core.dll", menus, "DofusContextualMenu"), "AppendDefaultItem", 13, 0x16D06F0);
+        api.FindVerified(api.Class("Core.dll", menus, "DofusContextualMenuPopulateEvent"), "get_menu", 0, 0x11DEB40);
         auto extensions = api.Class(UiImage, UiSpace, "VisualElementExtensions");
-        state.addManipulator = api.FindVerified(extensions, "AddManipulator", 2, 0x56755F0);
-        state.removeManipulator = api.FindVerified(extensions, "RemoveManipulator", 2, 0x5676A90);
-        api.Native(api.Find(base,"get_headerWidget",0),0x1585330);
-        api.Native(api.Find(base,"get_contentContainer",0),0x1585350);
+        state.addManipulator = api.FindVerified(extensions, "AddManipulator", 2, 0x563A930);
+        state.removeManipulator = api.FindVerified(extensions, "RemoveManipulator", 2, 0x563BDD0);
+        api.Native(api.Find(base,"get_headerWidget",0),0x157EDD0);
+        api.Native(api.Find(base,"get_contentContainer",0),0x157EDF0);
         auto dependencies = api.Class("Core.dll","","goc");
         api.Native(api.Find(dependencies,"bfre",0),0x68D2C0);
         api.Native(api.Find(dependencies,"bfri",0),0x682030);
         auto input = api.Class("Core.dll","","eqo");
-        for (auto [name,rva] : {std::pair{"ydf",uintptr_t{0x69A450}}, {"ydh",uintptr_t{0x741A60}},
-                {"ydj",uintptr_t{0x11E7EC0}}, {"ydl",uintptr_t{0x11E7E80}}})
+        for (auto [name,rva] : {std::pair{"ydf",uintptr_t{0x69A450}}, {"ydh",uintptr_t{0x73FA90}},
+                {"ydj",uintptr_t{0x11DEB40}}, {"ydl",uintptr_t{0x11DEB00}}})
             api.Native(api.Find(input,name,0),rva);
         api.Native(api.Find(api.Class("mscorlib.dll","System","Delegate"),"get_Target",0),0x68D2D0);
         state.unsubscribe = api.FindVerified(api.Class("Core.dll","Core.Engine.Inputs.Events","InputCustomEvent"),
-            "UnSubscribe",1,0x20FF620);
+            "UnSubscribe",1,0x2097300);
         auto action = api.Class("Core.dll", FigmaSpace, "ListElementBasic");
-        api.Native(api.Find(action, ".ctor", 0), 0x1734630);
-        api.Native(api.Find(action, "set_listElementStyle", 1), 0x1734700);
+        api.Native(api.Find(action, ".ctor", 0), 0x172E100);
+        api.Native(api.Find(action, "set_listElementStyle", 1), 0x172E1D0);
         auto mouse = api.Class(UiImage, UiSpace, "MouseCaptureController");
-        api.Native(api.Find(mouse, "HasMouseCapture", 1), 0x57A9FD0);
-        api.Native(api.Find(mouse, "ReleaseMouse", 1), 0x57AA140);
-        api.NativeAt(0x166DF30);
-        AddNativeHook(0x166DF30, reinterpret_cast<void*>(&DragFlagHook), reinterpret_cast<void**>(&setDragging));
+        api.Native(api.Find(mouse, "HasMouseCapture", 1), 0x576F310);
+        api.Native(api.Find(mouse, "ReleaseMouse", 1), 0x576F480);
+        api.NativeAt(0x16679C0);
+        AddNativeHook(0x16679C0, reinterpret_cast<void*>(&DragFlagHook), reinterpret_cast<void**>(&setDragging));
         auto list = api.Class("Core.dll", FigmaSpace, "ListElementBase");
-        AddHook(api.Find(list, "<AssignClickAction>b__27_0", 0), 0x1733850,
+        AddHook(api.Find(list, "<AssignClickAction>b__27_0", 0), 0x172D320,
             reinterpret_cast<void*>(&ActionHook), reinterpret_cast<void**>(&originalAction));
         auto dragger = api.Class("Core.dll", DragSpace, "ElementDraggerWithBounds");
-        api.Native(api.Find(dragger,"RemoveSnapPreview",0),0x16714A0);
-        AddHook(api.Find(dragger,"NotifyDragCompleted",0),0x16702F0,
+        api.Native(api.Find(dragger,"RemoveSnapPreview",0),0x166AF30);
+        AddHook(api.Find(dragger,"NotifyDragCompleted",0),0x1669D80,
             reinterpret_cast<void*>(&NotifyHook),reinterpret_cast<void**>(&originalNotify));
-        AddHook(api.Find(dragger, "OnMouseDown", 1), 0x1670470,
+        AddHook(api.Find(dragger, "OnMouseDown", 1), 0x1669F00,
             reinterpret_cast<void*>(&DownHook), reinterpret_cast<void**>(&originalDown));
-        AddHook(api.Find(dragger, "OnMouseUp", 1), 0x16709C0,
+        AddHook(api.Find(dragger, "OnMouseUp", 1), 0x166A450,
             reinterpret_cast<void*>(&UpHook), reinterpret_cast<void**>(&originalUp));
         state.installed = true;
     }
