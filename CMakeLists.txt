@@ -18,7 +18,7 @@ add_subdirectory(third_party/minhook EXCLUDE_FROM_ALL)
 # The in-game module. The source order is the link order of every previous
 # release; keep it and append new files at the end.
 add_library(DofusMiniatures SHARED
-  src/core/module.cpp src/core/runtime.cpp src/core/world-exit.cpp src/core/relogin-guard.cpp src/appearance/features.cpp
+  src/core/module.cpp src/core/runtime.cpp src/core/world-exit.cpp src/core/relogin-guard.cpp src/ui/ui-timing.cpp src/appearance/features.cpp
   src/animations/animations.cpp src/animations/movement.cpp src/animations/movement-dispatch.cpp
   src/animations/movement-waits.cpp src/animations/push-movement.cpp src/animations/throw-movement.cpp
   src/animations/jump-movement.cpp src/animations/instant-waits.cpp src/animations/script-waits.cpp
@@ -114,6 +114,8 @@ set_tests_properties(GitHubUpdateTests PROPERTIES TIMEOUT 30)
 # Options window and the toolbar module menu.
 dofus_test(OptionsUiTests tests/ui/options-ui-tests.cpp src/ui/options-ui.cpp src/ui/game-theme.cpp)
 dofus_test(ToolsUiTests tests/ui/tools-ui-tests.cpp src/ui/tools-ui.cpp)
+# 1.21.1: one log line for each opening of a game window.
+dofus_test(UiTimingTests tests/ui/ui-timing-tests.cpp)
 # The performance overlay's GPU and disk figures come from PDH (Windows'
 # performance counters); the tests replace every PDH call with a fake.
 dofus_test(PerfOverlayTests tests/ui/perf-overlay-tests.cpp LIBS pdh)

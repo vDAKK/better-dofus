@@ -10,7 +10,12 @@ all game rights belong to Ankama. I do not know whether using this mod is
 allowed by Ankama's terms: a ban cannot be completely ruled out. Use it at
 your own risk; the software is provided "as is", without any warranty.
 
-DOFUS ENHANCED — Dofus Unity 3.7.13.17 — VERSION 1.21.0
+DOFUS ENHANCED — Dofus Unity 3.7.13.17 — VERSION 1.21.1
+
+VERSION 1.21.1 : MESURE DE L’OUVERTURE DES FENÊTRES
+- Le mod note dans module.log le temps que mettent les fenêtres du jeu à s’ouvrir,
+  pour préparer des ouvertures plus rapides. Cette mesure ne change rien au jeu et
+  ne garde que le nom des fenêtres et des durées, jamais les touches appuyées.
 
 VERSION 1.21.0 : TA VERSION RESTE LA TIENNE, MISE À JOUR DE DOFUS SIGNALÉE
 - Mises à jour GitHub : le mod regarde d’abord vDAKK/dofus-enhanced. Une version

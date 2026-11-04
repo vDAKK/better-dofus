@@ -38,6 +38,7 @@
 #include "souls/capture-detect.hpp"
 #include "maps/map-info.hpp"
 #include "ui/perf-overlay.hpp"
+#include "ui/ui-timing.hpp"
 #include "core/world-exit.hpp"
 #include "core/relogin-guard.hpp"
 #include "ui/custom-cursor.hpp"
@@ -487,6 +488,7 @@ static void UpdateHook(Obj self, Method method) {
         if (now < nextDiscovery[self]) return;
         nextDiscovery[self] = now + 1000;
     } else if (self != module->compositor.get()) return;
+    if (module->servicesReady) UiTimingFrame();
     if (module->servicesReady) TickMapPreload();
     if (module->servicesReady) TickChatTravelFrame();
     if (module->servicesReady) { MapInfoFrame(now); PerfOverlayFrame(now); VerticalGaugesFrame(now); }
@@ -570,6 +572,7 @@ static DWORD WINAPI Worker(void*) {
         InstallStatsFights();
         InstallCustomCursor(); // never throws: CUSTOM_CURSOR_DISABLED leaves the Windows cursor
         InstallReloginGuard(); // never throws: RELOGIN_GUARD_UNAVAILABLE leaves the game's login as it is
+        InstallUiTiming(); // never throws: UI_TIMING_UNAVAILABLE only leaves a measure out
         for (auto target : hookTargets) {
             auto result = MH_QueueEnableHook(target);
             if (result != MH_OK) throw std::runtime_error(MH_StatusToString(result));
