@@ -25,4 +25,10 @@ inline std::string Kamas(int64_t value) {
     return (value < 0 ? "-" : "") + digits + " K";
 }
 inline int64_t Missing(int64_t needed, int64_t owned) { return std::max<int64_t>(0, needed - owned); }
+// What selling at the item's average price leaves. Known only if every price is.
+struct Margin { bool known = false; int64_t value = 0; };
+inline Margin Estimate(const Total& total, int64_t averagePrice) {
+    if (averagePrice <= 0 || total.cost <= 0 || total.unpriced) return {};
+    return {true, averagePrice - total.cost};
+}
 }

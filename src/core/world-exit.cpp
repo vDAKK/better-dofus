@@ -1,6 +1,7 @@
 #include "core/world-exit.hpp"
 #include "notebook/notebook-panel.hpp"
 #include "ui/item-search.hpp"
+#include "jobs/craft-list-panel.hpp"
 #include "souls/soul-helper.hpp"
 #include "stats/stats-window.hpp"
 #include "treasure/treasure-launch.hpp"
@@ -16,5 +17,6 @@ void CloseWindowsOffWorld() {
     RestorePresetWindows();
     CloseNotebookPanelOffWorld();
     CloseItemSearchOffWorld();
+    CloseCraftListOffWorld();
     HideSoulHelper();
 }

@@ -10,9 +10,21 @@ all game rights belong to Ankama. I do not know whether using this mod is
 allowed by Ankama's terms: a ban cannot be completely ruled out. Use it at
 your own risk; the software is provided "as is", without any warranty.
 
-BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.4.1
+BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.5.0
 
 INSTALLATION : double-clique sur BetterDofusLoader.exe, puis lance Dofus.
+
+VERSION 2.5.0 : LISTE DE CRAFTS, MARGE DANS LA FICHE DE RECETTE
+- Liste de crafts : le bouton Ajouter à la liste de la fiche de recette prévoit un
+  craft ; − et + règlent le nombre. La fenêtre additionne les ressources de tous les
+  crafts, retire ton stock, donne le coût restant au prix moyen, et se met à jour
+  quand tu achètes ou fabriques. Elle est gardée entre deux sessions et partagée par
+  tes personnages. Les objets obtenus après l’ajout comptent comme fabriqués.
+- Case Inclure les sous-recettes : un ingrédient qui se fabrique compte pour ses
+  propres ingrédients, et s’affiche dans À fabriquer d’abord.
+- À l’hôtel de vente, une loupe affiche la ressource dans l’onglet d’achat. Il faut
+  être à l’hôtel qui vend ce type de ressource : le mod ne peut pas l’ouvrir.
+- La fiche de recette donne le prix moyen de l’objet et la marge estimée.
 
 VERSION 2.4.1 : TRAJET DEPUIS LES QUÊTES CORRIGÉ
 - L’entrée du clic droit sur un objectif n’apparaissait jamais : la fonction se

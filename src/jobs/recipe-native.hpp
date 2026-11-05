@@ -18,6 +18,7 @@ void Install();
 std::optional<Recipe> Find(int resultItem);
 int64_t AveragePrice(int item); // 0: unknown
 Stock Owned(int item);
+std::string ItemName(int item);
 // The items of the bag and the read bank whose name matches, sorted by name.
 std::vector<Found> Search(const std::string& query);
 }

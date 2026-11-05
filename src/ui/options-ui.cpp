@@ -51,7 +51,7 @@ constexpr const char* AnimationDescriptions[] = {
 // The checkboxes added in 1.13.0, 1.14.0, 1.16.0, 1.17.1, 1.18.0, 1.19.0, 1.20.0 and 1.20.2, in the order of Settings' ExtraToggles.
 enum ExtraRow : size_t { MiniMapBarRow, MiniMapZoneNameRow, NotebookPingRow, NotebookCopyRow, NotebookTravelRow, MapAddPositionRow,
     PerfOverlayRow, PerfGpuRow, PerfDiskRow, PerfDragRow, PerfButtonRow, NotebookSendRow, GaugeVerticalRow, PartyTravelRow, CursorGameRow,
-    PresetWindowsRow, ReloginGuardRow, RecipeCardRow, QuestTravelRow, ItemSearchRow };
+    PresetWindowsRow, ReloginGuardRow, RecipeCardRow, QuestTravelRow, ItemSearchRow, CraftListRow };
 constexpr CheckRow ExtraRows[] = {
     {"Barre des ressources sur la mini-carte", "Affiche sur la mini-carte la barre des six métiers qui ouvre le choix des ressources. Décochée, la barre et sa liste disparaissent, mais les repères des ressources choisies restent affichés si « Ressources sur la mini-carte » est cochée ; le choix se fait alors depuis la grande carte. Activé par défaut."},
     {"Nom de la zone au survol de la mini-carte", "Sur la mini-carte, l’infobulle de la case survolée affiche le nom de sa zone au-dessus de ses coordonnées. Activé par défaut."},
@@ -84,7 +84,9 @@ constexpr CheckRow ExtraRows[] = {
     {"Fiche de recette", "Ouvrir la recette d’un objet affiche l’infobulle du jeu, épinglée et déplaçable, avec ses ingrédients, ce que tu as au sac et en banque, et le prix moyen du craft. Les infobulles d’objets donnent aussi ce prix. Décochée, le jeu ouvre sa grande fenêtre de toutes les recettes liées. Un objet sans recette l’ouvre aussi."},
     // 2.4.0: quest-travel.cpp, item-search.cpp.
     {"Trajet depuis les quêtes", "Le clic droit sur un objectif de la liste des quêtes suivies propose le trajet du mod vers sa position, quand les données du jeu lui en donnent une."},
-    {"Recherche d’objets : bouton dans la barre du haut", "Ajoute à la barre du haut le bouton de la recherche d’objets, qui trouve un objet par son nom dans le sac et la banque et donne ce que le sac, la banque et le havre-sac en contiennent."}};
+    {"Recherche d’objets : bouton dans la barre du haut", "Ajoute à la barre du haut le bouton de la recherche d’objets, qui trouve un objet par son nom dans le sac et la banque et donne ce que le sac, la banque et le havre-sac en contiennent."},
+    // 2.5.0: craft-list-panel.cpp.
+    {"Liste de crafts : bouton dans la barre du haut", "Ajoute à la barre du haut le bouton de la liste de crafts, et à la fiche de recette son bouton Ajouter à la liste. La liste additionne les ressources de tes crafts, retire ce que tu as déjà et suit ce que tu fabriques ; à l’hôtel de vente, une loupe y affiche la ressource."}};
 // « Dimension avec les coordonnées » on the big map, the mini-map and in the
 // chat: the same three choices, each id the saved mode (Settings'
 // coordsWorld*Mode), « Oui, sauf dans le Monde des Douze » by default.
@@ -1203,7 +1205,7 @@ bool OptionsUi::Attach(Obj page) {
         {"Pierre d’âme", {soulOption.get(), soulAutoOption.get(), soulButtonOption.get(), metamobSyncOption.get(), metamobKeyOption.get()}},
         {"Chat", {chatTravelOption.get(), chatSoulOption.get(), chatOcreOption.get(), chatMetamobOption.get(), chatCoordsOption.get()}},
         {"Calendrier", {calendarKraloveOption.get()}},
-        {"Métiers", {extra(RecipeCardRow), extra(ItemSearchRow)}},
+        {"Métiers", {extra(RecipeCardRow), extra(ItemSearchRow), extra(CraftListRow)}},
         {"Performances", {extra(PerfOverlayRow), extra(PerfGpuRow), extra(PerfDiskRow), extra(PerfDragRow), extra(PerfButtonRow)}},
         {"Statistiques", {statsOption.get(), statsOpenOption.get(), statsButtonOption.get()}},
         // 1.20.2: the relogin after an inactivity disconnection.

@@ -39,7 +39,7 @@ std::vector<std::filesystem::path> openedFolders;
 // Settings' ExtraToggles, by row (options-ui.cpp ExtraRow).
 enum ExtraIndex : size_t { MiniMapBarExtra, MiniMapZoneNameExtra, NotebookPingExtra, NotebookCopyExtra, NotebookTravelExtra, MapAddPositionExtra,
     PerfOverlayExtra, PerfGpuExtra, PerfDiskExtra, PerfDragExtra, PerfButtonExtra, NotebookSendExtra, GaugeVerticalExtra, PartyTravelExtra,
-    CursorGameExtra, PresetWindowsExtra, ReloginGuardExtra, RecipeCardExtra, QuestTravelExtra, ItemSearchExtra };
+    CursorGameExtra, PresetWindowsExtra, ReloginGuardExtra, RecipeCardExtra, QuestTravelExtra, ItemSearchExtra, CraftListExtra };
 constexpr int SectionId(size_t index) { return ModId + 1 + static_cast<int>(index); }
 // The Metamob rows sit in « Pierre d’âme », after the two soul rows and Capture d’âme's top-bar button.
 constexpr int DisplayId = SectionId(AppearanceSection), SoulId = SectionId(SoulSection);
@@ -639,7 +639,7 @@ std::vector<Obj> AllSources(OptionsUi& ui) {
         ui.travelPlannerSource.get(), ui.templeSource.get(), ui.extraSources[QuestTravelExtra].get(),
         ui.soulSource.get(), ui.soulAutoSource.get(), ui.soulButtonSource.get(), ui.metamobSyncSource.get(),
         ui.chatTravelSource.get(), ui.chatSoulSource.get(), ui.chatOcreSource.get(), ui.chatMetamobSource.get(), ui.chatCoordsSource.get(),
-        ui.calendarKraloveSource.get(), ui.extraSources[RecipeCardExtra].get(), ui.extraSources[ItemSearchExtra].get(), ui.extraSources[PerfOverlayExtra].get(), ui.extraSources[PerfGpuExtra].get(),
+        ui.calendarKraloveSource.get(), ui.extraSources[RecipeCardExtra].get(), ui.extraSources[ItemSearchExtra].get(), ui.extraSources[CraftListExtra].get(), ui.extraSources[PerfOverlayExtra].get(), ui.extraSources[PerfGpuExtra].get(),
         ui.extraSources[PerfDiskExtra].get(), ui.extraSources[PerfDragExtra].get(), ui.extraSources[PerfButtonExtra].get(),
         ui.statsSource.get(), ui.statsButtonSource.get(),
         ui.autoLoadSource.get(), ui.githubSource.get(), ui.extraSources[ReloginGuardExtra].get()};
@@ -734,7 +734,8 @@ std::vector<ExpectedSection> Layout(OptionsUi& ui) {
         // no corner choice any more (the overlay is placed and sized with the
         // mouse); its top-bar button on by default.
         {"Métiers", {CheckRow(ui.extraOptions[RecipeCardExtra], ui.extraSources[RecipeCardExtra], "Fiche de recette", true),
-            CheckRow(ui.extraOptions[ItemSearchExtra], ui.extraSources[ItemSearchExtra], "Recherche d’objets : bouton dans la barre du haut", true)}},
+            CheckRow(ui.extraOptions[ItemSearchExtra], ui.extraSources[ItemSearchExtra], "Recherche d’objets : bouton dans la barre du haut", true),
+            CheckRow(ui.extraOptions[CraftListExtra], ui.extraSources[CraftListExtra], "Liste de crafts : bouton dans la barre du haut", true)}},
         {"Performances", {CheckRow(ui.extraOptions[PerfOverlayExtra], ui.extraSources[PerfOverlayExtra], "Afficher les FPS et la mémoire", false),
             CheckRow(ui.extraOptions[PerfGpuExtra], ui.extraSources[PerfGpuExtra], "Charge du GPU", false),
             CheckRow(ui.extraOptions[PerfDiskExtra], ui.extraSources[PerfDiskExtra], "Activité du disque", false),
@@ -745,7 +746,7 @@ std::vector<ExpectedSection> Layout(OptionsUi& ui) {
             CheckRow(ui.githubOption, ui.githubSource, "Mises à jour GitHub", true),
             // 1.20.2: the relogin after an inactivity disconnection, on by default.
             CheckRow(ui.extraOptions[ReloginGuardExtra], ui.extraSources[ReloginGuardExtra], "Reconnexion après une déconnexion", true)}},
-        {"À propos", {ButtonRow(ui.creditsOption, "Better Dofus 2.4.1 — par DAKK"), ButtonRow(ui.modFolderOption, "Dossier du mod")}}};
+        {"À propos", {ButtonRow(ui.creditsOption, "Better Dofus 2.5.0 — par DAKK"), ButtonRow(ui.modFolderOption, "Dossier du mod")}}};
 }
 std::vector<Obj> Models(const ExpectedSection& section) {
     std::vector<Obj> models;
@@ -852,8 +853,8 @@ void Refresh(Fixture& f) { f.Ui().nextKeyFieldRefresh = 0; f.Ui().Tick(); }
 void CheckLayout(Fixture& f) {
     const auto parent = f.Categories().back();
     Check(Name(parent) == ModCategoryTitle, "Loaded revision missing from category");
-    Check(std::string(ModCategoryTitle) == "Better Dofus" && std::string(ModSemanticVersion) == "2.4.1" && std::string(ModVersion) == "2.4.1" &&
-        ModRevision == 2004001,
+    Check(std::string(ModCategoryTitle) == "Better Dofus" && std::string(ModSemanticVersion) == "2.5.0" && std::string(ModVersion) == "2.5.0" &&
+        ModRevision == 2005000,
         "Tab name carries no revision; version is x.y.z");
     const auto layout = Layout(f.Ui());
     Check(!Get(parent).booleans["isSubCategory"] && Rows(parent).empty() && Sections(parent).size() == SectionCount && layout.size() == SectionCount,
@@ -900,7 +901,7 @@ void CheckLayout(Fixture& f) {
     // « À propos »: the credits row alone, named after the x.y.z version.
     const auto credits = Rows(Section(parent, AboutSection)).at(0);
     const auto description = Description(credits);
-    Check(Label(credits).find("2.4.1") != std::string::npos && Label(credits).find("par DAKK") != std::string::npos &&
+    Check(Label(credits).find("2.5.0") != std::string::npos && Label(credits).find("par DAKK") != std::string::npos &&
         description.find("DAKK") != std::string::npos && description.find("Altansar") != std::string::npos &&
         description.find("3.7.13.17") != std::string::npos && description.find("3.7.12.12") == std::string::npos &&
         description.find("https://github.com/vDAKK/better-dofus") != std::string::npos &&
@@ -908,8 +909,8 @@ void CheckLayout(Fixture& f) {
         "Credits must name the version, the author and the project page, without the revision");
     Check(ButtonText(credits) == "Ouvrir GitHub" && f.Ui().creditsMarker.get() == Get(credits).refs.at("description"),
         "Credits button opens the project page");
-    Check(sourceModels == 78 && optionModels == 78 + 4,
-        "The UI must create seventy-eight private sources and eighty-two rows");
+    Check(sourceModels == 79 && optionModels == 79 + 4,
+        "The UI must create seventy-nine private sources and eighty-three rows");
     Check(uiHooks == 4, "Only native page callbacks, the text button action and its view Init must be hooked");
     for (const uintptr_t rva : {uintptr_t{0x2D47990}, uintptr_t{0x1788780}, uintptr_t{0x55AAA50}, uintptr_t{0x55ACF10}, uintptr_t{0x5598B30},
         uintptr_t{0x55965B0}, uintptr_t{0x171B330}, uintptr_t{0x1707180}, uintptr_t{0x158D3E0}, uintptr_t{0x55A4E10}})
@@ -1427,6 +1428,7 @@ Settings WithSectionDefaults(Settings settings, size_t index) {
     } else if (index == JobsSection) {
         settings.*ExtraToggles[RecipeCardExtra] = defaults.*ExtraToggles[RecipeCardExtra];
         settings.*ExtraToggles[ItemSearchExtra] = defaults.*ExtraToggles[ItemSearchExtra];
+        settings.*ExtraToggles[CraftListExtra] = defaults.*ExtraToggles[CraftListExtra];
     } else if (index == PerformanceSection) {
         for (auto extra : {PerfOverlayExtra, PerfGpuExtra, PerfDiskExtra, PerfDragExtra, PerfButtonExtra}) settings.*ExtraToggles[extra] = defaults.*ExtraToggles[extra];
     } else if (index == StatsSection) {
@@ -2857,7 +2859,7 @@ void ModFolderRow() {
         ui.modFolderMarker.get() != ui.metamobKeyMarker.get(), "« Dossier du mod » is an owned text button known by its own description reference");
     Check(Label(row) == "Dossier du mod" && ButtonText(row) == "Ouvrir", "Its button: « Ouvrir »");
     const auto text = Description(row);
-    for (const char* term : {"Ouvre dans l’Explorateur de Windows le dossier de cette version du mod", "BetterDofus-2.4.1",
+    for (const char* term : {"Ouvre dans l’Explorateur de Windows le dossier de cette version du mod", "BetterDofus-2.5.0",
             "BetterDofus.dll", "module.log", "BetterDofus-settings.ini", "dans le dossier au-dessus",
             "ne modifie ni ne supprime aucun fichier"})
         Check(text.find(term) != std::string::npos, std::string("« Dossier du mod » says: ") + term);

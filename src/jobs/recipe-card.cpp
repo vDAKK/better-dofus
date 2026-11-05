@@ -1,8 +1,10 @@
 #include "jobs/recipe-card.hpp"
+#include "jobs/craft-list-panel.hpp"
 #include "jobs/recipe-cost.hpp"
 #include "jobs/recipe-native.hpp"
 #include "core/module.hpp"
 #include "souls/soul-panel.hpp"
+#include "ui/native-click.hpp"
 #include "ui/native-style.hpp"
 #include <algorithm>
 #include <array>
@@ -27,6 +29,8 @@ Klass tooltipServiceClass = nullptr;
 // The tooltips opened as a recipe card, by their information; the game's own pinned
 // tooltips stay as they are.
 std::vector<Ref> cardInfos;
+struct AddButton { Ref button; int item = 0; };
+std::vector<AddButton> addButtons; // Those of the cards still open or recently closed.
 bool reported = false;
 
 void Report(const char* where, const std::exception& error) {
@@ -102,6 +106,9 @@ bool IsCard(Obj builder) {
     return std::any_of(cardInfos.begin(), cardInfos.end(), [&](const Ref& card) { return card.get() == info.get(); });
 }
 void Hide(Obj element) { if (element) Set<int>(element, "display", 1); }
+void AddCaption(Obj button, int count) {
+    Text(button, count ? "Ajouter à la liste (" + std::to_string(count) + " prévus)" : "Ajouter à la liste");
+}
 // The block of a recipe card: a table of the ingredients, then the total. Everything
 // that is not the recipe goes: the card answers « what does it take ». The parent is
 // emptied by the tooltip's own ClearElements each time it is set up.
@@ -145,6 +152,43 @@ void AddRecipeBlock(Obj builder, const recipeNative::Recipe& recipe) {
     Ref sumName(Label(sum.get(), total.unpriced ? "Total (" + std::to_string(total.unpriced) + " sans prix)" : "Total", nativeStyle::Strong));
     Set<float>(sumName.get(), "flexGrow", 1.f);
     Column(sum.get(), recipeCost::Kamas(total.cost), PriceWidth + StockWidth, nativeStyle::Strong);
+    const auto sale = recipeNative::AveragePrice(recipe.result);
+    if (sale > 0) {
+        Ref line(Row(block.get()));
+        Ref name(Label(line.get(), "Prix moyen de l’objet", nativeStyle::Secondary));
+        Set<float>(name.get(), "flexGrow", 1.f);
+        Column(line.get(), recipeCost::Kamas(sale), PriceWidth + StockWidth, nativeStyle::Secondary);
+    }
+    if (const auto margin = recipeCost::Estimate(total, sale); margin.known) {
+        Ref line(Row(block.get()));
+        Ref name(Label(line.get(), "Marge estimée", nativeStyle::Secondary));
+        Set<float>(name.get(), "flexGrow", 1.f);
+        Ref value(Column(line.get(), recipeCost::Kamas(margin.value), PriceWidth + StockWidth));
+        nativeStyle::Tone(value.get(), margin.value > 0, margin.value < 0);
+    }
+    if (!CraftListEnabled()) return;
+    Ref button(api.New(api.Class("Core.dll", "Core.UILogic.Components.Figma", "DofusButtonCustom")));
+    int size = 0, style = 1; // Small, secondary.
+    api.Call(button.get(), "set_size", {&size}); api.Call(button.get(), "set_mainStyle", {&style});
+    AddCaption(button.get(), CraftListCount(recipe.result));
+    Text(button.get(), "Ajoute un craft de cet objet à la liste de crafts", "set_tooltip");
+    Pixels(button.get(), "marginTop", 6);
+    api.Call(block.get(), "Add", {button.get()});
+    if (addButtons.size() >= 16) addButtons.erase(addButtons.begin());
+    addButtons.push_back({Ref(button.get()), recipe.result});
+}
+bool CardAction(Obj owner) {
+    if (!owner) return false;
+    for (const auto& entry : addButtons) {
+        if (entry.button.get() != owner) continue;
+        try {
+            const int count = AddToCraftList(entry.item);
+            AddCaption(owner, count ? count : CraftListCount(entry.item));
+            Log("RECIPE_CARD_ADD item=" + std::to_string(entry.item) + " count=" + std::to_string(count));
+        } catch (const std::exception& error) { Report("add", error); }
+        return true;
+    }
+    return false;
 }
 template <size_t Index> void MessageHook(Obj self, Obj message, Method method);
 bool OpenCard(Obj message) {
@@ -256,6 +300,7 @@ void InstallRecipeCard() {
         api.FindVerified(tooltipServiceClass, "bfpo", 1, 0x1EC99B0);
         const auto message = api.Class("Core.dll", "", "bfz");
         api.FindVerified(message, "rwq", 0, 0x68D2B0);
+        nativeClick::AddHandler(CardAction);
         HookMessages(std::make_index_sequence<4>{});
         AddHook(api.FindVerified(builder, "SetupViewWithContent", 0, 0x16108C0), 0x16108C0, reinterpret_cast<void*>(&SetupHook), reinterpret_cast<void**>(&originalSetup));
         AddHook(api.FindVerified(builder, "SetItemPrices", 0, 0x160D3B0), 0x160D3B0, reinterpret_cast<void*>(&PricesHook), reinterpret_cast<void**>(&originalPrices));

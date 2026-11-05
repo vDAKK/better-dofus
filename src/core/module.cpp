@@ -29,6 +29,7 @@
 #include "jobs/jobs-xp-panel.hpp"
 #include "jobs/recipe-card.hpp"
 #include "ui/item-search.hpp"
+#include "jobs/craft-list-panel.hpp"
 #include "travel/quest-travel.hpp"
 #include "maps/archi-zones.hpp"
 #include "stats/stats.hpp"
@@ -322,6 +323,7 @@ void Module::Pump(Obj source) {
     startupStage("treasure-panel", [] { TickTreasurePanel(); });
     startupStage("notebook-panel", [] { TickNotebookPanel(); });
     startupStage("item-search", [] { TickItemSearch(); });
+    startupStage("craft-list", [] { TickCraftList(); });
     startupStage("stats-window", [] { TickStatsWindow(); });
     // After the panels: a window a layout opens is placed the pump its panel builds it.
     startupStage("preset-windows", [] { TickPresetWindows(); });
@@ -389,6 +391,7 @@ void Module::Stop() {
     RestoreTreasurePanel();
     RestoreNotebookPanel();
     RestoreItemSearch();
+    RestoreCraftList();
     RestoreStatsWindow();
     RestorePresetWindows();
     toolsUi::Restore();
@@ -424,7 +427,7 @@ void Module::Stop() {
     Log("STOPPED miniatureConversions=" + std::to_string(features->miniatureCount));
     // The worker disables hooks; the DLL remains resident to avoid unloading code on an active stack.
     stopRequested.store(true);
-    stopCompleted.store(!ui->CleanupPending() && !MonsterGlowCleanupPending() && !SoulHelperCleanupPending() && !SoulWidgetCleanupPending() && !ChatTpLinksCleanupPending() && !SpousePartyWidgetCleanupPending() && !PartyTravelWidgetCleanupPending() && !MapPreloadCleanupPending() && !resourceMap::UiCleanupPending() && !resourceMap::RenderCleanupPending() && !TreasurePanelCleanupPending() && !NotebookPanelCleanupPending() && !ItemSearchCleanupPending() && !StatsWindowCleanupPending() && !toolsUi::CleanupPending() && !JobsXpCleanupPending() && !ArchiZonesCleanupPending() && !CalendarKraloveCleanupPending() && !MapInfoCleanupPending() && !PerfOverlayCleanupPending() && !CustomCursorCleanupPending() && !VerticalGaugesCleanupPending());
+    stopCompleted.store(!ui->CleanupPending() && !MonsterGlowCleanupPending() && !SoulHelperCleanupPending() && !SoulWidgetCleanupPending() && !ChatTpLinksCleanupPending() && !SpousePartyWidgetCleanupPending() && !PartyTravelWidgetCleanupPending() && !MapPreloadCleanupPending() && !resourceMap::UiCleanupPending() && !resourceMap::RenderCleanupPending() && !TreasurePanelCleanupPending() && !NotebookPanelCleanupPending() && !ItemSearchCleanupPending() && !CraftListCleanupPending() && !StatsWindowCleanupPending() && !toolsUi::CleanupPending() && !JobsXpCleanupPending() && !ArchiZonesCleanupPending() && !CalendarKraloveCleanupPending() && !MapInfoCleanupPending() && !PerfOverlayCleanupPending() && !CustomCursorCleanupPending() && !VerticalGaugesCleanupPending());
     if (!stopCompleted.load()) Log("STOPPING awaiting owned UI cleanup on main thread");
     try { WriteStartupStatus(folder, GetCurrentProcessId(), "STOPPED"); }
     catch (const std::exception& e) { Log(std::string("STATUS_ERROR ") + e.what()); }
@@ -469,6 +472,7 @@ static void UpdateHook(Obj self, Method method) {
             if (TreasurePanelCleanupPending()) RestoreTreasurePanel();
             if (NotebookPanelCleanupPending()) RestoreNotebookPanel();
             if (ItemSearchCleanupPending()) RestoreItemSearch();
+            if (CraftListCleanupPending()) RestoreCraftList();
             if (StatsWindowCleanupPending()) RestoreStatsWindow();
             if (toolsUi::CleanupPending()) toolsUi::Restore();
             if (JobsXpCleanupPending()) RestoreJobsXp();
@@ -483,7 +487,7 @@ static void UpdateHook(Obj self, Method method) {
             if (PartyTravelWidgetCleanupPending()) RestorePartyTravelWidget();
             if (CustomCursorCleanupPending()) RestoreCustomCursor();
             if (VerticalGaugesCleanupPending()) RestoreVerticalGauges();
-            if (!module->ui->CleanupPending() && !MonsterGlowCleanupPending() && !SoulHelperCleanupPending() && !SoulWidgetCleanupPending() && !ChatTpLinksCleanupPending() && !SpousePartyWidgetCleanupPending() && !PartyTravelWidgetCleanupPending() && !MapPreloadCleanupPending() && !resourceMap::UiCleanupPending() && !resourceMap::RenderCleanupPending() && !TreasurePanelCleanupPending() && !NotebookPanelCleanupPending() && !ItemSearchCleanupPending() && !StatsWindowCleanupPending() && !toolsUi::CleanupPending() && !JobsXpCleanupPending() && !ArchiZonesCleanupPending() && !CalendarKraloveCleanupPending() && !MapInfoCleanupPending() && !PerfOverlayCleanupPending() && !CustomCursorCleanupPending() && !VerticalGaugesCleanupPending()) module->stopCompleted.store(true);
+            if (!module->ui->CleanupPending() && !MonsterGlowCleanupPending() && !SoulHelperCleanupPending() && !SoulWidgetCleanupPending() && !ChatTpLinksCleanupPending() && !SpousePartyWidgetCleanupPending() && !PartyTravelWidgetCleanupPending() && !MapPreloadCleanupPending() && !resourceMap::UiCleanupPending() && !resourceMap::RenderCleanupPending() && !TreasurePanelCleanupPending() && !NotebookPanelCleanupPending() && !ItemSearchCleanupPending() && !CraftListCleanupPending() && !StatsWindowCleanupPending() && !toolsUi::CleanupPending() && !JobsXpCleanupPending() && !ArchiZonesCleanupPending() && !CalendarKraloveCleanupPending() && !MapInfoCleanupPending() && !PerfOverlayCleanupPending() && !CustomCursorCleanupPending() && !VerticalGaugesCleanupPending()) module->stopCompleted.store(true);
         }
         return;
     }
@@ -554,6 +558,7 @@ static DWORD WINAPI Worker(void*) {
         InstallJobsXp();
         InstallRecipeCard(); // never throws: RECIPE_CARD_UNAVAILABLE leaves the game's recipes as they are
         InstallItemSearch();
+        InstallCraftList(); // never throws: CRAFT_LIST_UNAVAILABLE leaves the game as it is
         InstallQuestTravel(); // never throws: QUEST_TRAVEL_UNAVAILABLE leaves the menu as it is
         InstallArchiZones();
         InstallCalendarKralove();

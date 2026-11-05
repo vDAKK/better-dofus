@@ -87,6 +87,15 @@ std::optional<Recipe> Find(int resultItem) {
     return result;
 }
 
+std::string ItemName(int item) {
+    if (Session()) {
+        Ref data(api.Invoke(itemById, nullptr, {&item}));
+        Ref name(data.get() ? api.Invoke(itemName, data.get()) : nullptr);
+        if (name.get()) return api.String(name.get());
+    }
+    return "Objet " + std::to_string(item);
+}
+
 int64_t AveragePrice(int item) {
     if (!Session()) return 0;
     try {
