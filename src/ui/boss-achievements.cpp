@@ -10,6 +10,7 @@
 #include "souls/soul-panel.hpp"
 #include <algorithm>
 #include <array>
+#include <map>
 #include <optional>
 #include <set>
 
@@ -25,7 +26,7 @@ constexpr int IconFlag = 145, AlignRight = 5;
 constexpr float PointsWidth = 60;
 constexpr uint64_t RefreshMs = 2000, FightRetryMs = 1000;
 
-struct RowView { Ref line, card, name, points, description, icon; int shownIcon = 0; };
+struct RowView { Ref line, card, name, points, description, icon, objectivesBox; std::vector<Ref> objectives; int shownIcon = 0; };
 struct State {
     Ref root, window, header, dragger, dependencies, cached, compositor, closeButton;
     Ref status, todoHead, todoBox, doneHead, doneBox, showDone;
@@ -53,12 +54,28 @@ uint64_t nextFightRead = 0;
 constexpr size_t SuccessListOffset = 0x10 + 72 - 16; // Its binding's field, in the object.
 constexpr size_t MaxPanelIcons = 6;
 constexpr int TipTooltipLeft = 3, TipSourceRight = 5, TipLeave = 0;
-struct Panel { Ref display; std::vector<Ref> icons; std::vector<int> enemies; Target target; bool dirty = false; } panel;
+// nativeHidden: the game has no achievement to show. It hides the list without emptying
+// it: what is left there comes from an earlier fight.
+struct Panel { Ref display; std::vector<Ref> icons; std::vector<int> enemies; Target target; bool dirty = false, nativeHidden = false; } panel;
 using DisplayFn = void (*)(Obj, Method);
 DisplayFn originalDisplay = nullptr;
 Method updateIcon = nullptr, addManipulator = nullptr, clickableCtor = nullptr, tooltipCtor = nullptr, objectivesRoot = nullptr, objectiveName = nullptr;
 Klass iconClass = nullptr, clickableClass = nullptr, tooltipClass = nullptr;
-std::set<int> objectivesLogged;
+// What is known of each achievement's objectives: its data, and the game's answer. The
+// game only learns these from the server, as when its own window opens an achievement.
+constexpr uint64_t RequestSpacingMs = 400, AnswerLifeMs = 120000, RetryMs = 10000;
+struct Answer { std::set<int> finished; uint64_t at = 0; };
+std::map<int, std::vector<Objective>> objectiveData;
+std::map<int, Answer> answers;
+std::map<int, uint64_t> asked;
+std::vector<int> toAsk;
+uint64_t nextAsk = 0;
+bool answersUnavailable = false;
+Ref detailsSender, detailsConnection;
+Method sendDetails = nullptr, answerOf = nullptr;
+Klass senderClass = nullptr, requestClass = nullptr;
+using AnswerFn = void (*)(Obj, Obj, Method);
+std::array<AnswerFn, 2> originalAnswer{};
 // fcv's handler of a finished achievement always adds it to the account's set, and to
 // the character's set only when it was achieved by the character in play.
 Klass serviceClass = nullptr;
@@ -137,6 +154,79 @@ std::vector<Item> ReadItems(const std::vector<int>& ids, const Finished& finishe
     return items;
 }
 
+const std::vector<Objective>& ObjectivesOf(int id) {
+    const auto found = objectiveData.find(id);
+    if (found != objectiveData.end()) return found->second;
+    std::vector<Objective> result;
+    try {
+        Ref root(api.Invoke(achievementsRoot, nullptr));
+        int64_t key = id;
+        Ref data(root.get() ? api.Invoke(achievementById, root.get(), {&key}) : nullptr);
+        Ref objectives(api.Invoke(objectivesRoot, nullptr));
+        if (data.get() && objectives.get()) {
+            Ref list(api.Field(data.get(), "objectiveIds"));
+            for (const int objectiveId : Numbers(list.get())) {
+                int64_t objectiveKey = objectiveId;
+                Ref objective(api.Call(objectives.get(), "GetObjectById", {&objectiveKey}));
+                if (!objective.get()) continue;
+                Ref name(api.Invoke(objectiveName, objective.get())), criterion(api.Field(objective.get(), "criterion"));
+                result.push_back({objectiveId, criterion.get() ? MonsterOf(api.String(criterion.get())) : 0, name.get() ? Plain(api.String(name.get())) : ""});
+            }
+        }
+    } catch (const std::exception& error) { Log(std::string("BOSS_ACHIEVEMENTS_OBJECTIVE_ERROR ") + error.what()); }
+    return objectiveData.emplace(id, std::move(result)).first->second;
+}
+// Asks at most once in a while, one at a time: the window's or the fight's achievements.
+void Ask(int id) {
+    if (answersUnavailable || id <= 0 || id > 32767) return;
+    const auto now = GetTickCount64();
+    const auto answer = answers.find(id);
+    if (answer != answers.end() && now - answer->second.at < AnswerLifeMs) return;
+    const auto before = asked.find(id);
+    if (before != asked.end() && now - before->second < RetryMs) return;
+    if (std::find(toAsk.begin(), toAsk.end(), id) == toAsk.end()) toAsk.push_back(id);
+}
+void PumpQuestions() {
+    const auto now = GetTickCount64();
+    if (toAsk.empty() || now < nextAsk) return;
+    nextAsk = now + RequestSpacingMs;
+    const int id = toAsk.front();
+    toAsk.erase(toAsk.begin());
+    asked[id] = now;
+    Ref connection(module->FindService("fff"));
+    if (!connection.get()) {
+        answersUnavailable = true; toAsk.clear(); panel.dirty = true;
+        Log("BOSS_ACHIEVEMENTS_DETAILS_UNAVAILABLE");
+        return;
+    }
+    if (detailsConnection.get() != connection.get() || !detailsSender.get()) {
+        detailsConnection.reset(connection.get());
+        detailsSender.reset(api.New(senderClass, {connection.get()}));
+    }
+    short key = static_cast<short>(id);
+    Ref request(api.New(requestClass, {&key}));
+    api.Invoke(sendDetails, detailsSender.get(), {request.get()});
+}
+template <size_t Index> void AnswerHook(Obj self, Obj message, Method method) {
+    originalAnswer[Index](self, message, method);
+    try {
+        Ref achievement(api.Field(message, "fgtm"));
+        Ref details(achievement.get() ? api.Invoke(answerOf, nullptr, {achievement.get()}) : nullptr);
+        if (!details.get()) return;
+        const int id = api.Value<int>(api.Field(details.get(), "dcmb"));
+        Answer answer;
+        answer.at = GetTickCount64();
+        Ref finished(api.Field(details.get(), "dcmc"));
+        const int count = finished.get() ? api.Value<int>(api.Call(finished.get(), "get_Count")) : 0;
+        for (int i = 0; i < count && i < 512; ++i) {
+            Ref objective(api.Call(finished.get(), "get_Item", {&i}));
+            if (objective.get()) answer.finished.insert(api.Value<int>(api.Field(objective.get(), "dcly")));
+        }
+        Log("BOSS_ACHIEVEMENTS_DETAILS id=" + std::to_string(id) + " finished=" + std::to_string(answer.finished.size()));
+        answers[id] = std::move(answer);
+        panel.dirty = true; state.nextRefresh = 0;
+    } catch (const std::exception& error) { Log(std::string("BOSS_ACHIEVEMENTS_DETAILS_ERROR ") + error.what()); }
+}
 // The menu.
 int HereMap() {
     Ref character(module->FindService("fng"));
@@ -362,6 +452,26 @@ void Fill(std::vector<RowView>& rows, Obj box, const std::vector<Item>& items, b
         }
     }
     for (size_t i = items.size(); i < rows.size(); ++i) Show(rows[i].line.get(), false);
+    // Which monsters: each objective, ticked once the game has told.
+    for (size_t i = 0; i < items.size(); ++i) {
+        auto& view = rows[i];
+        if (!done) Ask(items[i].id);
+        const auto answer = answers.find(items[i].id);
+        const bool known = done || answer != answers.end();
+        if (!view.objectivesBox.get()) {
+            view.objectivesBox.reset(Element(view.line.get()));
+            Pixels(view.objectivesBox.get(), "marginTop", 4); Pixels(view.objectivesBox.get(), "marginLeft", 8);
+        }
+        const auto& objectives = ObjectivesOf(items[i].id);
+        for (size_t k = 0; k < objectives.size() && k < 24; ++k) {
+            if (view.objectives.size() <= k) view.objectives.emplace_back(Label(view.objectivesBox.get(), "", nativeStyle::Secondary));
+            const bool finished = done || (answer != answers.end() && answer->second.finished.count(objectives[k].id));
+            Show(view.objectives[k].get(), true);
+            Text(view.objectives[k].get(), ObjectiveLine(objectives[k].name, known, finished));
+            nativeStyle::Toggle(view.objectives[k].get(), nativeStyle::ColorPositive, known && finished);
+        }
+        for (size_t k = objectives.size(); k < view.objectives.size(); ++k) Show(view.objectives[k].get(), false);
+    }
 }
 void Refresh() {
     const auto finished = ReadFinished();
@@ -470,32 +580,6 @@ void Create(Obj root) {
     Add(root, state.window.get());
     Log("BOSS_ACHIEVEMENTS_OPEN items=" + std::to_string(shown.ids.size()));
 }
-// The names of an achievement's objectives. Logged once each: what they say decides how
-// a missing monster can be told, which the game's data does not state.
-std::vector<std::string> Objectives(int id) {
-    std::vector<std::string> names;
-    const bool logged = !objectivesLogged.insert(id).second;
-    try {
-        Ref root(api.Invoke(achievementsRoot, nullptr));
-        int64_t key = id;
-        Ref data(root.get() ? api.Invoke(achievementById, root.get(), {&key}) : nullptr);
-        Ref objectives(api.Invoke(objectivesRoot, nullptr));
-        if (!data.get() || !objectives.get()) return names;
-        Ref list(api.Field(data.get(), "objectiveIds"));
-        for (const int objectiveId : Numbers(list.get())) {
-            int64_t objectiveKey = objectiveId;
-            Ref objective(api.Call(objectives.get(), "GetObjectById", {&objectiveKey}));
-            if (!objective.get()) continue;
-            Ref name(api.Invoke(objectiveName, objective.get())), criterion(api.Field(objective.get(), "criterion"));
-            const auto text = name.get() ? Plain(api.String(name.get())) : "";
-            if (!text.empty() && names.size() < 12) names.push_back(text);
-            if (!logged) Log("BOSS_ACHIEVEMENTS_OBJECTIVE achievement=" + std::to_string(id) + " id=" + std::to_string(objectiveId) + " name=" + text + " criterion=" + (criterion.get() ? api.String(criterion.get()) : ""));
-        }
-    } catch (const std::exception& error) {
-        if (!logged) Log(std::string("BOSS_ACHIEVEMENTS_OBJECTIVE_ERROR ") + error.what());
-    }
-    return names;
-}
 void ClearPanelIcons() {
     for (const auto& icon : panel.icons) {
         try { if (icon.get()) api.Call(icon.get(), "RemoveFromHierarchy"); }
@@ -511,7 +595,11 @@ void AddPanelIcon(Obj list, const Item& item) {
     }
     Ref service(module->FindService("fou"));
     if (service.get()) {
-        Ref tip(api.string_new(Tip(item, Objectives(item.id)).c_str()));
+        std::vector<std::string> lines;
+        const auto answer = answers.find(item.id);
+        for (const auto& objective : ObjectivesOf(item.id))
+            lines.push_back(ObjectiveLine(objective.name, answer != answers.end(), answer != answers.end() && answer->second.finished.count(objective.id)));
+        Ref tip(api.string_new(Tip(item, lines).c_str()));
         Ref manipulator(api.object_new(tooltipClass));
         int origin = TipTooltipLeft, source = TipSourceRight, behavior = TipLeave;
         bool front = false;
@@ -529,7 +617,12 @@ void AddPanelIcon(Obj list, const Item& item) {
 }
 void DisplayHook(Obj self, Method method) {
     originalDisplay(self, method);
-    try { panel.display.reset(self); panel.dirty = true; } catch (...) {}
+    try {
+        panel.display.reset(self); panel.dirty = true;
+        Ref list(*reinterpret_cast<Obj*>(reinterpret_cast<char*>(self) + SuccessListOffset));
+        Ref display(list.get() ? Style(list.get(), "display") : nullptr);
+        panel.nativeHidden = display.get() && api.Value<int>(api.Call(display.get(), "get_value")) == 1;
+    } catch (const std::exception& error) { Log(std::string("BOSS_ACHIEVEMENTS_PANEL_ERROR ") + error.what()); }
 }
 // The panel's list of achievements, for what the enemies still have to give. The game
 // empties it whenever it redraws the panel: the next look draws them again.
@@ -552,15 +645,27 @@ void WatchFight() {
     if (!finished.known) return; // Tried again at the next look.
     panel.dirty = false; panel.enemies = enemies.ids;
     ClearPanelIcons();
+    if (panel.nativeHidden) {
+        // An earlier fight's achievements: they stay out of sight until the game empties them.
+        Ref hierarchy(api.Call(list.get(), "get_hierarchy"));
+        const int children = api.Value<int>(api.Call(hierarchy.get(), "get_childCount"));
+        for (int i = 0; i < children && i < 64; ++i) { Ref child(api.Call(hierarchy.get(), "get_Item", {&i})); Show(child.get(), false); }
+    }
     auto target = FromMonsters(enemies.ids);
     if (!target) return;
     const auto sorted = Sort(ReadItems(target->ids, finished));
     // What the panel shows already, from the fight's challenges.
-    Ref native(api.Field(panel.display.get(), "m_successList"));
+    Ref native(panel.nativeHidden ? nullptr : api.Field(panel.display.get(), "m_successList"));
     for (const auto& item : sorted.todo) {
         if (panel.icons.size() >= MaxPanelIcons) break;
         int id = item.id;
         if (native.get() && api.Value<bool>(api.Call(native.get(), "ContainsKey", {&id}))) continue;
+        // Shown once the game has told it: only if one of these monsters is still missing.
+        const auto answer = answers.find(id);
+        if (!answersUnavailable) {
+            Ask(id);
+            if (answer == answers.end() || !Advances(ObjectivesOf(id), answer->second.finished, enemies.ids)) continue;
+        }
         AddPanelIcon(list.get(), item);
     }
     panel.target = std::move(*target);
@@ -609,6 +714,19 @@ void InstallBossAchievements() {
         const auto checkbox = api.Class("Core.dll", "Core.UILogic.Components.Figma", "CheckboxCustom");
         api.FindVerified(checkbox, ".ctor", 0, 0x16FE760); api.FindVerified(checkbox, "get_value", 0, 0x16FEAE0);
         api.FindVerified(checkbox, "set_value", 1, 0x16FF100); api.FindVerified(checkbox, "set_rightText", 1, 0x16FF020);
+        senderClass = api.Class("Core.dll", "", "fez");
+        api.FindVerified(senderClass, ".ctor", 1, 0xDD9E50);
+        sendDetails = api.FindVerified(senderClass, "bdxq", 1, 0x1B64CC0);
+        requestClass = api.Class("Core.dll", "", "ciq");
+        api.FindVerified(requestClass, ".ctor", 1, 0x26384F0);
+        const auto details = api.Class("Core.dll", "", "gw");
+        answerOf = api.FindVerified(details, "mxn", 1, 0x25992F0);
+        Field(details, "dcmb", 16); Field(details, "dcmc", 24);
+        Field(api.Class("Core.dll", "", "gv"), "dcly", 16);
+        Field(api.Class("Ankama.Dofus.Protocol.Game.dll", "", "mdv"), "fgtm", 24);
+        const auto handler = api.Class("Core.dll", "", "fcv");
+        AddHook(api.FindVerified(handler, "bcvi", 1, 0x1AA7320), 0x1AA7320, reinterpret_cast<void*>(&AnswerHook<0>), reinterpret_cast<void**>(&originalAnswer[0]));
+        AddHook(api.FindVerified(handler, "jnm", 1, 0x1AAEB40), 0x1AAEB40, reinterpret_cast<void*>(&AnswerHook<1>), reinterpret_cast<void**>(&originalAnswer[1]));
         AddHook(api.FindVerified(display, "DisplayChallenges", 0, 0x2CA08D0), 0x2CA08D0, reinterpret_cast<void*>(&DisplayHook), reinterpret_cast<void**>(&originalDisplay));
         // The card's class of a finished achievement (AchievementItem.Init). Without it,
         // the section's title still says so.
@@ -687,6 +805,7 @@ void TickBossAchievements() {
         try {
             if (doneClass.empty() && doneClassOf) { Ref name(api.Invoke(doneClassOf, nullptr)); doneClassOf = nullptr; if (name.get()) doneClass = api.String(name.get()); }
             WatchFight();
+            PumpQuestions();
         }
         catch (const std::exception& error) { Log(std::string("BOSS_ACHIEVEMENTS_FIGHT_ERROR ") + error.what()); }
     }

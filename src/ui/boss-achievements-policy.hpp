@@ -1,5 +1,7 @@
 #pragma once
 #include <algorithm>
+#include <cctype>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -44,11 +46,38 @@ inline std::string Title(const std::vector<std::string>& monsters) {
     if (monsters.size() == 1) return monsters.front();
     return monsters.front() + " et " + std::to_string(monsters.size() - 1) + (monsters.size() == 2 ? " autre" : " autres");
 }
+// An objective, and the monster its criterion asks for: (Ef>4818,0) is monster 4818.
+struct Objective { int id = 0, monster = 0; std::string name; };
+inline int MonsterOf(const std::string& criterion) {
+    const auto start = criterion.find("Ef>");
+    if (start == std::string::npos) return 0;
+    int monster = 0;
+    for (size_t i = start + 3; i < criterion.size() && std::isdigit(static_cast<unsigned char>(criterion[i])); ++i) {
+        if (monster > 100000000) return 0;
+        monster = monster * 10 + (criterion[i] - '0');
+    }
+    return monster;
+}
+// Whether this fight advances the achievement: one of its enemies is a monster still
+// missing. An achievement that names no monster stays: the game linked it to them.
+inline bool Advances(const std::vector<Objective>& objectives, const std::set<int>& finished, const std::vector<int>& enemies) {
+    bool named = false;
+    for (const auto& objective : objectives) {
+        if (!objective.monster) continue;
+        named = true;
+        if (!finished.count(objective.id) && std::find(enemies.begin(), enemies.end(), objective.monster) != enemies.end()) return true;
+    }
+    return !named;
+}
+// known: the game's answer on this achievement has come.
+inline std::string ObjectiveLine(const std::string& name, bool known, bool done) {
+    return (known ? (done ? "[x] " : "[ ] ") : "- ") + name;
+}
 // What an achievement's icon says when hovered in the fight's panel.
 inline std::string Tip(const Item& item, const std::vector<std::string>& objectives) {
     std::string tip = item.name + "\nSuccès à faire : " + std::to_string(item.points) + " points";
     if (!item.description.empty()) tip += "\n" + item.description;
-    for (const auto& objective : objectives) tip += "\n- " + objective;
+    for (const auto& objective : objectives) tip += "\n" + objective;
     return tip;
 }
 // known: the game has told which achievements are finished.

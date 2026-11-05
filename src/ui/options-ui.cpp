@@ -90,7 +90,7 @@ constexpr CheckRow ExtraRows[] = {
     // 2.6.0: boss-achievements.cpp.
     {"Succès au clic droit sur un monstre", "Le clic droit sur un groupe dont les monstres ont des succès les propose dans une petite fenêtre, avec ceux du donjon pour un boss : ceux à faire, avec leur description, et ceux que ce personnage a déjà faits."},
     // 2.8.0, in the fight's panel since 2.9.0.
-    {"Succès dans le panneau de combat", "En combat, ajoute au panneau des challenges une icône pour chaque succès des monstres adverses qu’il reste à faire à ce personnage. Le survol le détaille, le clic ouvre la fenêtre des succès."}};
+    {"Succès dans le panneau de combat", "En combat, ajoute au panneau des challenges une icône pour chaque succès auquel il manque un des monstres adverses. Le survol détaille ses objectifs, le clic ouvre la fenêtre des succès. Pour le savoir, le mod demande au serveur l’avancement de ces succès, comme la fenêtre des succès du jeu."}};
 // « Dimension avec les coordonnées » on the big map, the mini-map and in the
 // chat: the same three choices, each id the saved mode (Settings'
 // coordsWorld*Mode), « Oui, sauf dans le Monde des Douze » by default.
