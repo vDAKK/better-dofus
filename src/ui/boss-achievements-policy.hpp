@@ -7,7 +7,7 @@
 // and what is finished come from the game (boss-achievements.cpp).
 namespace bossAchievements {
 inline constexpr size_t MaxItems = 64;
-struct Item { int id = 0, points = 0, level = 0; std::string name, description; bool done = false; };
+struct Item { int id = 0, points = 0, level = 0, icon = 0; std::string name, description; bool done = false; };
 struct Sorted { std::vector<Item> todo, done; };
 
 // The monsters' lists then the dungeon's: each achievement once, in that order.

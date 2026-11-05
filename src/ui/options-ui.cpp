@@ -51,7 +51,7 @@ constexpr const char* AnimationDescriptions[] = {
 // The checkboxes added in 1.13.0, 1.14.0, 1.16.0, 1.17.1, 1.18.0, 1.19.0, 1.20.0 and 1.20.2, in the order of Settings' ExtraToggles.
 enum ExtraRow : size_t { MiniMapBarRow, MiniMapZoneNameRow, NotebookPingRow, NotebookCopyRow, NotebookTravelRow, MapAddPositionRow,
     PerfOverlayRow, PerfGpuRow, PerfDiskRow, PerfDragRow, PerfButtonRow, NotebookSendRow, GaugeVerticalRow, PartyTravelRow, CursorGameRow,
-    PresetWindowsRow, ReloginGuardRow, RecipeCardRow, QuestTravelRow, ItemSearchRow, CraftListRow, BossAchievementsRow };
+    PresetWindowsRow, ReloginGuardRow, RecipeCardRow, QuestTravelRow, ItemSearchRow, CraftListRow, BossAchievementsRow, CombatAchievementsRow };
 constexpr CheckRow ExtraRows[] = {
     {"Barre des ressources sur la mini-carte", "Affiche sur la mini-carte la barre des six métiers qui ouvre le choix des ressources. Décochée, la barre et sa liste disparaissent, mais les repères des ressources choisies restent affichés si « Ressources sur la mini-carte » est cochée ; le choix se fait alors depuis la grande carte. Activé par défaut."},
     {"Nom de la zone au survol de la mini-carte", "Sur la mini-carte, l’infobulle de la case survolée affiche le nom de sa zone au-dessus de ses coordonnées. Activé par défaut."},
@@ -88,7 +88,9 @@ constexpr CheckRow ExtraRows[] = {
     // 2.5.0: craft-list-panel.cpp.
     {"Liste de crafts : bouton dans la barre du haut", "Ajoute à la barre du haut le bouton de la liste de crafts, et à la fiche de recette son bouton Ajouter à la liste. La liste additionne les ressources de tes crafts, retire ce que tu as déjà et suit ce que tu fabriques ; à l’hôtel de vente, un clic sur une ressource l’y affiche."},
     // 2.6.0: boss-achievements.cpp.
-    {"Succès au clic droit sur un monstre", "Le clic droit sur un groupe dont les monstres ont des succès les propose dans une petite fenêtre, avec ceux du donjon pour un boss : ceux à faire, avec leur description, et ceux que ce personnage a déjà faits."}};
+    {"Succès au clic droit sur un monstre", "Le clic droit sur un groupe dont les monstres ont des succès les propose dans une petite fenêtre, avec ceux du donjon pour un boss : ceux à faire, avec leur description, et ceux que ce personnage a déjà faits."},
+    // 2.8.0: the same window in fights.
+    {"Succès à faire au début d’un combat", "Au début d’un combat, ouvre la fenêtre des succès des monstres adverses s’il en reste à faire pour ce personnage. Elle se ferme avec le combat."}};
 // « Dimension avec les coordonnées » on the big map, the mini-map and in the
 // chat: the same three choices, each id the saved mode (Settings'
 // coordsWorld*Mode), « Oui, sauf dans le Monde des Douze » by default.
@@ -1208,7 +1210,7 @@ bool OptionsUi::Attach(Obj page) {
         {"Chat", {chatTravelOption.get(), chatSoulOption.get(), chatOcreOption.get(), chatMetamobOption.get(), chatCoordsOption.get()}},
         {"Calendrier", {calendarKraloveOption.get()}},
         {"Métiers", {extra(RecipeCardRow), extra(ItemSearchRow), extra(CraftListRow)}},
-        {"Succès", {extra(BossAchievementsRow)}},
+        {"Succès", {extra(BossAchievementsRow), extra(CombatAchievementsRow)}},
         {"Performances", {extra(PerfOverlayRow), extra(PerfGpuRow), extra(PerfDiskRow), extra(PerfDragRow), extra(PerfButtonRow)}},
         {"Statistiques", {statsOption.get(), statsOpenOption.get(), statsButtonOption.get()}},
         // 1.20.2: the relogin after an inactivity disconnection.

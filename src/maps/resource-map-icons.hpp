@@ -17,6 +17,8 @@ inline int RepresentativeResourceIcon(std::span<const Resource> catalog, int job
 // inventory objects or unmanaged completion callbacks are created.
 void InstallIcons();
 managed::Obj ItemIconAddress(int iconId);
+// typeField: the static field of rz holding the entry type of that kind of image.
+managed::Obj IconAddress(void* typeField, int iconId);
 void LoadItemIcon(managed::Obj element, int iconId);
 void LoadJobIcon(managed::Obj element, int jobId);
 }

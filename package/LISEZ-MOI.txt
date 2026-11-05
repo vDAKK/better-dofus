@@ -10,9 +10,15 @@ all game rights belong to Ankama. I do not know whether using this mod is
 allowed by Ankama's terms: a ban cannot be completely ruled out. Use it at
 your own risk; the software is provided "as is", without any warranty.
 
-BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.7.0
+BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.8.0
 
 INSTALLATION : double-clique sur BetterDofusLoader.exe, puis lance Dofus.
+
+VERSION 2.8.0 : LES SUCCÈS EN COMBAT, AUX CARTES DU JEU
+- La fenêtre des succès reprend les cartes de la fenêtre du jeu, avec leur icône.
+- Au début d’un combat, elle montre les succès des monstres adverses qu’il reste à
+  faire, et se ferme avec le combat. Réglage : Succès, dans les options du mod.
+- Les succès que le jeu masque à ce personnage n’apparaissent plus.
 
 VERSION 2.7.0 : LES SUCCÈS DE TOUS LES MONSTRES, CEUX DU PERSONNAGE
 - Le clic droit propose les succès de tout groupe dont les monstres en ont, plus

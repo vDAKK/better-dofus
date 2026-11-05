@@ -4,11 +4,14 @@
 #include "ui/native-style.hpp"
 #include "ui/tools-ui.hpp"
 #include "core/module.hpp"
+#include "maps/resource-map-icons.hpp"
+#include "souls/soul-combat.hpp"
 #include "souls/soul-group-menu.hpp"
 #include "souls/soul-panel.hpp"
 #include <algorithm>
 #include <array>
 #include <optional>
+#include <set>
 
 namespace {
 using namespace managed;
@@ -20,9 +23,9 @@ constexpr const char* UiSpace = "UnityEngine.UIElements";
 constexpr const char* Key = "bossachievements";
 constexpr int IconFlag = 145, AlignRight = 5;
 constexpr float PointsWidth = 60;
-constexpr uint64_t RefreshMs = 2000;
+constexpr uint64_t RefreshMs = 2000, FightRetryMs = 1000;
 
-struct RowView { Ref line, name, points, description; };
+struct RowView { Ref line, card, name, points, description, icon; int shownIcon = 0; };
 struct State {
     Ref root, window, header, dragger, dependencies, cached, compositor, closeButton;
     Ref status, todoHead, todoBox, doneHead, doneBox;
@@ -39,6 +42,14 @@ struct MenuRow { Ref item, callback; Target target; bool armed = false; } row;
 Method achievementsRoot = nullptr, monstersRoot = nullptr, dungeonsRoot = nullptr, achievementById = nullptr, monsterById = nullptr, dungeonByMap = nullptr;
 Method isBoss = nullptr, monsterName = nullptr, achievementName = nullptr, achievementDescription = nullptr, finishedAccount = nullptr, finishedCharacter = nullptr;
 Method currentMap = nullptr, append = nullptr, unsubscribe = nullptr;
+Method categoryOf = nullptr, categoryVisible = nullptr, settingsOf = nullptr, cardAsset = nullptr, cloneTree = nullptr, doneClassOf = nullptr, loadIcon = nullptr;
+void* iconTypeField = nullptr;
+std::string doneClass;
+std::set<int> hiddenLogged;
+// The window as opened for a fight: only what is left, and closed with the fight.
+bool fightWindow = false, fightHandled = false;
+Ref fightSeen;
+uint64_t nextFightRead = 0;
 // fcv's handler of a finished achievement always adds it to the account's set, and to
 // the character's set only when it was achieved by the character in play.
 Klass serviceClass = nullptr;
@@ -78,6 +89,22 @@ Finished ReadFinished() {
     finished.known = count(account.get()) + count(finished.character.get()) > 0;
     return finished;
 }
+// As the game before it shows an achievement: its category's visibility for this
+// character (LobbyTab.SetMainInformations). When that cannot be read, it stays.
+bool Visible(Obj data, int id) {
+    try {
+        int category = api.Value<int>(api.Field(data, "categoryId"));
+        Ref wrapper(api.Invoke(categoryOf, nullptr, {&category}));
+        Ref provider(module->FindService("fkq"));
+        if (!wrapper.get() || !provider.get()) return true;
+        const bool visible = api.Value<bool>(api.Invoke(categoryVisible, wrapper.get(), {provider.get()}));
+        if (!visible && hiddenLogged.insert(id).second) Log("BOSS_ACHIEVEMENTS_HIDDEN id=" + std::to_string(id) + " category=" + std::to_string(category));
+        return visible;
+    } catch (const std::exception& error) {
+        if (hiddenLogged.insert(-id).second) Log(std::string("BOSS_ACHIEVEMENTS_VISIBILITY_ERROR ") + error.what());
+        return true;
+    }
+}
 bool Contains(Obj set, int id) { return set && api.Value<bool>(api.Call(set, "Contains", {&id})); }
 std::vector<Item> ReadItems(const std::vector<int>& ids, const Finished& finished) {
     std::vector<Item> items;
@@ -86,11 +113,12 @@ std::vector<Item> ReadItems(const std::vector<int>& ids, const Finished& finishe
     for (const int id : ids) {
         int64_t key = id;
         Ref data(api.Invoke(achievementById, root.get(), {&key}));
-        if (!data.get()) continue;
+        if (!data.get() || !Visible(data.get(), id)) continue;
         Item item;
         item.id = id;
         item.points = api.Value<int>(api.Field(data.get(), "points"));
         item.level = api.Value<int>(api.Field(data.get(), "level"));
+        item.icon = api.Value<int>(api.Field(data.get(), "iconId"));
         Ref name(api.Invoke(achievementName, data.get())), description(api.Invoke(achievementDescription, data.get()));
         item.name = name.get() ? api.String(name.get()) : "Succès " + std::to_string(id);
         item.description = description.get() ? Plain(api.String(description.get())) : "";
@@ -109,24 +137,29 @@ int HereMap() {
     const int64_t map = *static_cast<int64_t*>(api.FieldAddress(location.get(), "m_mapId"));
     return map > 0 && map <= INT32_MAX ? static_cast<int>(map) : 0;
 }
-// The monsters' achievements, then the dungeon's when this map is in the dungeon of a
-// boss of the group.
-std::optional<Target> FindTarget(Obj group) {
-    Ref root(api.Invoke(monstersRoot, nullptr));
-    if (!root.get()) return std::nullopt;
+// The group's monsters.
+std::vector<int> GroupMonsters(Obj group) {
     std::vector<Ref> monsters;
     monsters.emplace_back(api.Field(group, "dqyq"));
     Ref others(api.Field(group, "dqyr"));
     const int count = others.get() ? api.Value<int>(api.Call(others.get(), "get_Count")) : 0;
     if (count < 0 || count > 64) throw std::runtime_error("Boss achievements group bounds");
     for (int i = 0; i < count; ++i) monsters.emplace_back(api.Call(others.get(), "get_Item", {&i}));
+    std::vector<int> ids;
+    for (const auto& monster : monsters)
+        if (monster.get()) ids.push_back(*static_cast<int*>(api.FieldAddress(monster.get(), "dcgq")));
+    return ids;
+}
+// The monsters' achievements, then the dungeon's when this map is in the dungeon of a
+// boss among them.
+std::optional<Target> FromMonsters(const std::vector<int>& monsterIds) {
+    Ref root(api.Invoke(monstersRoot, nullptr));
+    if (!root.get()) return std::nullopt;
     Target target;
     std::vector<std::vector<int>> lists;
     std::vector<int> seen, bosses;
     std::vector<std::string> bossNames, otherNames;
-    for (const auto& monster : monsters) {
-        if (!monster.get()) continue;
-        int id = *static_cast<int*>(api.FieldAddress(monster.get(), "dcgq"));
+    for (int id : monsterIds) {
         if (std::find(seen.begin(), seen.end(), id) != seen.end()) continue;
         seen.push_back(id);
         Ref data(api.Invoke(monsterById, root.get(), {&id}));
@@ -159,14 +192,14 @@ std::optional<Target> FindTarget(Obj group) {
     target.ids = Merge(lists);
     bossNames.insert(bossNames.end(), otherNames.begin(), otherNames.end());
     target.boss = Title(bossNames);
-    if (target.ids.empty()) return std::nullopt;
+    if (target.ids.empty() || seen.empty()) return std::nullopt;
     Log("BOSS_ACHIEVEMENTS monster=" + std::to_string(seen.front()) + " bosses=" + std::to_string(bosses.size()) + " own=" + std::to_string(own) + " dungeon=" + std::to_string(fromDungeon) + " total=" + std::to_string(target.ids.size()));
     return target;
 }
 void Extend(Obj menu, Obj group) {
     row.armed = false;
     if (!Enabled()) return;
-    auto target = FindTarget(group);
+    auto target = FromMonsters(GroupMonsters(group));
     if (!target) return;
     const auto finished = ReadFinished();
     const auto sorted = Sort(ReadItems(target->ids, finished));
@@ -190,7 +223,7 @@ bool Clicked(Obj callback, Obj view) {
     try {
         if (!row.armed || !view || api.Call(view, "get_itemData") != row.item.get() || !Enabled()) return true;
         shown = row.target;
-        wanted = true; newTarget = true;
+        wanted = true; newTarget = true; fightWindow = false;
     } catch (const std::exception& error) { Log(std::string("BOSS_ACHIEVEMENTS_ERROR ") + error.what()); }
     return true;
 }
@@ -229,19 +262,50 @@ Obj Element(Obj parent) {
     Add(parent, element.get());
     return element.get();
 }
+Obj Named(Obj parent, const char* name, int depth = 0) {
+    if (!parent || depth > 12) return nullptr;
+    Ref hierarchy(api.Call(parent, "get_hierarchy"));
+    const int count = api.Value<int>(api.Call(hierarchy.get(), "get_childCount"));
+    for (int i = 0; i < count && i < 64; ++i) {
+        Ref child(api.Call(hierarchy.get(), "get_Item", {&i}));
+        if (api.String(api.Call(child.get(), "get_name")) == name) return child.get();
+        if (Obj found = Named(child.get(), name, depth + 1)) return found;
+    }
+    return nullptr;
+}
+// The game's own card of its achievements window; plain labels if it cannot be had.
+bool NativeCard(RowView& view) {
+    try {
+        Ref settings(api.Invoke(settingsOf, nullptr));
+        Ref asset(settings.get() ? api.Invoke(cardAsset, settings.get()) : nullptr);
+        if (!asset.get()) return false;
+        api.Invoke(cloneTree, asset.get(), {view.line.get()});
+        view.card.reset(Named(view.line.get(), "ctr_item"));
+        view.name.reset(Named(view.line.get(), "lbl_name"));
+        view.points.reset(Named(view.line.get(), "lbl_pointsAchievement"));
+        view.description.reset(Named(view.line.get(), "lbl_description"));
+        view.icon.reset(Named(view.line.get(), "tx_iconAchievement"));
+        if (view.card.get() && view.name.get() && view.points.get() && view.description.get()) return true;
+        Log("BOSS_ACHIEVEMENTS_CARD_ERROR template");
+    } catch (const std::exception& error) { Log(std::string("BOSS_ACHIEVEMENTS_CARD_ERROR ") + error.what()); }
+    return false;
+}
 RowView& RowAt(std::vector<RowView>& rows, Obj box, size_t index) {
     while (rows.size() <= index) {
         RowView view;
         view.line.reset(Element(box));
-        Pixels(view.line.get(), "marginBottom", 8);
-        Ref head(Element(view.line.get()));
-        Set<int>(head.get(), "flexDirection", 2);
-        view.name.reset(Label(head.get(), "", nativeStyle::Strong));
-        Set<float>(view.name.get(), "flexGrow", 1.f); Set<float>(view.name.get(), "flexShrink", 1.f);
-        view.points.reset(Label(head.get(), "", nativeStyle::Secondary));
-        Pixels(view.points.get(), "width", PointsWidth); Set<float>(view.points.get(), "flexShrink", 0.f);
-        Set<int>(view.points.get(), "unityTextAlign", AlignRight);
-        view.description.reset(Label(view.line.get(), "", nativeStyle::Secondary));
+        Pixels(view.line.get(), "marginBottom", 6);
+        if (!NativeCard(view)) {
+            view.card.reset();
+            Ref head(Element(view.line.get()));
+            Set<int>(head.get(), "flexDirection", 2);
+            view.name.reset(Label(head.get(), "", nativeStyle::Strong));
+            Set<float>(view.name.get(), "flexGrow", 1.f); Set<float>(view.name.get(), "flexShrink", 1.f);
+            view.points.reset(Label(head.get(), "", nativeStyle::Secondary));
+            Pixels(view.points.get(), "width", PointsWidth); Set<float>(view.points.get(), "flexShrink", 0.f);
+            Set<int>(view.points.get(), "unityTextAlign", AlignRight);
+            view.description.reset(Label(view.line.get(), "", nativeStyle::Secondary));
+        }
         rows.push_back(std::move(view));
     }
     return rows[index];
@@ -251,16 +315,29 @@ void Fill(std::vector<RowView>& rows, Obj box, const std::vector<Item>& items, b
         auto& view = RowAt(rows, box, i);
         Show(view.line.get(), true);
         Text(view.name.get(), items[i].name);
-        nativeStyle::Tone(view.name.get(), done, false);
-        Text(view.points.get(), std::to_string(items[i].points) + " pts");
         Text(view.description.get(), items[i].description);
-        Show(view.description.get(), !items[i].description.empty());
+        if (view.card.get()) {
+            Text(view.points.get(), std::to_string(items[i].points));
+            Text(view.description.get(), items[i].description, "set_tooltip");
+            if (!doneClass.empty()) nativeStyle::Toggle(view.card.get(), doneClass.c_str(), done);
+            if (view.icon.get() && iconTypeField && items[i].icon > 0 && view.shownIcon != items[i].icon) {
+                view.shownIcon = items[i].icon;
+                Ref address(resourceMap::IconAddress(iconTypeField, items[i].icon));
+                bool yes = true;
+                api.Invoke(loadIcon, nullptr, {view.icon.get(), api.object_unbox(address.get()), nullptr, nullptr, nullptr, &yes, &yes});
+            }
+        } else {
+            nativeStyle::Tone(view.name.get(), done, false);
+            Text(view.points.get(), std::to_string(items[i].points) + " pts");
+            Show(view.description.get(), !items[i].description.empty());
+        }
     }
     for (size_t i = items.size(); i < rows.size(); ++i) Show(rows[i].line.get(), false);
 }
 void Refresh() {
     const auto finished = ReadFinished();
-    const auto sorted = Sort(ReadItems(shown.ids, finished));
+    auto sorted = Sort(ReadItems(shown.ids, finished));
+    if (fightWindow) sorted.done.clear();
     Text(state.window.get(), "Succès : " + shown.boss, "set_headerTitle");
     Text(state.todoHead.get(), "À faire (" + std::to_string(sorted.todo.size()) + ")");
     Text(state.doneHead.get(), "Déjà faits (" + std::to_string(sorted.done.size()) + ")");
@@ -347,6 +424,32 @@ void Create(Obj root) {
     Add(root, state.window.get());
     Log("BOSS_ACHIEVEMENTS_OPEN items=" + std::to_string(shown.ids.size()));
 }
+// Once per fight: when its monsters have achievements left, the window shows them.
+void WatchFight() {
+    if (!module->InCombat()) {
+        if (fightWindow && wanted) wanted = false;
+        fightWindow = false; fightHandled = false; fightSeen.reset();
+        return;
+    }
+    if (!module->settings.combatAchievements) return;
+    const auto now = GetTickCount64();
+    if (now < nextFightRead) return;
+    nextFightRead = now + FightRetryMs;
+    const auto enemies = soul::ReadEnemyMonsters(module->fight.get());
+    if (!enemies.context) return;
+    if (fightSeen.get() != enemies.context) { fightSeen.reset(enemies.context); fightHandled = false; }
+    if (fightHandled || enemies.ids.empty()) return;
+    fightHandled = true;
+    auto target = FromMonsters(enemies.ids);
+    if (!target) return;
+    const auto finished = ReadFinished();
+    if (!finished.known) return;
+    const auto sorted = Sort(ReadItems(target->ids, finished));
+    if (sorted.todo.empty()) return;
+    shown = std::move(*target);
+    wanted = true; newTarget = true; fightWindow = true;
+    Log("BOSS_ACHIEVEMENTS_FIGHT todo=" + std::to_string(sorted.todo.size()));
+}
 }
 
 void InstallBossAchievements() {
@@ -357,7 +460,23 @@ void InstallBossAchievements() {
         dungeonsRoot = api.FindVerified(data, "get_dungeonsDataRoot", 0, 0x7B3610);
         achievementById = api.FindVerified(api.Class(DataImage, QuestSpace, "AchievementsDataRoot"), "GetAchievementById", 1, 0x7AEF30);
         const auto achievement = api.Class(DataImage, QuestSpace, "AchievementData");
-        Field(achievement, "points", 36); Field(achievement, "level", 40);
+        Field(achievement, "points", 36); Field(achievement, "level", 40); Field(achievement, "categoryId", 24); Field(achievement, "iconId", 32);
+        const auto category = api.Class("Core.dll", "", "nz");
+        categoryOf = api.FindVerified(category, "ova", 1, 0x2D09FB0);
+        categoryVisible = api.FindVerified(category, "ovb", 1, 0x2D0A0D0);
+        const auto settings = api.Class("Core.dll", "Core.UILogic.Components", "DofusUISettings");
+        settingsOf = api.FindVerified(settings, "GetSettings", 0, 0x1591A70);
+        cardAsset = api.FindVerified(settings, "get_achievementItem", 0, 0x1592E50);
+        cloneTree = api.FindVerified(api.Class(Ui, UiSpace, "VisualTreeAsset"), "CloneTree", 1, 0x5643780);
+        loadIcon = api.FindVerified(api.Class("Core.dll", "", "pq"), "paw", 7, 0x2E547E0);
+        resourceMap::InstallIcons();
+        iconTypeField = api.class_get_field_from_name(api.Class("Core.dll", "", "rz"), "deuy");
+        if (!iconTypeField || api.field_get_offset(iconTypeField) != 800) throw std::runtime_error("Achievement icon catalog layout");
+        // The card's class of a finished achievement (AchievementItem.Init). Without it,
+        // the section's title still says so.
+        try {
+            doneClassOf = api.FindVerified(api.Class("Core.dll", "<PrivateImplementationDetails>{CB22598B-AE9F-4989-A466-01138C0A3A23}", "a"), "nvp", 0, 0x242AA10);
+        } catch (const std::exception& error) { Log(std::string("BOSS_ACHIEVEMENTS_DONE_CLASS ") + error.what()); }
         achievementName = api.FindVerified(achievement, "get_name", 0, 0x7AE6F0);
         achievementDescription = api.FindVerified(achievement, "get_description", 0, 0x7AE770);
         monsterById = api.FindVerified(api.Class(DataImage, "Core.DataCenter.Metadata.Monster", "MonstersDataRoot"), "GetMonsterById", 1, 0x7DF5F0);
@@ -387,7 +506,7 @@ void InstallBossAchievements() {
 }
 
 void RestoreBossAchievements() {
-    wanted = false; newTarget = false; row.armed = false;
+    wanted = false; newTarget = false; row.armed = false; fightWindow = false;
     if (!state.window.get()) { state = State{}; return; }
     state.cleanup = true;
     try {
@@ -425,6 +544,13 @@ void CloseBossAchievementsOffWorld() { if (installed && (wanted || state.window.
 
 void TickBossAchievements() {
     if (!installed) return;
+    if (Enabled()) {
+        try {
+            if (doneClass.empty() && doneClassOf) { Ref name(api.Invoke(doneClassOf, nullptr)); doneClassOf = nullptr; if (name.get()) doneClass = api.String(name.get()); }
+            WatchFight();
+        }
+        catch (const std::exception& error) { Log(std::string("BOSS_ACHIEVEMENTS_FIGHT_ERROR ") + error.what()); }
+    }
     if (!wanted || !Session() || state.cleanup || (state.window.get() && !Current())) {
         if (wanted || state.window.get() || state.cleanup) RestoreBossAchievements();
         return;

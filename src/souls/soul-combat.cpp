@@ -125,6 +125,34 @@ void ResetCombat() {
     Advance();
 }
 
+EnemyMonsters ReadEnemyMonsters(Obj fight) {
+    EnemyMonsters result;
+    if (!state.installed || !Is(fight, "fxc") || !api.Value<bool>(api.Invoke(methods.inCombat, fight))) return result;
+    Ref context(Read<Obj>(fight, 0x18));
+    if (!Is(context.get(), "fyb")) return result;
+    result.context = context.get();
+    Ref character(Read<Obj>(context.get(), 0xF0)), entities(Read<Obj>(context.get(), 0x58));
+    if (!Is(character.get(), "esg") || !Is(entities.get(), "evv")) return result;
+    int64_t localId = api.Value<int64_t>(api.Invoke(methods.localId, character.get()));
+    Obj found = nullptr;
+    if (!localId || !api.Value<bool>(api.Invoke(methods.findEntity, entities.get(), {&localId, &found})) || !found) return result;
+    Ref local(found);
+    int8_t localTeam = -1;
+    if (!Is(local.get(), "EntityInfo") || !Team(local.get(), localTeam)) return result;
+    Ref list(api.Invoke(methods.entities, entities.get()));
+    const int count = list.get() ? api.Value<int>(api.Call(list.get(), "get_Count")) : 0;
+    if (count < 0 || count > 512) return result;
+    for (int i = 0; i < count; ++i) {
+        Ref entity(api.Call(list.get(), "get_Item", {&i}));
+        if (!Is(entity.get(), "EntityInfo") || !Flag(entity.get(), 1) || Summon(entity.get()) || !Flag(entity.get(), 8)) continue;
+        int8_t team = -1;
+        int monsterId = 0;
+        if (!Team(entity.get(), team) || team == localTeam || !Integer(entity.get(), 11, monsterId) || monsterId <= 0) continue;
+        if (std::find(result.ids.begin(), result.ids.end(), monsterId) == result.ids.end()) result.ids.push_back(monsterId);
+    }
+    return result;
+}
+
 CombatSnapshot ReadCombat(Obj fight, Obj cached) {
     if (state.fight.get() != fight || state.cached.get() != cached) {
         state.fight.reset(fight);
