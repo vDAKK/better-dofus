@@ -29,7 +29,7 @@ add_library(BetterDofus SHARED
   src/treasure/treasure-hunt.cpp
   src/ui/tools-ui.cpp src/notebook/notebook-data.cpp src/notebook/notebook-panel.cpp
   src/notebook/notebook-native.cpp src/ui/native-click.cpp
-  src/jobs/jobs-xp-data.cpp src/jobs/jobs-xp-http.cpp src/jobs/jobs-xp-panel.cpp src/jobs/recipe-native.cpp src/jobs/recipe-card.cpp
+  src/jobs/jobs-xp-data.cpp src/jobs/jobs-xp-http.cpp src/jobs/jobs-xp-panel.cpp src/jobs/recipe-native.cpp src/jobs/recipe-card.cpp src/ui/native-text.cpp
   src/appearance/startup-options.cpp
   src/souls/soul-helper.cpp src/souls/soul-combat.cpp src/souls/soul-inventory.cpp src/souls/soul-panel.cpp
   src/souls/soul-widget.cpp src/maps/map-transitions.cpp src/maps/map-preload.cpp

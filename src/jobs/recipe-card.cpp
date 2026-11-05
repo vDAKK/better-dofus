@@ -3,7 +3,10 @@
 #include "jobs/recipe-native.hpp"
 #include "core/module.hpp"
 #include "souls/soul-panel.hpp"
+#include "ui/native-text.hpp"
+#include <algorithm>
 #include <array>
+#include <vector>
 
 namespace {
 using namespace managed;
@@ -21,6 +24,9 @@ std::array<MessageFn, 4> originalMessage{};
 BuilderFn originalSetup = nullptr, originalPrices = nullptr;
 Method tooltipFactory = nullptr, createItem = nullptr;
 Klass tooltipServiceClass = nullptr;
+// The tooltips opened as a recipe card, by their information; the game's own pinned
+// tooltips stay as they are.
+std::vector<Ref> cardInfos;
 bool reported = false;
 
 void Report(const char* where, const std::exception& error) {
@@ -46,11 +52,12 @@ void Pixels(Obj element, const char* property, float value) {
 void Text(Obj element, const std::string& text, const char* setter = "set_text") {
     Ref value(api.string_new(text.c_str())); api.Call(element, setter, {value.get()});
 }
-Obj Label(Obj parent, const std::string& text) {
+Obj Label(Obj parent, const std::string& text, Obj model) {
     Ref label(api.New(api.Class("Core.dll", "Core.UILogic.Components", "DofusLabel")));
     bool multiline = false; api.Call(label.get(), "set_isSingleLine", {&multiline});
     Set<int>(label.get(), "whiteSpace", 0);
     Text(label.get(), text); api.Call(parent, "Add", {label.get()});
+    nativeText::Follow(label.get(), model);
     return label.get();
 }
 Obj Element(Obj parent) {
@@ -78,36 +85,67 @@ void Icon(Obj parent, int id, int quantity) {
         api.Call(parent, "Add", {slot.get()});
     } catch (const std::exception& error) { Report("icon", error); }
 }
-std::string StockText(const recipeNative::Stock& stock) {
-    if (!stock.bagKnown) return "";
-    return "sac " + std::to_string(stock.bag) + (stock.bankKnown ? ", banque " + std::to_string(stock.bank) : "");
+constexpr float StockWidth = 54, PriceWidth = 78;
+constexpr int AlignRight = 5; // TextAnchor.MiddleRight
+Obj Row(Obj parent) {
+    Ref row(Element(parent));
+    Set<int>(row.get(), "flexDirection", 2); Set<int>(row.get(), "alignItems", 2);
+    return row.get();
 }
-// The block of a pinned tooltip. Its parent is emptied by the tooltip's own
-// ClearElements each time it is set up, so nothing here needs a cleanup.
+Obj Column(Obj row, const std::string& text, float width, Obj model) {
+    Ref label(Label(row, text, model));
+    Pixels(label.get(), "width", width); Set<float>(label.get(), "flexShrink", 0.f);
+    Set<int>(label.get(), "unityTextAlign", AlignRight);
+    return label.get();
+}
+bool IsCard(Obj builder) {
+    Ref info(api.Field(builder, "m_tooltipInfos"));
+    return std::any_of(cardInfos.begin(), cardInfos.end(), [&](const Ref& card) { return card.get() == info.get(); });
+}
+void Hide(Obj element) { if (element) Set<int>(element, "display", 1); }
+// The block of a recipe card: a table of the ingredients, then the total. Everything
+// that is not the recipe goes: the card answers « what does it take ». The parent is
+// emptied by the tooltip's own ClearElements each time it is set up.
 void AddRecipeBlock(Obj builder, const recipeNative::Recipe& recipe) {
     Ref binding(api.Field(builder, "m_binding"));
     Ref blocks(api.Call(binding.get(), "get_ctr_tooltipBlocks"));
+    Ref model(api.Call(binding.get(), "get_lbl_generalCaptionWeight"));
+    Ref hierarchy(api.Call(blocks.get(), "get_hierarchy"));
+    const int count = api.Value<int>(api.Call(hierarchy.get(), "get_childCount"));
+    for (int i = 0; i < count && i < 64; ++i) { Ref child(api.Call(hierarchy.get(), "get_Item", {&i})); Hide(child.get()); }
+    Ref weight(api.Call(binding.get(), "get_dataSection_weight")), description(api.Call(binding.get(), "get_ctr_tooltipDescription"));
+    Hide(weight.get()); Hide(description.get());
     Ref block(Element(blocks.get()));
-    for (const char* side : {"paddingLeft", "paddingRight", "paddingTop", "paddingBottom"}) Pixels(block.get(), side, 8);
-    Ref title(Label(block.get(), "Recette · niveau " + std::to_string(recipe.level)));
-    Set<int>(title.get(), "unityFontStyleAndWeight", 1); Pixels(title.get(), "marginBottom", 6);
+    for (const char* side : {"paddingLeft", "paddingRight"}) Pixels(block.get(), side, 10);
+    for (const char* side : {"paddingTop", "paddingBottom"}) Pixels(block.get(), side, 6);
+    Ref head(Row(block.get()));
+    Pixels(head.get(), "marginBottom", 4);
+    Ref title(Label(head.get(), "Recette", model.get()));
+    Set<float>(title.get(), "flexGrow", 1.f); Set<float>(title.get(), "opacity", .7f);
+    Ref stockTitle(Column(head.get(), "Stock", StockWidth, model.get())); Set<float>(stockTitle.get(), "opacity", .7f);
+    Ref priceTitle(Column(head.get(), "Prix", PriceWidth, model.get())); Set<float>(priceTitle.get(), "opacity", .7f);
     std::vector<recipeCost::Line> lines;
     for (const auto& ingredient : recipe.ingredients) {
         const auto price = recipeNative::AveragePrice(ingredient.id);
         lines.push_back({ingredient.quantity, price});
-        Ref row(Element(block.get()));
-        Set<int>(row.get(), "flexDirection", 2); Set<int>(row.get(), "alignItems", 2); Pixels(row.get(), "marginBottom", 3);
+        Ref row(Row(block.get()));
+        Pixels(row.get(), "marginBottom", 2);
         Icon(row.get(), ingredient.id, ingredient.quantity);
-        const auto stock = StockText(recipeNative::Owned(ingredient.id));
-        Ref name(Label(row.get(), std::to_string(ingredient.quantity) + " × " + ingredient.name + (stock.empty() ? "" : " (" + stock + ")")));
+        Ref name(Label(row.get(), ingredient.name, model.get()));
         Set<float>(name.get(), "flexGrow", 1.f); Set<float>(name.get(), "flexShrink", 1.f);
-        Ref cost(Label(row.get(), price > 0 ? recipeCost::Kamas(price * ingredient.quantity) : "—"));
-        Set<float>(cost.get(), "flexShrink", 0.f); Pixels(cost.get(), "marginLeft", 8);
+        const auto stock = recipeNative::Owned(ingredient.id);
+        const auto owned = stock.bag + stock.bank;
+        Ref have(Column(row.get(), stock.bagKnown ? std::to_string(owned) + "/" + std::to_string(ingredient.quantity) : "—", StockWidth, model.get()));
+        if (stock.bagKnown) Text(have.get(), "Sac " + std::to_string(stock.bag) + (stock.bankKnown ? ", banque " + std::to_string(stock.bank) : ", banque non lue"), "set_tooltip");
+        Column(row.get(), price > 0 ? recipeCost::Kamas(price * ingredient.quantity) : "—", PriceWidth, model.get());
     }
     const auto total = recipeCost::Sum(lines);
-    Ref sum(Label(block.get(), "Prix moyen du craft : " + recipeCost::Kamas(total.cost) +
-        (total.unpriced ? " (sans " + std::to_string(total.unpriced) + " ingrédient(s) sans prix)" : "")));
-    Set<int>(sum.get(), "unityFontStyleAndWeight", 1); Pixels(sum.get(), "marginTop", 6);
+    Ref sum(Row(block.get()));
+    Pixels(sum.get(), "marginTop", 4);
+    Ref sumName(Label(sum.get(), total.unpriced ? "Total (" + std::to_string(total.unpriced) + " sans prix)" : "Total", model.get()));
+    Set<float>(sumName.get(), "flexGrow", 1.f); Set<int>(sumName.get(), "unityFontStyleAndWeight", 1);
+    Ref sumValue(Column(sum.get(), recipeCost::Kamas(total.cost), PriceWidth + StockWidth, model.get()));
+    Set<int>(sumValue.get(), "unityFontStyleAndWeight", 1);
 }
 template <size_t Index> void MessageHook(Obj self, Obj message, Method method);
 bool OpenCard(Obj message) {
@@ -124,6 +162,8 @@ bool OpenCard(Obj message) {
         // As ItemTooltipBuilder.CreatePinnedTooltip: the same information, pinned.
         const auto infoClass = api.Class("Core.dll", "Core.UILogic.Components.Tooltips.Builder.Infos", "ItemTooltipInformation");
         Ref info(api.New(infoClass, {item.get()}));
+        if (cardInfos.size() >= 16) cardInfos.erase(cardInfos.begin());
+        cardInfos.emplace_back(info.get());
         bool yes = true, no = false;
         api.Call(info.get(), "set_pinned", {&yes}); api.Call(info.get(), "set_pinnable", {&no});
         *static_cast<bool*>(api.FieldAddress(info.get(), "effects")) = true;
@@ -146,21 +186,21 @@ void SetupHook(Obj builder, Method method) {
     originalSetup(builder, method);
     if (!Enabled()) return;
     try {
-        if (!api.Value<bool>(api.Call(builder, "get_isPinned"))) return;
+        if (!IsCard(builder)) return;
         Ref wrapper(api.Call(builder, "get_itemWrapper"));
         const int id = wrapper.get() ? ItemId(wrapper.get()) : 0;
         if (const auto recipe = id ? recipeNative::Find(id) : std::nullopt) AddRecipeBlock(builder, *recipe);
     } catch (const std::exception& error) { Report("block", error); }
 }
 // The line stays with the tooltip's reused binding: found again by its name.
-Obj PriceLine(Obj parent) {
+Obj PriceLine(Obj parent, Obj model) {
     Ref hierarchy(api.Call(parent, "get_hierarchy"));
     const int count = api.Value<int>(api.Call(hierarchy.get(), "get_childCount"));
     for (int i = 0; i < count && i < 64; ++i) {
         Ref child(api.Call(hierarchy.get(), "get_Item", {&i}));
         if (api.String(api.Call(child.get(), "get_name")) == PriceLineName) return child.get();
     }
-    Ref line(Label(parent, ""));
+    Ref line(Label(parent, "", model));
     Text(line.get(), PriceLineName, "set_name");
     return line.get();
 }
@@ -178,9 +218,11 @@ void PricesHook(Obj builder, Method method) {
         std::vector<recipeCost::Line> lines;
         if (recipe) for (const auto& ingredient : recipe->ingredients) lines.push_back({ingredient.quantity, recipeNative::AveragePrice(ingredient.id)});
         const auto total = recipeCost::Sum(lines);
-        Ref line(PriceLine(parent.get()));
-        Set<int>(line.get(), "display", total.cost > 0 ? 0 : 1);
-        if (total.cost > 0) Text(line.get(), "Prix moyen du craft : " + recipeCost::Kamas(total.cost) + (total.unpriced ? " (incomplet)" : ""));
+        Ref model(api.Call(binding.get(), "get_lbl_generalCaptionWeight"));
+        Ref line(PriceLine(parent.get(), model.get()));
+        const bool show = total.cost > 0 && !IsCard(builder); // A card has its total already.
+        Set<int>(line.get(), "display", show ? 0 : 1);
+        if (show) Text(line.get(), "Prix moyen du craft : " + recipeCost::Kamas(total.cost) + (total.unpriced ? " (incomplet)" : ""));
     } catch (const std::exception& error) { Report("price", error); }
 }
 template <size_t... I> void HookMessages(std::index_sequence<I...>) {
@@ -196,7 +238,6 @@ void InstallRecipeCard() {
         const auto builder = api.Class("Core.dll", Builders, "ItemTooltipBuilder");
         tooltipFactory = api.FindVerified(builder, "CreateItemTooltip", 4, 0x1609DE0);
         api.FindVerified(builder, "get_itemWrapper", 0, 0x1611A30);
-        api.FindVerified(builder, "get_isPinned", 0, 0x3965650);
         const auto info = api.Class("Core.dll", "Core.UILogic.Components.Tooltips.Builder.Infos", "ItemTooltipInformation");
         api.FindVerified(info, ".ctor", 1, 0x164CB30);
         api.FindVerified(info, "set_pinned", 1, 0xBED620);
@@ -205,6 +246,12 @@ void InstallRecipeCard() {
         if (!effects || api.field_get_offset(effects) != 24) throw std::runtime_error("Tooltip information layout");
         const auto binding = api.Class("Core.dll", "Core.UILogic.Bindings", "ItemTooltipBinding");
         api.FindVerified(binding, "get_ctr_tooltipBlocks", 0, 0x2F121C0);
+        api.FindVerified(binding, "get_dataSection_weight", 0, 0x2F13000);
+        api.FindVerified(binding, "get_lbl_generalCaptionWeight", 0, 0x2F14AB0);
+        api.FindVerified(binding, "get_ctr_tooltipDescription", 0, 0x2F12280);
+        const auto resolved = api.Class(Ui, UiSpace, "ResolvedStyleAccess");
+        api.FindVerified(resolved, "get_color", 0, 0x559EB90);
+        api.FindVerified(resolved, "get_fontSize", 0, 0x559ED40);
         api.FindVerified(binding, "get_dataSection_price", 0, 0x2F12DC0);
         const auto item = api.Class("Core.dll", "", "mc");
         createItem = api.FindVerified(item, "ohc", 5, 0x2A6BF80);

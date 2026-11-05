@@ -10,9 +10,15 @@ all game rights belong to Ankama. I do not know whether using this mod is
 allowed by Ankama's terms: a ban cannot be completely ruled out. Use it at
 your own risk; the software is provided "as is", without any warranty.
 
-BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.2.0
+BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.2.1
 
 INSTALLATION : double-clique sur BetterDofusLoader.exe, puis lance Dofus.
+
+VERSION 2.2.1 : TEXTES LISIBLES, FICHE DE RECETTE COMPACTE
+- Les textes de l’onglet XP et de la fiche de recette étaient presque noirs : ils
+  prennent maintenant la couleur et la taille des textes du jeu, selon le thème.
+- La fiche de recette devient un petit tableau, ingrédient, stock et prix, avec le
+  total. Les effets, le poids et la description de l’objet n’y figurent plus.
 
 VERSION 2.2.0 : RECETTES EN INFOBULLE, PRIX DU CRAFT, LISTE DE COURSES
 - Fiche de recette : ouvrir la recette d’un objet affiche l’infobulle du jeu,
