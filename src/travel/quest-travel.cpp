@@ -35,7 +35,11 @@ std::optional<ChatTpTarget> Target(Obj objective) {
     const int64_t map = api.Value<int>(api.Field(objective, "mapId"));
     if (map > 0) if (auto target = OfMap(map)) return target;
     Ref coords(api.Field(objective, "coords"));
-    if (!coords.get() || !api.Value<bool>(api.Call(coords.get(), "get_isValid"))) return std::nullopt;
+    if (!coords.get()) return std::nullopt;
+    // The class of this field is not found by its name: its layout is checked on the value.
+    const auto coordsClass = api.object_get_class(coords.get());
+    Field(coordsClass, "x", 16); Field(coordsClass, "y", 20);
+    if (!api.Value<bool>(api.Call(coords.get(), "get_isValid"))) return std::nullopt;
     Ref character(module->FindService("fng"));
     if (!character.get()) return std::nullopt;
     if (api.object_get_class(character.get()) != api.Class("Core.dll", "", "esg")) return std::nullopt;
@@ -46,19 +50,21 @@ std::optional<ChatTpTarget> Target(Obj objective) {
     if (!current) return std::nullopt;
     return ChatTpTarget{api.Value<int>(api.Field(coords.get(), "x")), api.Value<int>(api.Field(coords.get(), "y")), current->world};
 }
-void AppendRow(Obj menu, ChatTpTarget target) {
-    const std::string text = "Voyager jusqu’à l’objectif [" + std::to_string(target.x) + "," + std::to_string(target.y) + "]";
+// Without a position the row stays, disabled: it says why there is no trip.
+void AppendRow(Obj menu, const std::optional<ChatTpTarget>& target) {
+    const std::string text = target ? "Voyager jusqu’à l’objectif [" + std::to_string(target->x) + "," + std::to_string(target->y) + "]" : "Voyager : position non indiquée par le jeu";
     Ref rows(api.Call(menu, "get_menuItems"));
     const int index = api.Value<int>(api.Call(rows.get(), "get_Count"));
     Ref label(api.string_new(text.c_str())), help(api.string_new("Lance le trajet du mod vers la position de cet objectif.")), empty(api.string_new(""));
     Ref asset(api.object_new(api.class_from_type(api.method_get_param(append, 7))));
     Ref color(api.object_new(api.class_from_type(api.method_get_param(append, 10))));
-    bool disabled = false, close = true; unsigned delay = 1000; int style = 1, icon = IconZaap;
+    bool disabled = !target, close = true; unsigned delay = 1000; int style = 1, icon = IconZaap;
     api.Invoke(append, menu, {label.get(), nullptr, &disabled, &close, help.get(), &delay, empty.get(),
         api.object_unbox(asset.get()), &style, &icon, api.object_unbox(color.get()), empty.get(), empty.get()});
     row.item.reset(api.Call(rows.get(), "get_Item", {const_cast<int*>(&index)}));
     row.callback.reset(api.Call(row.item.get(), "get_m_callback"));
-    row.target = target; row.armed = row.callback.get() != nullptr;
+    if (target) row.target = *target;
+    row.armed = target && row.callback.get();
 }
 void BuilderHook(Obj self, Obj objective, Obj event, Method method) {
     originalBuilder(self, objective, event, method);
@@ -67,7 +73,11 @@ void BuilderHook(Obj self, Obj objective, Obj event, Method method) {
     try {
         const auto target = Target(objective);
         Ref menu(api.Call(event, "get_menu"));
-        if (target && menu.get()) AppendRow(menu.get(), *target);
+        if (menu.get()) AppendRow(menu.get(), target);
+        // What the game's data gives each objective: many get their flag from the server.
+        Ref coords(api.Field(objective, "coords"));
+        Log("QUEST_TRAVEL_OBJECTIVE id=" + std::to_string(api.Value<int>(api.Field(objective, "id"))) + " type=" + std::to_string(api.Value<int>(api.Field(objective, "typeId"))) +
+            " map=" + std::to_string(api.Value<int>(api.Field(objective, "mapId"))) + " coords=" + (coords.get() ? "1" : "0") + " target=" + (target ? "1" : "0"));
     } catch (const std::exception& error) { Log(std::string("QUEST_TRAVEL_MENU_ERROR ") + error.what()); }
 }
 bool NoPopulate(Obj, Obj) { return false; }
@@ -86,10 +96,7 @@ bool Clicked(Obj callback, Obj view) {
 void InstallQuestTravel() {
     try {
         const auto objective = api.Class(DataImage, "Core.DataCenter.Metadata.Quest", "QuestObjectiveData");
-        Field(objective, "coords", 40); Field(objective, "mapId", 48);
-        const auto coords = api.Class(DataImage, "", "SerializableNullVector2");
-        Field(coords, "x", 16); Field(coords, "y", 20);
-        api.FindVerified(coords, "get_isValid", 0, 0x7C2EA0);
+        Field(objective, "id", 16); Field(objective, "typeId", 24); Field(objective, "coords", 40); Field(objective, "mapId", 48);
         const auto info = api.Class(DataImage, WorldSpace, "MapInformationData");
         Field(info, "posX", 24); Field(info, "posY", 26);
         mapInfo = api.FindVerified(info, "GetMapInformationById", 1, 0x7BB050);
