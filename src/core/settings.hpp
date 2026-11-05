@@ -70,6 +70,9 @@ struct Settings {
     bool reloginGuard = true;
     // 2.2.0: an item's recipe in the game's pinned tooltip, and the craft's average price.
     bool recipeCard = true;
+    // 2.4.0: the trip from a quest's objective, the item search's top-bar button.
+    bool questTravel = true;
+    bool itemSearchButton = true;
     // Jauges (1.18.1) : la longueur et la place de chaque jauge à la verticale
     // choisies à la souris, une par bit de fqd+GaugesType (à l'index du bit).
     // length : en pixels de l'interface, 0 pour sa largeur à l'horizontale ;
@@ -261,4 +264,4 @@ inline constexpr bool Settings::* ExtraToggles[] = {
     &Settings::notebookPingButton, &Settings::notebookCopyButton, &Settings::notebookTravelButton, &Settings::mapAddPosition, &Settings::perfOverlay,
     &Settings::perfOverlayGpu, &Settings::perfOverlayDisk, &Settings::perfOverlayDrag, &Settings::perfOverlayButton,
     &Settings::notebookSendButtons, &Settings::gaugeVerticalMenu, &Settings::partyTravelButton, &Settings::customCursorGame,
-    &Settings::presetModWindows, &Settings::reloginGuard, &Settings::recipeCard};
+    &Settings::presetModWindows, &Settings::reloginGuard, &Settings::recipeCard, &Settings::questTravel, &Settings::itemSearchButton};

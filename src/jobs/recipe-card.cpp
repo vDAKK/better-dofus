@@ -132,10 +132,11 @@ void AddRecipeBlock(Obj builder, const recipeNative::Recipe& recipe) {
         Ref name(Label(row.get(), ingredient.name));
         Set<float>(name.get(), "flexGrow", 1.f); Set<float>(name.get(), "flexShrink", 1.f);
         const auto stock = recipeNative::Owned(ingredient.id);
-        const auto owned = stock.bag + stock.bank;
+        const auto owned = stock.Total();
         Ref have(Column(row.get(), stock.bagKnown ? std::to_string(owned) + "/" + std::to_string(ingredient.quantity) : "—", StockWidth));
         if (stock.bagKnown) nativeStyle::Tone(have.get(), owned >= ingredient.quantity, owned < ingredient.quantity);
-        if (stock.bagKnown) Text(have.get(), "Sac " + std::to_string(stock.bag) + (stock.bankKnown ? ", banque " + std::to_string(stock.bank) : ", banque non lue"), "set_tooltip");
+        if (stock.bagKnown) Text(have.get(), "Sac " + std::to_string(stock.bag) + (stock.bankKnown ? ", banque " + std::to_string(stock.bank) : ", banque non lue") +
+            (stock.havenBagKnown ? ", havre-sac " + std::to_string(stock.havenBag) : ""), "set_tooltip");
         Column(row.get(), price > 0 ? recipeCost::Kamas(price * ingredient.quantity) : "—", PriceWidth);
     }
     const auto total = recipeCost::Sum(lines);

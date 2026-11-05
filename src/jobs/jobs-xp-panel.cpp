@@ -230,11 +230,12 @@ void RenderIngredients(const jobsxp::Recipe& recipe,int count) {
         const int64_t total=static_cast<int64_t>(ingredient.quantity)*count;
         const bool available=BindItem(view,view.visual.get(),ingredient.id,total);
         const auto stock=recipeNative::Owned(ingredient.id);
-        const auto owned=stock.bag+stock.bank;
+        const auto owned=stock.Total();
         const auto missing=recipeCost::Missing(total,owned);
         std::string text=std::to_string(total)+" × "+ingredient.name+(available?"":" · objet indisponible dans cette version");
         if(stock.bagKnown){
-            text+="\nSac "+std::to_string(stock.bag)+(stock.bankKnown?" · Banque "+std::to_string(stock.bank):" · Banque non lue");
+            text+="\nSac "+std::to_string(stock.bag)+(stock.bankKnown?" · Banque "+std::to_string(stock.bank):" · Banque non lue")+
+                (stock.havenBagKnown?" · Havre-sac "+std::to_string(stock.havenBag):"");
             text+=missing?" · il en manque "+std::to_string(missing):" · tu as tout";
         }
         const auto price=recipeNative::AveragePrice(ingredient.id);

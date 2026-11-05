@@ -10,9 +10,18 @@ all game rights belong to Ankama. I do not know whether using this mod is
 allowed by Ankama's terms: a ban cannot be completely ruled out. Use it at
 your own risk; the software is provided "as is", without any warranty.
 
-BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.3.0
+BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.4.0
 
 INSTALLATION : double-clique sur BetterDofusLoader.exe, puis lance Dofus.
+
+VERSION 2.4.0 : RECHERCHE D’OBJETS, TRAJET DEPUIS LES QUÊTES, HAVRE-SAC
+- Recherche d’objets : un bouton de la barre du haut ouvre une fenêtre qui trouve
+  un objet par son nom, sans tenir compte des accents, et dit ce que le sac, la
+  banque et le havre-sac en contiennent. Elle parcourt le sac et la banque lue.
+- Trajet depuis les quêtes : le clic droit sur un objectif de la liste des quêtes
+  suivies propose le trajet du mod, quand le jeu donne sa position.
+- Le stock compte aussi le havre-sac pour les objets que tu as dans ton sac : la
+  fiche de recette et l’onglet XP l’additionnent au sac et à la banque.
 
 VERSION 2.3.0 : TOUTES LES FENÊTRES AUX STYLES DU JEU
 - Les textes de l’onglet XP, de la fiche de recette, des statistiques, du carnet,

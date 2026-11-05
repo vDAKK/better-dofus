@@ -1,5 +1,8 @@
 #include "jobs/recipe-native.hpp"
 #include "core/module.hpp"
+#include "ui/item-search-policy.hpp"
+#include <algorithm>
+#include <set>
 
 namespace recipeNative {
 namespace {
@@ -7,7 +10,8 @@ using namespace managed;
 constexpr const char* DataImage = "Ankama.Dofus.Core.DataCenter.dll";
 constexpr const char* JobSpace = "Core.DataCenter.Metadata.Job";
 Method recipesRoot = nullptr, recipeByResult = nullptr, itemById = nullptr, itemName = nullptr, averagePrice = nullptr;
-Method bagInventory = nullptr, quantityOf = nullptr, objectNumber = nullptr;
+Method bagInventory = nullptr, quantityOf = nullptr, objectNumber = nullptr, itemWithGid = nullptr, bankOf = nullptr, havenBagOf = nullptr, viewOf = nullptr, viewContent = nullptr;
+constexpr int ViewReal = 2, ViewBank = 10; // ViewsNames: the bag's whole content, the bank's.
 Klass priceClass = nullptr, inventoryClass = nullptr;
 bool installed = false;
 
@@ -55,6 +59,13 @@ void Install() {
     const auto inventory = api.Class("Core.dll", "Core.UILogic.Inventory", "Inventory");
     quantityOf = api.FindVerified(inventory, "GetItemsQuantityFromGid", 1, 0x2AAEF70);
     objectNumber = api.FindVerified(inventory, "get_objectNumber", 0, 0x2AB2140);
+    itemWithGid = api.FindVerified(inventory, "GetItemWithGid", 1, 0x2AAEE50);
+    viewOf = api.FindVerified(inventory, "GetView", 1, 0x2AAF170);
+    viewContent = api.FindVerified(api.Class("Core.dll", "Core.UILogic.Inventory.Views", "AbstractStorageView"), "get_content", 0, 0x2AAA950);
+    const auto places = api.Class("Core.dll", "", "lz");
+    bankOf = api.FindVerified(places, "odz", 0, 0x2A64B50);
+    havenBagOf = api.FindVerified(places, "oea", 0, 0x2A64B80);
+    api.FindVerified(api.Class("Core.dll", "", "mc"), "myq", 0, 0x744C80);
     installed = true;
 }
 
@@ -99,7 +110,47 @@ Stock Owned(int item) {
             stock.bank = Quantity(bank.get(), item);
             stock.bankKnown = true;
         }
+        // An item of the bag knows what the bank and the havenbag hold of it, as its
+        // tooltip shows, whether or not the bank has been opened.
+        Ref wrapper(bag.get() ? api.Invoke(itemWithGid, bag.get(), {&item}) : nullptr);
+        Ref places(wrapper.get() ? api.Call(wrapper.get(), "myq") : nullptr);
+        if (places.get()) {
+            stock.bank = std::max<int64_t>(stock.bank, api.Value<int>(api.Invoke(bankOf, places.get())));
+            stock.bankKnown = true;
+            stock.havenBag = api.Value<int>(api.Invoke(havenBagOf, places.get()));
+            stock.havenBagKnown = true;
+        }
     } catch (const std::exception&) {}
     return stock;
+}
+
+std::vector<Found> Search(const std::string& query) {
+    std::vector<Found> found;
+    if (!Session()) return found;
+    Obj service = Service("fmo", inventoryClass);
+    if (!service) return found;
+    std::set<int> seen;
+    const auto scan = [&](Obj inventory, int viewName) {
+        if (!inventory) return;
+        Ref view(api.Invoke(viewOf, inventory, {&viewName}));
+        Ref items(view.get() ? api.Invoke(viewContent, view.get()) : nullptr);
+        const int count = items.get() ? api.Value<int>(api.Call(items.get(), "get_Count")) : 0;
+        if (count < 0 || count > 20000) throw std::runtime_error("Inventory view bounds");
+        for (int i = 0; i < count; ++i) {
+            Ref item(api.Call(items.get(), "get_Item", {&i}));
+            Ref data(item.get() ? api.Call(item.get(), "myx") : nullptr);
+            if (!data.get()) continue;
+            const int id = api.Value<int>(api.Field(data.get(), "id"));
+            if (!id || !seen.insert(id).second) continue;
+            Ref name(api.Invoke(itemName, data.get()));
+            const auto text = name.get() ? api.String(name.get()) : std::string();
+            if (itemSearch::Matches(text, query)) found.push_back({id, text, Owned(id)});
+        }
+    };
+    Ref bag(api.Invoke(bagInventory, service)), bank(api.Field(service, "dtji"));
+    scan(bag.get(), ViewReal);
+    scan(bank.get(), ViewBank);
+    std::sort(found.begin(), found.end(), [](const Found& a, const Found& b) { return a.name < b.name; });
+    return found;
 }
 }

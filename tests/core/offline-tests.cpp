@@ -313,7 +313,7 @@ int main() {
             defaults.perfOverlayCorner == 0 && !defaults.perfOverlayGpu && !defaults.perfOverlayDisk && defaults.perfOverlayDrag &&
             defaults.perfOverlayX == -1 && defaults.perfOverlayY == -1 && Settings{} == defaults,
             "The 1.13.0 and 1.14.0 additions start shown, the performance overlay hidden (no part ticked) in the top left corner");
-        static_assert(std::size(ExtraToggles) == 18); // with 1.20.2's (the relogin guard), 1.16.0's (the notebook's copy and travel buttons, the overlay's top-bar button), 1.17.1's (the notebook's send buttons), 1.18.0's (the gauges' vertical row), 1.19.0's (the party members' travel button, « Curseurs du jeu aussi ») and 1.20.0's (the mod's windows in the saved layouts)
+        static_assert(std::size(ExtraToggles) == 20); // with 1.20.2's (the relogin guard), 1.16.0's (the notebook's copy and travel buttons, the overlay's top-bar button), 1.17.1's (the notebook's send buttons), 1.18.0's (the gauges' vertical row), 1.19.0's (the party members' travel button, « Curseurs du jeu aussi ») and 1.20.0's (the mod's windows in the saved layouts)
         for (unsigned mask = 0; mask < 256; ++mask) {
             auto extra = defaults;
             // Every combination of the first five, many times; the others follow inverted bits.

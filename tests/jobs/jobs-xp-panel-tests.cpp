@@ -377,6 +377,10 @@ int main(){
         Check(firstLabel.find(first>7?"il en manque "+std::to_string(first-7):"tu as tout")!=std::string::npos,"The ingredient says what is left to gather");
         Check(firstLabel.find(recipeCost::Kamas(100*first))!=std::string::npos,"The ingredient says what it costs");
         Check(Get(state.ingredients[1].label.get()).text.find("Banque")==std::string::npos,"An unknown stock says nothing");
+        recipeNative::fixtureStock={2,5,true,true,3,true};Render();
+        Check(Get(state.ingredients[1].label.get()).text.find("Sac 2 · Banque 5 · Havre-sac 3")!=std::string::npos,"The havenbag is counted and said");
+        {const auto need=int64_t(state.page.recipes[0].ingredients[1].quantity)*plan.count;
+         Check(Get(state.ingredients[1].label.get()).text.find(need>10?"il en manque "+std::to_string(need-10):"tu as tout")!=std::string::npos,"What is missing counts the bag, the bank and the havenbag");}
         recipeNative::fixtureStock={2,0,true,false};Render();
         Check(Get(state.ingredients[1].label.get()).text.find("Sac 2 · Banque non lue")!=std::string::npos,"An unread bank is not an empty bank");
         recipeNative::fixtureStock={};Render();
