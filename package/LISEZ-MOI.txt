@@ -10,9 +10,15 @@ all game rights belong to Ankama. I do not know whether using this mod is
 allowed by Ankama's terms: a ban cannot be completely ruled out. Use it at
 your own risk; the software is provided "as is", without any warranty.
 
-BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.10.0
+BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.10.1
 
 INSTALLATION : double-clique sur BetterDofusLoader.exe, puis lance Dofus.
+
+VERSION 2.10.1 : CORRECTIF IMPORTANT DE LA 2.10.0
+- La 2.10.0 demandait l’avancement des succès avec le mauvais message : elle envoyait
+  au serveur une demande de smiley portant le numéro du succès, à la place. Installe
+  cette version. Les coches et les icônes de combat fonctionnent avec le bon message.
+- Un clic sur une carte de succès ouvre ce succès dans la fenêtre du jeu.
 
 VERSION 2.10.0 : LES MONSTRES MANQUANTS DES SUCCÈS
 - La fenêtre et le survol listent les monstres de chaque succès, cochés une fois

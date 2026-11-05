@@ -26,7 +26,7 @@ constexpr int IconFlag = 145, AlignRight = 5;
 constexpr float PointsWidth = 60;
 constexpr uint64_t RefreshMs = 2000, FightRetryMs = 1000;
 
-struct RowView { Ref line, card, name, points, description, icon, objectivesBox; std::vector<Ref> objectives; int shownIcon = 0; };
+struct RowView { Ref line, card, name, points, description, icon, objectivesBox; std::vector<Ref> objectives; int shownIcon = 0, achievement = 0; bool clickable = false; };
 struct State {
     Ref root, window, header, dragger, dependencies, cached, compositor, closeButton;
     Ref status, todoHead, todoBox, doneHead, doneBox, showDone;
@@ -72,8 +72,11 @@ std::vector<int> toAsk;
 uint64_t nextAsk = 0;
 bool answersUnavailable = false;
 Ref detailsSender, detailsConnection;
-Method sendDetails = nullptr, answerOf = nullptr;
-Klass senderClass = nullptr, requestClass = nullptr;
+Method sendDetails = nullptr, answerOf = nullptr, linkCtor = nullptr, linkOpen = nullptr, createArray = nullptr, setArray = nullptr;
+Klass senderClass = nullptr, requestClass = nullptr, linkClass = nullptr;
+Ref stringType;
+struct NullableColor { bool hasValue = false; float r = 0, g = 0, b = 0, a = 0; };
+struct Vec2 { float x = 0, y = 0; };
 using AnswerFn = void (*)(Obj, Obj, Method);
 std::array<AnswerFn, 2> originalAnswer{};
 // fcv's handler of a finished achievement always adds it to the account's set, and to
@@ -193,15 +196,15 @@ void PumpQuestions() {
     const int id = toAsk.front();
     toAsk.erase(toAsk.begin());
     asked[id] = now;
-    Ref connection(module->FindService("fff"));
-    if (!connection.get()) {
+    Ref connection(module->FindService("fkm")), bus(module->FindService("fmz")), service(module->FindService("fja"));
+    if (!connection.get() || !bus.get() || !service.get() || api.object_get_class(service.get()) != serviceClass) {
         answersUnavailable = true; toAsk.clear(); panel.dirty = true;
         Log("BOSS_ACHIEVEMENTS_DETAILS_UNAVAILABLE");
         return;
     }
     if (detailsConnection.get() != connection.get() || !detailsSender.get()) {
         detailsConnection.reset(connection.get());
-        detailsSender.reset(api.New(senderClass, {connection.get()}));
+        detailsSender.reset(api.New(senderClass, {bus.get(), connection.get(), service.get()}));
     }
     short key = static_cast<short>(id);
     Ref request(api.New(requestClass, {&key}));
@@ -451,10 +454,18 @@ void Fill(std::vector<RowView>& rows, Obj box, const std::vector<Item>& items, b
             Show(view.description.get(), !items[i].description.empty());
         }
     }
-    for (size_t i = items.size(); i < rows.size(); ++i) Show(rows[i].line.get(), false);
+    for (size_t i = items.size(); i < rows.size(); ++i) { rows[i].achievement = 0; Show(rows[i].line.get(), false); }
     // Which monsters: each objective, ticked once the game has told.
     for (size_t i = 0; i < items.size(); ++i) {
         auto& view = rows[i];
+        view.achievement = items[i].id;
+        if (!view.clickable) {
+            view.clickable = true;
+            Ref clickable(api.object_new(clickableClass));
+            Obj none = nullptr;
+            api.Invoke(clickableCtor, clickable.get(), {none});
+            api.Invoke(addManipulator, nullptr, {view.line.get(), clickable.get()});
+        }
         if (!done) Ask(items[i].id);
         const auto answer = answers.find(items[i].id);
         const bool known = done || answer != answers.end();
@@ -493,9 +504,31 @@ void SyncShowDone() {
     bool value = state.doneShown = !fightWindow && module->settings.bossAchievementsShowDone;
     api.Call(state.showDone.get(), "set_value", {&value});
 }
+// Through the game's own link: it opens its achievements window on that achievement.
+void OpenInGameWindow(int id) {
+    Ref bus(module->FindService("fmz")), tooltips(module->FindService("fou")), theme(module->FindService("fri"));
+    if (!bus.get() || !tooltips.get() || !theme.get()) throw std::runtime_error("Achievement link services unavailable");
+    int count = 1, index = 0;
+    Ref parameters(api.Invoke(createArray, nullptr, {stringType.get(), &count}));
+    Ref value(api.string_new(std::to_string(id).c_str())), title(api.string_new(""));
+    api.Invoke(setArray, parameters.get(), {value.get(), &index});
+    NullableColor color;
+    Vec2 position;
+    Ref link(api.object_new(linkClass));
+    api.Invoke(linkCtor, link.get(), {title.get(), parameters.get(), bus.get(), tooltips.get(), theme.get(), &color, &color});
+    api.Invoke(linkOpen, link.get(), {&position});
+    Log("BOSS_ACHIEVEMENTS_OPEN_GAME id=" + std::to_string(id));
+}
 bool Action(Obj owner) {
     if (!owner) return false;
     if (owner == state.closeButton.get() && state.window.get()) { wanted = false; return true; }
+    for (auto* rows : {&state.todo, &state.done})
+        for (const auto& row : *rows) {
+            if (!row.achievement || row.line.get() != owner) continue;
+            try { OpenInGameWindow(row.achievement); }
+            catch (const std::exception& error) { Log(std::string("BOSS_ACHIEVEMENTS_OPEN_GAME_ERROR ") + error.what()); }
+            return true;
+        }
     for (const auto& icon : panel.icons) {
         if (icon.get() != owner) continue;
         shown = panel.target;
@@ -714,11 +747,23 @@ void InstallBossAchievements() {
         const auto checkbox = api.Class("Core.dll", "Core.UILogic.Components.Figma", "CheckboxCustom");
         api.FindVerified(checkbox, ".ctor", 0, 0x16FE760); api.FindVerified(checkbox, "get_value", 0, 0x16FEAE0);
         api.FindVerified(checkbox, "set_value", 1, 0x16FF100); api.FindVerified(checkbox, "set_rightText", 1, 0x16FF020);
-        senderClass = api.Class("Core.dll", "", "fez");
-        api.FindVerified(senderClass, ".ctor", 1, 0xDD9E50);
-        sendDetails = api.FindVerified(senderClass, "bdxq", 1, 0x1B64CC0);
-        requestClass = api.Class("Core.dll", "", "ciq");
+        // As AchievementsUI.OnAchievementSelected: cvo, handled by fcr, which sends mdk. Many
+        // one-short messages share this constructor's address: the class is named here by
+        // what the window allocates, and checked on the handler's own parameter.
+        senderClass = api.Class("Core.dll", "", "fcr");
+        api.FindVerified(senderClass, ".ctor", 3, 0xDDD4F0);
+        sendDetails = api.FindVerified(senderClass, "bcus", 1, 0x1AA4B20);
+        requestClass = api.Class("Core.dll", "", "cvo");
         api.FindVerified(requestClass, ".ctor", 1, 0x26384F0);
+        if (api.class_from_type(api.method_get_param(sendDetails, 0)) != requestClass) throw std::runtime_error("Achievement details request class");
+        const auto links = "Core.UILogic.Components.Hyperlink";
+        linkClass = api.Class("Core.dll", links, "HyperlinkShowAchievement");
+        linkCtor = api.FindVerified(linkClass, ".ctor", 7, 0x1698450);
+        linkOpen = api.FindVerified(linkClass, "OnHyperlinkLeftClick", 1, 0x16983A0);
+        const auto array = api.Class("mscorlib.dll", "System", "Array");
+        createArray = api.FindVerified(array, "CreateInstance", 2, 0x42C58D0);
+        setArray = api.FindVerified(array, "SetValue", 2, 0x42C82C0);
+        stringType.reset(api.type_get_object(api.class_get_type(api.Class("mscorlib.dll", "System", "String"))));
         const auto details = api.Class("Core.dll", "", "gw");
         answerOf = api.FindVerified(details, "mxn", 1, 0x25992F0);
         Field(details, "dcmb", 16); Field(details, "dcmc", 24);
