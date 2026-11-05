@@ -86,7 +86,7 @@ constexpr CheckRow ExtraRows[] = {
     {"Trajet depuis les quêtes", "Le clic droit sur un objectif de la liste des quêtes suivies propose le trajet du mod vers sa position, quand les données du jeu lui en donnent une."},
     {"Recherche d’objets : bouton dans la barre du haut", "Ajoute à la barre du haut le bouton de la recherche d’objets, qui trouve un objet par son nom dans le sac et la banque et donne ce que le sac, la banque et le havre-sac en contiennent."},
     // 2.5.0: craft-list-panel.cpp.
-    {"Liste de crafts : bouton dans la barre du haut", "Ajoute à la barre du haut le bouton de la liste de crafts, et à la fiche de recette son bouton Ajouter à la liste. La liste additionne les ressources de tes crafts, retire ce que tu as déjà et suit ce que tu fabriques ; à l’hôtel de vente, une loupe y affiche la ressource."}};
+    {"Liste de crafts : bouton dans la barre du haut", "Ajoute à la barre du haut le bouton de la liste de crafts, et à la fiche de recette son bouton Ajouter à la liste. La liste additionne les ressources de tes crafts, retire ce que tu as déjà et suit ce que tu fabriques ; à l’hôtel de vente, un clic sur une ressource l’y affiche."}};
 // « Dimension avec les coordonnées » on the big map, the mini-map and in the
 // chat: the same three choices, each id the saved mode (Settings'
 // coordsWorld*Mode), « Oui, sauf dans le Monde des Douze » by default.

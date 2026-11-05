@@ -18,15 +18,15 @@ constexpr const char* Ui = "UnityEngine.UIElementsModule.dll";
 constexpr const char* UiSpace = "UnityEngine.UIElements";
 constexpr const char* Figma = "Core.UILogic.Components.Figma";
 constexpr const char* Key = "craftlist";
-constexpr int IconLines = 185, IconMagnifier = 194;
+constexpr int IconLines = 185;
 constexpr int TertiaryStyle = 2, SlotXSmall = 0, PickingIgnore = 1, AlignRight = 5;
 constexpr float StockWidth = 64, PriceWidth = 84;
 constexpr uint64_t RefreshMs = 1500, ObserveMs = 2000, SettleMs = 10000;
 constexpr size_t MaxBuyRows = 60, MaxCraftRows = 24;
 
 struct EntryRow { Ref line, slot, name, minus, plus, remove; int item = 0, shownIcon = 0; };
-struct BuyRow { Ref line, slot, name, stock, price, select; int item = 0, shownIcon = 0; };
-struct CraftRow { Ref line, slot, name, stock; int shownIcon = 0; };
+struct BuyRow { Ref line, slot, name, stock, price; int item = 0, shownIcon = 0; };
+struct CraftRow { Ref line, slot, name, stock; int item = 0, shownIcon = 0; };
 struct State {
     Ref root, window, header, dragger, dependencies, cached, compositor, closeButton;
     Ref total, hint, subRecipes, entriesBox, buyHead, buyBox, craftHead, craftBox, empty, more;
@@ -39,8 +39,8 @@ struct State {
     bool cleanup = false, shownSubRecipes = false;
 } state;
 
-Method unsubscribe = nullptr, createItem = nullptr, selectFromRecipe = nullptr;
-Klass selectMessage = nullptr;
+Method unsubscribe = nullptr, createItem = nullptr, selectFromRecipe = nullptr, addManipulator = nullptr, clickableCtor = nullptr;
+Klass selectMessage = nullptr, clickableClass = nullptr;
 using EnableFn = void (*)(Obj, Method);
 EnableFn originalEnable = nullptr, originalDisable = nullptr;
 Ref auctionHouse; // The auction house's buying tab while the game shows it.
@@ -211,7 +211,8 @@ BuyRow& BuyAt(size_t index) {
         row.name.reset(Name(row.line.get()));
         row.stock.reset(Column(row.line.get(), StockWidth));
         row.price.reset(Column(row.line.get(), PriceWidth));
-        row.select.reset(Button(row.line.get(), "", IconMagnifier, "Afficher cette ressource dans l’hôtel de vente ouvert"));
+        Text(row.name.get(), "Clique pour l’afficher dans l’hôtel de vente ouvert", "set_tooltip");
+        MakeClickable(row.line.get());
         state.buys.push_back(std::move(row));
     }
     return state.buys[index];
@@ -223,6 +224,8 @@ CraftRow& CraftAt(size_t index) {
         row.slot.reset(Slot(row.line.get()));
         row.name.reset(Name(row.line.get()));
         row.stock.reset(Column(row.line.get(), StockWidth));
+        Text(row.name.get(), "Clique pour l’afficher dans l’hôtel de vente ouvert", "set_tooltip");
+        MakeClickable(row.line.get());
         state.crafts.push_back(std::move(row));
     }
     return state.crafts[index];
@@ -273,7 +276,6 @@ void Refresh() {
         Text(row.stock.get(), StockTooltip(stockOf(need.item)), "set_tooltip");
         nativeStyle::Tone(row.stock.get(), need.missing == 0, need.missing > 0);
         Text(row.price.get(), need.missing == 0 ? "" : price > 0 ? recipeCost::Kamas(price * need.missing) : "—");
-        Show(row.select.get(), canSelect && need.missing > 0);
     }
     for (size_t i = buyShown; i < state.buys.size(); ++i) { state.buys[i].item = 0; Show(state.buys[i].line.get(), false); }
     Show(state.buyHead.get(), !plan.buy.empty());
@@ -282,6 +284,7 @@ void Refresh() {
     for (size_t i = 0; i < craftShown; ++i) {
         const auto& need = plan.craft[i];
         auto& row = CraftAt(i);
+        row.item = need.item;
         Show(row.line.get(), true);
         Icon(row.slot.get(), row.shownIcon, need.item);
         Text(row.name.get(), need.missing > 0 ? std::to_string(need.missing) + " × " + NameOf(need.item) : NameOf(need.item));
@@ -289,7 +292,7 @@ void Refresh() {
         Text(row.stock.get(), StockTooltip(stockOf(need.item)), "set_tooltip");
         nativeStyle::Tone(row.stock.get(), need.missing == 0, false);
     }
-    for (size_t i = craftShown; i < state.crafts.size(); ++i) Show(state.crafts[i].line.get(), false);
+    for (size_t i = craftShown; i < state.crafts.size(); ++i) { state.crafts[i].item = 0; Show(state.crafts[i].line.get(), false); }
     Show(state.craftHead.get(), !plan.craft.empty());
 
     const auto total = recipeCost::Sum(lines);
@@ -302,24 +305,13 @@ void Refresh() {
     Text(state.more.get(), more);
     Show(state.more.get(), !more.empty());
     Show(state.empty.get(), list.entries.empty());
-    Text(state.hint.get(), canSelect ? "Une loupe affiche sa ressource dans l’hôtel de vente ouvert." :
-        "Ouvre un hôtel de vente : une loupe y affichera chaque ressource.");
+    Text(state.hint.get(), canSelect ? "Clique une ressource pour l’afficher dans l’hôtel de vente ouvert." :
+        "Ouvre un hôtel de vente, puis clique une ressource pour l’y afficher.");
     Show(state.hint.get(), !plan.buy.empty());
     if (state.shownSubRecipes != list.subRecipes) {
         bool value = state.shownSubRecipes = list.subRecipes;
         api.Call(state.subRecipes.get(), "set_value", {&value});
     }
-}
-// As a click on an ingredient in the game's recipes while the auction house is open.
-void SelectInAuctionHouse(int id) {
-    if (!auctionHouse.get()) { state.nextRefresh = 0; return; }
-    try {
-        Ref item(NewItem(id, 1));
-        if (!item.get()) throw std::runtime_error("no item");
-        Ref message(api.New(selectMessage, {item.get()}));
-        api.Invoke(selectFromRecipe, auctionHouse.get(), {message.get()});
-        Log("CRAFT_LIST_SELECT item=" + std::to_string(id));
-    } catch (const std::exception& error) { Log(std::string("CRAFT_LIST_SELECT_ERROR ") + error.what()); }
 }
 bool Action(Obj owner) {
     if (!owner || !state.window.get()) return false;
@@ -337,7 +329,9 @@ bool Action(Obj owner) {
         return true;
     }
     for (const auto& row : state.buys)
-        if (row.item && owner == row.select.get()) { SelectInAuctionHouse(row.item); return true; }
+        if (row.item && owner == row.line.get()) { ShowInAuctionHouse(row.item); return true; }
+    for (const auto& row : state.crafts)
+        if (row.item && owner == row.line.get()) { ShowInAuctionHouse(row.item); return true; }
     return false;
 }
 Obj Root() {
@@ -418,7 +412,6 @@ void Create(Obj root) {
     Set<float>(buyTitle.get(), "flexGrow", 1.f);
     Ref stockTitle(Column(state.buyHead.get(), StockWidth, nativeStyle::Heading)); Text(stockTitle.get(), "Stock");
     Ref priceTitle(Column(state.buyHead.get(), PriceWidth, nativeStyle::Heading)); Text(priceTitle.get(), "Prix");
-    Pixels(priceTitle.get(), "marginRight", 32); // Above the prices, past the magnifiers' column.
     state.buyBox.reset(Element(content.get()));
     state.more.reset(Label(content.get(), "", nativeStyle::Secondary));
     state.total.reset(Label(content.get(), "", nativeStyle::Strong));
@@ -460,6 +453,28 @@ void Observe() {
 }
 
 bool CraftListEnabled() { return module && module->settings.craftListButton; }
+bool MakeClickable(Obj element) {
+    if (!installed || !element) return false;
+    Ref clickable(api.object_new(clickableClass));
+    Obj none = nullptr;
+    api.Invoke(clickableCtor, clickable.get(), {none});
+    api.Invoke(addManipulator, nullptr, {element, clickable.get()});
+    return true;
+}
+bool ShowInAuctionHouse(int id) {
+    if (!installed || !auctionHouse.get()) return false;
+    try {
+        Ref item(NewItem(id, 1));
+        if (!item.get()) throw std::runtime_error("no item");
+        Ref message(api.New(selectMessage, {item.get()}));
+        api.Invoke(selectFromRecipe, auctionHouse.get(), {message.get()});
+        Log("CRAFT_LIST_SELECT item=" + std::to_string(id));
+        return true;
+    } catch (const std::exception& error) {
+        Log(std::string("CRAFT_LIST_SELECT_ERROR ") + error.what());
+        return false;
+    }
+}
 int AddToCraftList(int item) {
     int count = 0;
     bool first = false;
@@ -487,6 +502,9 @@ void InstallCraftList() {
         const auto checkbox = api.Class("Core.dll", Figma, "CheckboxCustom");
         api.FindVerified(checkbox, "get_value", 0, 0x16FEAE0);
         api.FindVerified(checkbox, "set_value", 1, 0x16FF100);
+        addManipulator = api.FindVerified(api.Class(Ui, UiSpace, "VisualElementExtensions"), "AddManipulator", 2, 0x563A930);
+        clickableClass = api.Class("Core.dll", Figma, "ExtendedClickable");
+        clickableCtor = api.FindVerified(clickableClass, ".ctor", 1, 0x1725300); // ExtendedClickable(Action), not (Action<EventBase>)
         AddHook(api.FindVerified(buy, "OnEnable", 0, 0x2875A20), 0x2875A20, reinterpret_cast<void*>(&EnableHook), reinterpret_cast<void**>(&originalEnable));
         AddHook(api.FindVerified(buy, "OnDisable", 0, 0x28756A0), 0x28756A0, reinterpret_cast<void*>(&DisableHook), reinterpret_cast<void**>(&originalDisable));
         if (!module->settingsPath.empty()) dataPath = craftList::DataPath(module->settingsPath);

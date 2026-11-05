@@ -31,6 +31,7 @@ Klass tooltipServiceClass = nullptr;
 std::vector<Ref> cardInfos;
 struct AddButton { Ref button; int item = 0; };
 std::vector<AddButton> addButtons; // Those of the cards still open or recently closed.
+std::vector<AddButton> ingredientRows; // Likewise: a click shows the ingredient at the auction house.
 bool reported = false;
 
 void Report(const char* where, const std::exception& error) {
@@ -138,6 +139,11 @@ void AddRecipeBlock(Obj builder, const recipeNative::Recipe& recipe) {
         Icon(row.get(), ingredient.id, ingredient.quantity);
         Ref name(Label(row.get(), ingredient.name));
         Set<float>(name.get(), "flexGrow", 1.f); Set<float>(name.get(), "flexShrink", 1.f);
+        if (MakeClickable(row.get())) {
+            Text(name.get(), "Clique pour l’afficher dans l’hôtel de vente ouvert", "set_tooltip");
+            if (ingredientRows.size() >= 96) ingredientRows.erase(ingredientRows.begin());
+            ingredientRows.push_back({Ref(row.get()), ingredient.id});
+        }
         const auto stock = recipeNative::Owned(ingredient.id);
         const auto owned = stock.Total();
         Ref have(Column(row.get(), stock.bagKnown ? std::to_string(owned) + "/" + std::to_string(ingredient.quantity) : "—", StockWidth));
@@ -179,6 +185,11 @@ void AddRecipeBlock(Obj builder, const recipeNative::Recipe& recipe) {
 }
 bool CardAction(Obj owner) {
     if (!owner) return false;
+    for (const auto& entry : ingredientRows) {
+        if (entry.button.get() != owner) continue;
+        ShowInAuctionHouse(entry.item);
+        return true;
+    }
     for (const auto& entry : addButtons) {
         if (entry.button.get() != owner) continue;
         try {
