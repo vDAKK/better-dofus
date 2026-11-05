@@ -68,7 +68,7 @@ int Display(Obj o){int result=0;std::memcpy(&result,Get(o).styles["display"].dat
 void Display(Obj o,int d){std::memcpy(Get(o).styles["display"].data(),&d,sizeof(d));}
 size_t Size(const std::string& property){
     if(property=="color"||property.ends_with("Color"))return 16;
-    if(property=="display"||property=="flexDirection"||property=="whiteSpace"||property=="flexGrow"||property=="alignSelf"||property=="alignItems"||property=="flexWrap"||property=="unityFontStyleAndWeight")return 4;
+    if(property=="display"||property=="flexDirection"||property=="whiteSpace"||property=="flexGrow"||property=="alignSelf"||property=="alignItems"||property=="flexWrap"||property=="unityFontStyleAndWeight"||property=="unityTextAlign"||property=="opacity"||property=="flexShrink")return 4;
     return 8;
 }
 float Metric(Obj object,const char* property){float value=0;std::memcpy(&value,Get(object).styles[property].data(),4);return value;}
@@ -220,8 +220,12 @@ Obj Api::Call(Obj self,const char* name,std::initializer_list<void*> arguments)c
     if(method=="get_size")return Box(1);
     if(method=="set_tileSize"){Check(o.ownedTile&&*static_cast<int*>(args[0])==2,"Native item preview uses medium Tile size");return nullptr;}
     if(method=="set_size"||method=="set_tooltip"||method=="set_maxLength"||method=="set_listElementStyle"||
-        method=="set_isSingleLine"||method=="set_horizontalScrollerVisibility"||method=="set_verticalScrollerVisibility")return nullptr;
+        method=="set_isSingleLine"||method=="set_enableRichText"||method=="set_mainStyle"||method=="set_icon"||method=="set_title"||method=="set_horizontalScrollerVisibility"||method=="set_verticalScrollerVisibility")return nullptr;
     if(method=="SetEnabled"){o.enabled=*static_cast<bool*>(args[0]);return nullptr;}
+    if(method=="set_isActivated"){o.activeClass=*static_cast<bool*>(args[0]);return nullptr;}
+    if(method=="set_canBeOpened"){o.allowSwitchOff=*static_cast<bool*>(args[0]);return nullptr;}
+    if(method=="set_isOpen"){if(o.allowSwitchOff)o.on=*static_cast<bool*>(args[0]);return nullptr;}
+    if(method=="AddSubContent"){Add(self,args[0]);return nullptr;}
     if(method=="Add"){Add(self,args[0]);return nullptr;}
     if(method=="get_contentContainer")return self;
     if(method=="get_parent")return o.fields["parent"];
@@ -251,6 +255,7 @@ void AddHook(managed::Method,uintptr_t rva,void*,void** original){
     else throw std::runtime_error("Unexpected hook");
 }
 namespace soul {void SetAuxiliaryPanelAction(bool(*fn)(managed::Obj)){fixture::action=fn;}}
+namespace nativeClick {bool(*handler)(managed::Obj)=nullptr;void AddHandler(bool(*fn)(managed::Obj)){handler=fn;}}
 namespace jobsxp {
 Page Fetch(const Query& query,const std::atomic_bool& cancel){
     ++fixture::calls;while(fixture::hold&&!cancel.load())Sleep(1);
@@ -301,6 +306,23 @@ int main(){
         Get(nativeRecipes).fields["m_currentRecipesFilter"]=initialFilter;TickJobsXp();
         Check(state.pane.get()&&Get(tabs).children.size()==3,"Third real native tab attached");
         Check(Get(state.tab.get()).klass->name=="DofusTab","Native DofusTab class");
+        // The panel is made of the game's components, so that it follows its theme.
+        Check(Get(state.title.get()).klass->name=="DofusLabel"&&Get(state.status.get()).klass->name=="DofusLabel"&&Get(state.details.get()).klass->name=="DofusLabel","The game's labels");
+        Check(Get(state.refresh.get()).klass->name=="DofusButtonCustom"&&Get(state.previous.get()).klass->name=="DofusButtonCustom"&&Get(state.next.get()).klass->name=="DofusButtonCustom","The game's buttons");
+        Check(Get(state.rows[0].get()).klass->name=="ListElementBasic","The game's list rows");
+        {
+            const auto body=Get(state.pane.get()).children;int sections=0;
+            for(auto child:body){Check(Get(child).klass->name=="SectionHeader","Only the game's sections at the top of the panel");Check(Get(child).on,"Sections stay open");++sections;}
+            Check(sections==3,"Objective, recipes, ingredients");
+            std::vector<Obj> walk{state.pane.get()};
+            while(!walk.empty()){
+                auto current=walk.back();walk.pop_back();
+                for(const auto& [property,bytes]:Get(current).styles)
+                    Check(property!="color"&&property!="backgroundColor"&&property!="borderLeftColor","No fixed color: the theme's own");
+                for(auto child:Get(current).children)walk.push_back(child);
+            }
+        }
+        Check(nativeClick::handler==action,"The game's buttons reach the panel's action");
         Check(Get(state.tab.get()).text=="XP","Custom tab caption must be exactly XP");
         Check(Get(state.tab.get()).fontCase==1&&Metric(state.tab.get(),"bottom")==-1,"Native typography and baseline copied");
         Check(customTabTopWrites==1&&Get(resourceTab).resolvedMetrics.at("top")==0,
@@ -331,6 +353,7 @@ int main(){
         Check(state.query.job==28&&state.xp==24500,"Native selected job and total XP");
         CheckNativeItem(state.recipeItems[0].tile.get(),2800,1);
         Check(action(state.rows[0].get()),"Owned recipe action");
+        Check(Get(state.rows[0].get()).activeClass&&!Get(state.rows[1].get()).activeClass,"The chosen recipe uses the row's own activated state");
         const auto plan=jobsxp::Simulate(state.page.recipes[0],state.xp,state.lastTarget,state.lastCoefficient,state.lastEpic);
         Check(plan.count>0&&state.ingredients.size()==2,"Selected recipe must create each ingredient as an individual native item");
         for(size_t i=0;i<state.ingredients.size();++i){

@@ -10,9 +10,14 @@ all game rights belong to Ankama. I do not know whether using this mod is
 allowed by Ankama's terms: a ban cannot be completely ruled out. Use it at
 your own risk; the software is provided "as is", without any warranty.
 
-BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.0.0
+BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.1.0
 
 INSTALLATION : double-clique sur BetterDofusLoader.exe, puis lance Dofus.
+
+VERSION 2.1.0 : L’ONGLET XP DES MÉTIERS DANS LE THÈME DU JEU
+- L’onglet XP de la fenêtre Métiers utilise les composants du jeu : sections,
+  textes, boutons, flèches de page et lignes de recette. Il suit le thème choisi
+  dans les options, sans couleur à lui, et va à l’essentiel.
 
 VERSION 2.0.0 : LE MOD DEVIENT BETTER DOFUS
 - Dofus Enhanced, d’abord nommé Dofus Miniatures, s’appelle Better Dofus : le

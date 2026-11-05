@@ -224,7 +224,7 @@ static int Watch(const std::filesystem::path& folder, const std::filesystem::pat
                     if (!enabled() || WaitForSingleObject(process.value, 0) != WAIT_TIMEOUT) continue;
                     const auto selectedRelease = LatestReleaseForClient(folder, clientExe);
                     const auto pathText = selectedRelease.folder.u8string();
-                    log << "LOCAL_RELEASE r" << selectedRelease.revision << " folder=" << std::string(pathText.begin(), pathText.end()) << '\n';
+                    log << "LOCAL_RELEASE folder=" << std::string(pathText.begin(), pathText.end()) << '\n';
                     log.flush();
                     LogEvent(log, "LOAD_ATTEMPT", pid);
                     if (DispatchVerifiedLoader(selectedRelease.folder, pid, creation, clientExe, log) != 0)
@@ -294,7 +294,7 @@ int wmain(int argc, wchar_t** argv) {
             if (!chosen) { std::cout << "Annule. Aucun module charge.\n"; return 0; }
             selectedPid = std::to_wstring(chosen);
             const auto release = LatestLocalRelease(ModulePath(nullptr).parent_path());
-            std::cout << "Revision locale compatible choisie : r" << release.revision << '\n';
+            std::cout << "Version locale compatible choisie : " << release.folder.filename().string() << '\n';
             const auto logPath = (release.folder / L"module.log").u8string();
             std::cout << "Journal du module : " << std::string(logPath.begin(), logPath.end()) << '\n';
             selectedDll = (release.folder / L"BetterDofus.dll").wstring();
@@ -337,7 +337,7 @@ int wmain(int argc, wchar_t** argv) {
             if (std::wstring(argv[1]) == L"--check-updates")
                 CheckGithubUpdates(folder, client, std::cout);
             const auto selected = LatestReleaseForClient(folder, client);
-            std::cout << "Compatible local release r" << selected.revision << "; files only, no process accessed.\n";
+            std::cout << "Compatible local release " << selected.folder.filename().string() << "; files only, no process accessed.\n";
             return 0;
         }
         if (argc == 5 && std::wstring(argv[1]) == L"--auto-load") {

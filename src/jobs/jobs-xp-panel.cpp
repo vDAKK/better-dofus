@@ -2,6 +2,7 @@
 #include "jobs/jobs-xp-data.hpp"
 #include "core/module.hpp"
 #include "souls/soul-panel.hpp"
+#include "ui/native-click.hpp"
 #include <array>
 #include <algorithm>
 #include <thread>
@@ -73,31 +74,45 @@ void Pixels(Obj element,const char* property,float value) {
     int unit=0;Ref length(api.New(api.Class(Ui,UiSpace,"Length"),{&value,&unit}));
     Ref box(Style(element,property));api.Call(box.get(),"set_value",{api.object_unbox(length.get())});WriteStyle(element,property,box.get());
 }
-void Color(Obj element,const char* property,float r,float g,float b,float a=1) {
-    Ref color(api.New(api.Class("UnityEngine.CoreModule.dll","UnityEngine","Color"),{&r,&g,&b,&a}));
-    Ref box(Style(element,property));api.Call(box.get(),"set_value",{api.object_unbox(color.get())});WriteStyle(element,property,box.get());
-}
 void Text(Obj element,const std::string& text,const char* setter="set_text") {
     Ref value(api.string_new(text.c_str()));api.Call(element,setter,{value.get()});
 }
 void Add(Obj parent,Obj child) {api.Call(parent,"Add",{child});}
 void Enabled(Obj element,bool value){api.Call(element,"SetEnabled",{&value});}
-Obj Label(Obj parent,const std::string& text) {
-    Ref label(api.New(api.Class(Ui,UiSpace,"Label")));Text(label.get(),text);
-    Enum(label.get(),"whiteSpace",0);Pixels(label.get(),"fontSize",14);Pixels(label.get(),"marginBottom",6);
-    Color(label.get(),"color",.91f,.91f,.86f);
-    Add(parent,label.get());return label.get();
+// The game's own label: its font and the colors of the chosen theme. Secondary text
+// only fades, so that it follows the theme too.
+Obj Label(Obj parent,const std::string& text,bool secondary=false) {
+    Ref label(api.New(api.Class("Core.dll","Core.UILogic.Components","DofusLabel")));
+    bool multiline=false;api.Call(label.get(),"set_isSingleLine",{&multiline});
+    Enum(label.get(),"whiteSpace",0);Pixels(label.get(),"marginBottom",secondary?0.f:4.f);
+    if(secondary)Float(label.get(),"opacity",.7f);
+    Text(label.get(),text);Add(parent,label.get());return label.get();
 }
 Obj Row(Obj parent) {
     Ref row(api.New(api.Class(Ui,UiSpace,"VisualElement")));Enum(row.get(),"flexDirection",2);
     Enum(row.get(),"alignItems",2);Enum(row.get(),"flexWrap",1);
     Pixels(row.get(),"marginBottom",8);Add(parent,row.get());return row.get();
 }
-Obj Button(Obj parent,const std::string& text) {
-    Ref item(api.New(api.Class("Core.dll",Figma,"ListElementBasic")));int kind=1;
-    api.Call(item.get(),"set_listElementStyle",{&kind});Text(item.get(),text);
-    Pixels(item.get(),"minHeight",30);Pixels(item.get(),"minWidth",0);
-    Add(parent,item.get());return item.get();
+// The game's button: its hover, pressed and disabled states, and its theme.
+// Styles: ComponentStyleEnum secondary 1, tertiary 2 (the flat paging arrows).
+constexpr int SecondaryStyle=1,TertiaryStyle=2,IconPrevious=44,IconNext=45;
+Obj Button(Obj parent,const std::string& text,int style,int icon,const char* tooltip) {
+    Ref button(api.New(api.Class("Core.dll",Figma,"DofusButtonCustom")));
+    int size=0;api.Call(button.get(),"set_size",{&size});api.Call(button.get(),"set_mainStyle",{&style});
+    if(icon)api.Call(button.get(),"set_icon",{&icon});
+    if(!text.empty())Text(button.get(),text);
+    Text(button.get(),tooltip,"set_tooltip");Float(button.get(),"flexShrink",0);
+    Add(parent,button.get());return button.get();
+}
+// A recipe: the game's selectable list row, its selection shown by its own activated state.
+Obj RecipeRow(Obj parent) {
+    Ref row(api.New(api.Class("Core.dll",Figma,"ListElementBasic")));
+    Ref label(api.Field(row.get(),"m_textLabel"));
+    bool no=false;api.Call(label.get(),"set_enableRichText",{&no});api.Call(label.get(),"set_isSingleLine",{&no});
+    Enum(label.get(),"whiteSpace",0);
+    int choice=0;api.Call(row.get(),"set_listElementStyle",{&choice});
+    Pixels(row.get(),"minHeight",56);Pixels(row.get(),"minWidth",0);Float(row.get(),"flexGrow",1);
+    Add(parent,row.get());return row.get();
 }
 Obj Input(Obj parent,const std::string& value,const char* tooltip,int maxLength) {
     Ref input(api.New(api.Class("Core.dll",Figma,"TextInput")));
@@ -105,14 +120,19 @@ Obj Input(Obj parent,const std::string& value,const char* tooltip,int maxLength)
     Pixels(input.get(),"width",88);Pixels(input.get(),"minWidth",0);Pixels(input.get(),"marginRight",12);Add(parent,input.get());return input.get();
 }
 void TabValue(Obj tab,bool value){api.Call(tab,"SetValueWithoutNotify",{&value});}
+// The game's titled section, opened then locked: set_isOpen keeps the closed state
+// while canBeOpened is off, which it is after the constructor.
 Obj Section(Obj parent,const char* title) {
-    Ref card(api.New(api.Class(Ui,UiSpace,"VisualElement")));
-    for(const char* property:{"paddingLeft","paddingRight","paddingTop","paddingBottom"})Pixels(card.get(),property,12);
-    Pixels(card.get(),"marginBottom",12);Color(card.get(),"backgroundColor",.14f,.15f,.13f,.88f);
-    Add(parent,card.get());Ref heading(Label(card.get(),title));
-    Pixels(heading.get(),"fontSize",16);Enum(heading.get(),"unityFontStyleAndWeight",1);
-    Color(heading.get(),"color",.78f,.88f,.44f);Pixels(heading.get(),"marginBottom",10);
-    return card.get();
+    bool subContent=true,folderButton=true,no=false,noIcon=false,open=true,openable=true,locked=false;
+    Ref section(api.New(api.Class("Core.dll",Figma,"SectionHeader"),{&subContent,&folderButton,&no,&noIcon,&no}));
+    Text(section.get(),title,"set_title");
+    api.Call(section.get(),"set_canBeOpened",{&openable});api.Call(section.get(),"set_isOpen",{&open});api.Call(section.get(),"set_canBeOpened",{&locked});
+    Ref content(api.New(api.Class(Ui,UiSpace,"VisualElement")));
+    for(const char* property:{"paddingLeft","paddingRight"})Pixels(content.get(),property,4);
+    Pixels(content.get(),"paddingTop",8);Pixels(content.get(),"paddingBottom",4);
+    api.Call(section.get(),"AddSubContent",{content.get()});
+    Pixels(section.get(),"marginBottom",8);
+    Add(parent,section.get());return content.get();
 }
 void MatchTabLayout() {
     // Read resolved geometry: UXML/USS values are not necessarily inline styles.
@@ -269,39 +289,37 @@ void Render() {
         if(!show){ClearItem(state.recipeItems[i]);continue;}
         const auto& r=state.page.recipes[i];
         const bool available=BindItem(state.recipeItems[i],state.recipeItems[i].visual.get(),r.id,1);
-        std::string caption=r.name+" · Niv. "+std::to_string(r.level)+(available?"":" · objet indisponible dans cette version");
+        std::string caption=r.name+" · niv. "+std::to_string(r.level)+(available?"":" · indisponible dans cette version");
         if(valid) {
             const auto plan=jobsxp::Simulate(r,state.xp,target,coefficient,epic);
-            caption+="\n"+std::to_string(jobsxp::CraftXp(r,state.query.level,coefficient,epic))+" XP / fabrication";
-            caption+=plan.reached?" · "+std::to_string(plan.count)+" fabrications pour le niveau "+std::to_string(target):" · cible non atteignable";
+            caption+="\n"+std::to_string(jobsxp::CraftXp(r,state.query.level,coefficient,epic))+" XP · ";
+            caption+=plan.reached?"× "+std::to_string(plan.count):"niveau visé hors de portée";
         }
         Text(state.rows[i].get(),caption);
-        Float(state.rows[i].get(),"borderLeftWidth",state.selected==static_cast<int>(i)?4.f:0.f);
-        Color(state.rows[i].get(),"borderLeftColor",.64f,.79f,.26f);
+        bool activated=state.selected==static_cast<int>(i);api.Call(state.rows[i].get(),"set_isActivated",{&activated});
     }
     Enabled(state.previous.get(),state.query.skip>0&&!state.request);
     Enabled(state.next.get(),state.havePage&&state.query.skip+jobsxp::PageSize<state.page.total&&!state.request);
-    if(!valid){ClearIngredients();Text(state.details.get(),"Niveau cible : 1 à 200. Coefficient d'XP : 1 à 600 %.");}
+    if(!valid){ClearIngredients();Text(state.details.get(),"Niveau : 1 à 200. Bonus d'XP : 1 à 600 %.");}
     else if(state.havePage&&state.selected>=0&&state.selected<static_cast<int>(state.page.recipes.size())) {
         const auto& r=state.page.recipes[state.selected];
         const auto plan=jobsxp::Simulate(r,state.xp,target,coefficient,epic);
-        std::string text=r.name+"\n";
+        std::string text;
         RenderIngredients(r,plan.count);
-        if(plan.count==0&&plan.reached)text+="Niveau cible déjà atteint.";
+        if(plan.count==0&&plan.reached)text="Niveau déjà atteint.";
         else {
-            text+=(plan.reached?"Pour atteindre la cible : ":"Simulation limitée : ")+std::to_string(plan.count)+
-                " fabrication(s), +"+std::to_string(plan.xp-state.xp)+" XP, niveau "+std::to_string(jobsxp::Level(plan.xp))+".";
-            if(!plan.reached)text+="\nChoisis une autre recette pour continuer.";
+            text=std::to_string(plan.count)+" × "+r.name+" : +"+std::to_string(plan.xp-state.xp)+" XP, niveau "+std::to_string(jobsxp::Level(plan.xp));
+            if(!plan.reached)text+="\nCette recette ne suffit pas : choisis-en une autre.";
         }
         Text(state.details.get(),text);
-    } else {ClearIngredients();Text(state.details.get(),"Sélectionne une recette dans la liste ci-dessus : les ingrédients et leurs quantités totales apparaîtront ici.");}
+    } else {ClearIngredients();Text(state.details.get(),"Choisis une recette.");}
     state.lastTarget=target;state.lastCoefficient=coefficient;state.lastEpic=epic;
 }
 void Search() {
     if(state.request||!jobsxp::Valid(state.query)||worker||GetTickCount64()<state.nextRequest)return;
     auto request=std::make_shared<Request>();request->query=state.query;request->generation=state.generation;
     state.request=worker=request;state.requested=true;state.nextRequest=GetTickCount64()+1500;
-    Text(state.status.get(),"Chargement des recettes DofusDB…");
+    Text(state.status.get(),"Chargement…");
     try {
         std::thread([request] {
             try {request->page=jobsxp::Fetch(request->query,request->cancelled);}
@@ -357,41 +375,37 @@ void Create(Obj owner) {
         Ref value(Style(state.resourceTab.get(),property));WriteStyle(state.tab.get(),property,value.get());
     }
     Float(state.tab.get(),"flexGrow",1);Pixels(state.tab.get(),"minWidth",0);
-    Text(state.tab.get(),"Recettes et simulation d'expérience du métier sélectionné.","set_tooltip");
+    Text(state.tab.get(),"Ce qu'il faut fabriquer pour atteindre un niveau.","set_tooltip");
     int vertical=0;state.pane.reset(api.New(api.Class(Ui,UiSpace,"ScrollView"),{&vertical}));
     int hidden=2,automatic=0;api.Call(state.pane.get(),"set_horizontalScrollerVisibility",{&hidden});
     api.Call(state.pane.get(),"set_verticalScrollerVisibility",{&automatic});
     Float(state.pane.get(),"flexGrow",1);Pixels(state.pane.get(),"minHeight",0);Enum(state.pane.get(),"display",1);
     Ref body(api.Call(state.pane.get(),"get_contentContainer"));
     for(const char* property:{"paddingLeft","paddingRight","paddingTop","paddingBottom"})Pixels(body.get(),property,8);
-    state.title.reset(Label(body.get(),"Métier sélectionné"));
-    Pixels(state.title.get(),"fontSize",18);Enum(state.title.get(),"unityFontStyleAndWeight",1);
-    Ref intro(Label(body.get(),"Ton métier, ton niveau et ton XP sont lus automatiquement. Choisis un objectif, puis une recette."));
-    Pixels(intro.get(),"marginBottom",14);
-    Ref goal(Section(body.get(),"1. Ton objectif"));
-    Ref controls(Row(goal.get()));Label(controls.get(),"Niveau à atteindre");
-    state.target.reset(Input(controls.get(),"200","Niveau cible (1 à 200)",3));
-    Ref bonuses(Row(goal.get()));Label(bonuses.get(),"XP de fabrication (%)");
-    state.coefficient.reset(Input(bonuses.get(),"100","100 % = normal. Inclure les bonus d'XP de fabrication, par exemple l'Almanax.",3));
+    Ref goal(Section(body.get(),"Objectif"));
+    state.title.reset(Label(goal.get(),"Métier"));
+    Ref controls(Row(goal.get()));
+    Ref targetName(Label(controls.get(),"Niveau visé"));Pixels(targetName.get(),"marginRight",8);Pixels(targetName.get(),"marginBottom",0);
+    state.target.reset(Input(controls.get(),"200","Le niveau à atteindre, de 1 à 200.",3));
+    Ref bonusName(Label(controls.get(),"Bonus d'XP (%)"));Pixels(bonusName.get(),"marginRight",8);Pixels(bonusName.get(),"marginBottom",0);
+    state.coefficient.reset(Input(controls.get(),"100","100 % sans bonus. Compte ici les bonus d'XP de fabrication, comme celui de l'Almanax.",3));
     state.epic.reset(api.New(api.Class("Core.dll",Figma,"CheckboxCustom")));
     Text(state.epic.get(),"Serveur Épique","set_rightText");Add(goal.get(),state.epic.get());
-    Ref bonusHelp(Label(goal.get(),"Garde 100 % et Épique décoché si tu n'as pas de bonus particulier."));
-    Pixels(bonusHelp.get(),"fontSize",12);Color(bonusHelp.get(),"color",.74f,.76f,.69f);
-    Ref list(Section(body.get(),"2. Choisis une recette"));
-    state.status.reset(Label(list.get(),"Recettes disponibles pour ton niveau, classées par niveau décroissant."));
-    state.refresh.reset(Button(list.get(),"Actualiser la liste"));Pixels(state.refresh.get(),"marginBottom",8);
-    bool no=false;
+    Ref list(Section(body.get(),"Recettes"));
     for(size_t i=0;i<state.rows.size();++i){
         auto& row=state.rows[i];state.recipeLines[i].reset(Row(list.get()));Enum(state.recipeLines[i].get(),"flexWrap",0);
+        Pixels(state.recipeLines[i].get(),"marginBottom",2);
         state.recipeItems[i].visual.reset(api.New(api.Class(Ui,UiSpace,"VisualElement")));Add(state.recipeLines[i].get(),state.recipeItems[i].visual.get());
-        row.reset(Button(state.recipeLines[i].get(),""));Pixels(row.get(),"minHeight",80);Float(row.get(),"flexGrow",1);
-        Ref label(api.Field(row.get(),"m_textLabel"));api.Call(label.get(),"set_isSingleLine",{&no});
-        Enum(label.get(),"whiteSpace",0);Enum(state.recipeLines[i].get(),"display",1);
+        row.reset(RecipeRow(state.recipeLines[i].get()));Enum(state.recipeLines[i].get(),"display",1);
     }
-    Ref pages(Row(list.get()));state.previous.reset(Button(pages.get(),"« Précédentes"));state.next.reset(Button(pages.get(),"Suivantes »"));
-    Float(state.previous.get(),"flexGrow",1);Float(state.next.get(),"flexGrow",1);Pixels(state.previous.get(),"marginRight",8);
-    Ref result(Section(body.get(),"3. Ingrédients à préparer"));
-    state.details.reset(Label(result.get(),"Sélectionne une recette pour afficher les quantités nécessaires à ton objectif."));
+    Ref pages(Row(list.get()));Enum(pages.get(),"flexWrap",0);Pixels(pages.get(),"marginTop",6);Pixels(pages.get(),"marginBottom",0);
+    state.previous.reset(Button(pages.get(),"",TertiaryStyle,IconPrevious,"Recettes précédentes"));
+    state.status.reset(Label(pages.get(),"",true));Float(state.status.get(),"flexGrow",1);Pixels(state.status.get(),"marginBottom",0);
+    Enum(state.status.get(),"unityTextAlign",4);
+    state.next.reset(Button(pages.get(),"",TertiaryStyle,IconNext,"Recettes suivantes"));
+    state.refresh.reset(Button(pages.get(),"Actualiser",SecondaryStyle,0,"Relit les recettes sur DofusDB."));Pixels(state.refresh.get(),"marginLeft",8);
+    Ref result(Section(body.get(),"Ingrédients"));
+    state.details.reset(Label(result.get(),"Choisis une recette."));
     state.ingredientList.reset(api.New(api.Class(Ui,UiSpace,"VisualElement")));Add(result.get(),state.ingredientList.get());
     Add(state.tabs.get(),state.tab.get());Add(state.content.get(),state.pane.get());
     Log("JOBS_XP_PANEL_READY nativeTab=true provider=DofusDB");
@@ -414,7 +428,7 @@ void UpdateCharacter() {
         if(newJob)Text(state.target.get(),std::to_string(std::min(200,((level/(id==79?5:10))+1)*(id==79?5:10))));
     }
     const bool xpChanged=state.xp!=xp;state.xp=xp;
-    Text(state.title.get(),api.String(api.Call(job.get(),"obt"))+" · Niveau "+std::to_string(level)+" · "+std::to_string(xp)+" XP");
+    Text(state.title.get(),api.String(api.Call(job.get(),"obt"))+" · niveau "+std::to_string(level)+" · "+std::to_string(xp)+" XP");
     if(changed||xpChanged)Render();
 }
 void EnableHook(Obj owner,Method method){
@@ -501,10 +515,19 @@ void InstallJobsXp(){
     api.FindVerified(scroll,"set_horizontalScrollerVisibility",1,0x57085C0);
     api.FindVerified(scroll,"set_verticalScrollerVisibility",1,0x5708FF0);
     // ListElementBasic contracts are verified by InstallSoulHelper first.
+    const auto label=api.Class("Core.dll","Core.UILogic.Components","DofusLabel");
+    api.FindVerified(label,".ctor",0,0x158D3E0);api.FindVerified(label,"set_text",1,0x158E010);api.FindVerified(label,"set_isSingleLine",1,0x158DA50);
+    const auto button=api.Class("Core.dll",Figma,"DofusButtonCustom");
+    api.FindVerified(button,".ctor",0,0x1707180);api.FindVerified(button,"set_icon",1,0x1707A70);api.FindVerified(button,"set_text",1,0x1708080);
+    api.FindVerified(button,"set_mainStyle",1,0x1707CA0);api.FindVerified(button,"set_size",1,0x1707DC0);
+    const auto section=api.Class("Core.dll",Figma,"SectionHeader");
+    api.FindVerified(section,".ctor",5,0x173F9D0);api.FindVerified(section,"set_title",1,0x1740280);api.FindVerified(section,"set_isOpen",1,0x173FDC0);
+    api.FindVerified(section,"set_canBeOpened",1,0x173FB60);api.FindVerified(section,"AddSubContent",1,0x173DE30);
+    api.FindVerified(api.Class("Core.dll",Figma,"ListElementBasic"),"set_isActivated",1,0x172D6C0);
     AddHook(api.FindVerified(ui,"OnEnable",0,0x2AB8A30),0x2AB8A30,reinterpret_cast<void*>(EnableHook),reinterpret_cast<void**>(&originalEnable));
     AddHook(api.FindVerified(ui,"OnDisable",0,0x2AB89F0),0x2AB89F0,reinterpret_cast<void*>(DisableHook),reinterpret_cast<void**>(&originalDisable));
     AddHook(api.FindVerified(handler,"SwitchTab",1,0x2A7E9E0),0x2A7E9E0,reinterpret_cast<void*>(SwitchHook),reinterpret_cast<void**>(&originalSwitch));
-    soul::SetAuxiliaryPanelAction(Action);installed=true;
+    soul::SetAuxiliaryPanelAction(Action);nativeClick::AddHandler(Action);installed=true;
 }
 void RestoreJobsXp(){
     pending.reset();Cancel();
@@ -538,9 +561,8 @@ void TickJobsXp(){
             if(jobsxp::AcceptResult(state.generation,request->generation,state.query,request->query,request->cancelled.load())){
                 if(request->error.empty()){
                     state.page=std::move(request->page);state.havePage=true;state.selected=-1;
-                    Text(state.status.get(),state.page.recipes.empty()?"Aucune recette disponible pour ce métier à ce niveau.":
-                        std::to_string(state.page.total)+" recettes · "+std::to_string(state.query.skip+1)+" à "+
-                        std::to_string(state.query.skip+state.page.recipes.size())+" · DofusDB");
+                    Text(state.status.get(),state.page.recipes.empty()?"Aucune recette à ce niveau.":
+                        std::to_string(state.query.skip+1)+" à "+std::to_string(state.query.skip+state.page.recipes.size())+" sur "+std::to_string(state.page.total));
                 }else Text(state.status.get(),request->error);
                 Render();
             }
