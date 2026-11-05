@@ -146,7 +146,7 @@ InitFn originalInit = nullptr;
 using TextButtonFn = void(*)(Obj, Obj, Method);
 TextButtonFn originalTextButton = nullptr, originalTextButtonInit = nullptr;
 Method textButtonModelGetter = nullptr, openUrl = nullptr, setPassword = nullptr, setEnabled = nullptr;
-constexpr const char* ProjectUrl = "https://github.com/vDAKK/dofus-enhanced";
+constexpr const char* ProjectUrl = "https://github.com/vDAKK/better-dofus";
 // « À propos » › « Dossier du mod » (1.20.1): an owned text-button row (see
 // TextButtonHook) that opens the running module's folder (ui/mod-folder.hpp).
 constexpr const char* ModFolderTitle = "Dossier du mod";
@@ -478,7 +478,7 @@ bool EnsureModels(OptionsUi& ui, Obj page) {
     prepared.autoLoadOption.reset(MakeBoolOption(prepared.autoLoadSource.get(), current.get(), tooltip.get(), "Chargement automatique",
         "Charge la dernière version compatible lors des prochains lancements de Dofus, sans saisie du PID. Si les mises à jour GitHub sont activées, vérifie les nouvelles versions avant le chargement. Les clients déjà ouverts conservent leur version chargée."));
     prepared.githubOption.reset(MakeBoolOption(prepared.githubSource.get(), current.get(), tooltip.get(), "Mises à jour GitHub",
-        "À chaque nouveau lancement, recherche une version publiée sur vDAKK/dofus-enhanced, vérifie son intégrité et sa compatibilité avec Dofus, puis la télécharge. Altansar69/dofus-enhanced sert de secours quand aucune version installée ne convient à ce Dofus. Sans réseau, conserve la version locale compatible. Nécessite le chargement automatique. Un correctif du mod peut rester nécessaire après une mise à jour du jeu."));
+        "À chaque nouveau lancement, recherche une version publiée sur vDAKK/better-dofus, vérifie son intégrité et sa compatibilité avec Dofus, puis la télécharge. Sans réseau, conserve la version locale compatible. Nécessite le chargement automatique. Un correctif du mod peut rester nécessaire après une mise à jour du jeu."));
     prepared.soulOption.reset(MakeBoolOption(prepared.soulSource.get(), current.get(), tooltip.get(), "Alerte pierre d’âme",
         "Pour un combat contenant un boss ou un archimonstre avec une âme capturable définie. Masqué pour les groupes ordinaires et les cartes interdisant la capture. Pendant le placement, affiche la tranche minimale requise, le stock et la pierre équipée. Équiper choisit uniquement cette tranche. En combat : Capture d’âme en rouge si l’état Chercheur d’âmes manque, en vert s’il est actif. L’effet ne garantit pas à lui seul la capture."));
     prepared.soulAutoOption.reset(MakeBoolOption(prepared.soulAutoSource.get(), current.get(), tooltip.get(), "Équiper automatiquement la pierre d’âme",
@@ -567,9 +567,9 @@ bool EnsureModels(OptionsUi& ui, Obj page) {
     prepared.creditsOption.reset(MakeTextButtonOption(tooltip.get(), creditsTitle.c_str(), creditsText.c_str(), "Ouvrir GitHub", 0, prepared.creditsMarker));
     // Then « Dossier du mod »: the folder of this version, named as installed.
     const std::string modFolderText = std::string("Ouvre dans l’Explorateur de Windows le dossier de cette version du mod, "
-        "DofusMiniatures-3.7.11.11-") + ModVersion + " : ses fichiers (DofusMiniatures.dll, ModuleLoader.exe…) et son journal "
+        "BetterDofus-") + ModVersion + " : ses fichiers (BetterDofus.dll, BetterDofusLoader.exe…) et son journal "
         "module.log, à joindre à un signalement en cas de problème. Les réglages partagés par toutes les versions du mod "
-        "(DofusMiniatures-3.7.11.11-settings.ini) et tes statistiques sont dans le dossier au-dessus, à côté des dossiers des "
+        "(BetterDofus-settings.ini) et tes statistiques sont dans le dossier au-dessus, à côté des dossiers des "
         "autres versions. Le bouton ne modifie ni ne supprime aucun fichier.";
     prepared.modFolderOption.reset(MakeTextButtonOption(tooltip.get(), ModFolderTitle, modFolderText.c_str(), ModFolderButton, 0,
         prepared.modFolderMarker));

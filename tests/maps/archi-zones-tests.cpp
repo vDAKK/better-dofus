@@ -635,7 +635,7 @@ Obj PanelWindow() {
     return nullptr;
 }
 Obj OurLayer(Obj root) {
-    for (auto child : Get(root).children) if (Get(child).name == "dofus_miniatures_ocre") return child;
+    for (auto child : Get(root).children) if (Get(child).name == "better_dofus_ocre") return child;
     return nullptr;
 }
 // The zone ids of the panel's shown rows, in order.
@@ -654,7 +654,7 @@ std::map<int, Obj> Shapes(Obj view) {
     std::map<int, Obj> shapes;
     const int world = static_cast<int>(Slot(Get(view).fields.at("<dugi>k__BackingField"), "id"));
     for (const auto& [name, shape] : Get(Registry(view, world)).stringKeys)
-        if (name.starts_with("dofus_miniatures_ocre_")) shapes[std::stoi(name.substr(22))] = shape;
+        if (name.starts_with("better_dofus_ocre_")) shapes[std::stoi(name.substr(std::string_view("better_dofus_ocre_").size()))] = shape;
     return shapes;
 }
 std::set<int> Ids(const std::map<int, Obj>& shapes) { std::set<int> ids; for (const auto& [id, _] : shapes) ids.insert(id); return ids; }
@@ -1621,7 +1621,7 @@ void WorldChangeWhileCreating() {
     Check(!now3.contains(10) && !now3.contains(20) && !now3.contains(60) && Get(landed.at(10)).disposed && Get(landed.at(20)).disposed &&
         Get(landed.at(60)).disposed, "Disposed under the world they landed in, at once");
     bool left = false;
-    for (const auto& [name, shape] : Get(Registry(bigView, 1)).stringKeys) left |= name.starts_with("dofus_miniatures_ocre_");
+    for (const auto& [name, shape] : Get(Registry(bigView, 1)).stringKeys) left |= name.starts_with("better_dofus_ocre_");
     Check(!left && Get(Registry(bigView, 1)).stringKeys.contains("anomaly_shape99"), "Nothing of ours left under the old world");
     Pump(20);
     Check(Ids(Shapes(bigView)) == std::set<int>{40}, "The new world's complete zone drawn there");

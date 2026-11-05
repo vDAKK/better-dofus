@@ -87,7 +87,7 @@ struct Change {
 };
 // True when it changed what is known.
 bool Apply(Knowledge& known, const Change& change);
-// The file beside the shared settings (DofusMiniatures-roublard-passage.json).
+// The file beside the shared settings (BetterDofus-roublard-passage.json).
 std::filesystem::path DataPath(const std::filesystem::path& settingsPath);
 // A file whose content is not the mod's: kept as it is, never rewritten.
 struct InvalidFile : std::runtime_error { using std::runtime_error::runtime_error; };

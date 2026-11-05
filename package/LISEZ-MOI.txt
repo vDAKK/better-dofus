@@ -10,7 +10,28 @@ all game rights belong to Ankama. I do not know whether using this mod is
 allowed by Ankama's terms: a ban cannot be completely ruled out. Use it at
 your own risk; the software is provided "as is", without any warranty.
 
-DOFUS ENHANCED — Dofus Unity 3.7.13.17 — VERSION 1.21.1
+BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.0.0
+
+INSTALLATION : double-clique sur BetterDofusLoader.exe, puis lance Dofus.
+
+VERSION 2.0.0 : LE MOD DEVIENT BETTER DOFUS
+- Dofus Enhanced, d’abord nommé Dofus Miniatures, s’appelle Better Dofus : le
+  dépôt vDAKK/better-dofus, l’onglet des options et tous ses fichiers.
+- Une version n’a plus qu’un nom, son numéro : l’archive BetterDofus-2.0.0.zip
+  et le dossier BetterDofus-2.0.0. Les fichiers sont BetterDofus.dll,
+  BetterDofusLoader.exe, BetterDofusAutoLoader.exe et BetterDofusTreasure.exe.
+- Installer tient en un double-clic sur BetterDofusLoader.exe.
+- Tes données suivent quand l’archive est extraite à côté des anciennes versions :
+  réglages, statistiques, affichages, carnet, passages du Roublard et clé Metamob
+  sont copiés au premier lancement sous leur nouveau nom (BetterDofus-settings.ini,
+  BetterDofus-stats.json…). L’ancien chargement automatique est retiré. Les anciens
+  fichiers restent en place : tu peux les supprimer une fois que tout marche.
+- Mises à jour : le mod ne regarde plus que vDAKK/better-dofus. Une version
+  d’Altansar n’est plus installée en secours après une mise à jour de Dofus, car
+  elle garde les anciens noms.
+- Le mod reste créé par Altansar : https://github.com/Altansar69/dofus-enhanced
+- Les notes ci-dessous sont gardées telles qu’elles ont été écrites, avec les noms
+  de l’époque.
 
 VERSION 1.21.1 : MESURE DE L’OUVERTURE DES FENÊTRES
 - Le mod note dans module.log le temps que mettent les fenêtres du jeu à s’ouvrir,
@@ -2319,15 +2340,15 @@ PASSER À R67
    dans un client qui en a déjà chargé une.
 
 CHARGEMENT AUTOMATIQUE ET ARRÊT
-La case active un assistant sans fenêtre et une entrée DofusMiniatures au
+La case active un assistant sans fenêtre et une entrée BetterDofus au
 lancement de votre session Windows. Il traite les futurs clients du chemin
 choisi, sans PID, et ignore ceux déjà ouverts à son démarrage. Une seule
 tentative par instance, après attente du moteur et vérification des empreintes.
 L'assistant sélectionne la révision compatible la plus récente parmi les dossiers
-voisins DofusMiniatures-3.7.11.11-rN, après vérification de release.ini et des trois
+voisins BetterDofus-X.Y.Z, après vérification de release.ini et des trois
 binaires. Une copie incomplète est ignorée. Aucun téléchargement automatique.
 Les versions complètes doivent être extraites à côté du dossier de l'assistant.
-Les préférences sont partagées dans DofusMiniatures-3.7.11.11-settings.ini, au
+Les préférences sont partagées dans BetterDofus-settings.ini, au
 même niveau que les versions. Si ce dossier n'est pas accessible en écriture,
 le fichier settings.ini de la version est utilisé. Les clients déjà ouverts ne
 relisent pas les changements d'un autre client.
@@ -2403,7 +2424,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
 
-MINHOOK — LICENCE BSD À DEUX CLAUSES (bibliothèque liée dans DofusMiniatures.dll)
+MINHOOK — LICENCE BSD À DEUX CLAUSES (bibliothèque liée dans BetterDofus.dll)
 MinHook - The Minimalistic API Hooking Library for x64/x86
 Copyright (C) 2009-2017 Tsuda Kageyu.
 All rights reserved.

@@ -278,7 +278,7 @@ fs::path Folder(const std::string& name) {
     fs::create_directories(folder);
     return folder;
 }
-fs::path File(const std::string& name) { return Folder(name) / L"DofusMiniatures-stats.json"; }
+fs::path File(const std::string& name) { return Folder(name) / L"BetterDofus-stats.json"; }
 fs::path With(const fs::path& path, const wchar_t* suffix) { auto result = path; result += suffix; return result; }
 std::string Bytes(const fs::path& path) {
     std::ifstream file(path, std::ios::binary);
@@ -357,7 +357,7 @@ void RoundTrip() {
         "Sums saturate instead of wrapping");
     // The previous file is kept as the backup.
     Check(fs::exists(With(path, L".bak")) && Count(SheetOf(Saved(With(path, L".bak")), 7), Counter::Xp) == 1000 + static_cast<int64_t>(Counter::Xp),
-        "Each write keeps the previous file as DofusMiniatures-stats.json.bak");
+        "Each write keeps the previous file as BetterDofus-stats.json.bak");
 }
 
 // Two clients (one character each, then the same character later on the
@@ -950,7 +950,7 @@ struct Client {
     Module state{L"stats-test"};
     explicit Client(const fs::path& folder) {
         module = &state;
-        state.settingsPath = folder / L"DofusMiniatures-3.7.11.11-settings.ini";
+        state.settingsPath = folder / L"BetterDofus-settings.ini";
         state.ready.store(true);
         state.servicesReady = true;
         state.settings.statsEnabled = true;
@@ -968,7 +968,7 @@ void NextSecond() { stats::state.nextRead = 0; }
 // and at Stop; the totals, the resets and the names the options show.
 void ModuleSide() {
     const auto folder = Folder("module");
-    const auto path = folder / L"DofusMiniatures-stats.json";
+    const auto path = folder / L"BetterDofus-stats.json";
     Client client(folder);
     fake::characterId = 101;
     fake::characterName = "Altansar";
@@ -1148,7 +1148,7 @@ void DungeonNames() {
 // it are dropped, those made after it are written, in its second too.
 void ModuleFollowsOtherResets() {
     const auto folder = Folder("module-resets");
-    const auto path = folder / L"DofusMiniatures-stats.json";
+    const auto path = folder / L"BetterDofus-stats.json";
     Client client(folder);
     fake::characterId = 303;
     fake::characterName = "Lou";
@@ -1182,7 +1182,7 @@ void ModuleFollowsOtherResets() {
 // without the pinned get_spellVariant nothing is converted, the names still read.
 void ModuleConvertsOldSpells() {
     const auto folder = Folder("module-old-spells");
-    const auto path = folder / L"DofusMiniatures-stats.json";
+    const auto path = folder / L"BetterDofus-stats.json";
     Put(path, OldFile().dump(1));
     const auto bytes = Bytes(path);
     Client client(folder);
@@ -1263,7 +1263,7 @@ void ModuleConvertsOldSpells() {
 // once, the other classes' spells dropped with their casts.
 void ModuleChecksClass() {
     const auto folder = Folder("module-class");
-    const auto path = folder / L"DofusMiniatures-stats.json";
+    const auto path = folder / L"BetterDofus-stats.json";
     Put(path, ClassFile().dump(1));
     Client client(folder);
     fake::characterId = 101;
@@ -1315,7 +1315,7 @@ void ModuleWithoutRuntime() {
     Check(stats::Counting() && stats::Current() == 0 && stats::Shown(false).character == 0 && stats::Shown(true).Count(Counter::Quests) == 1 &&
         stats::KeyName(Table::Spells, 413).empty() && !stats::Clear(false), "Counting goes on; no character, no names");
     FlushStats();
-    Check(Count(SheetOf(Saved(folder / L"DofusMiniatures-stats.json"), 7), Counter::Quests) == 1, "And is written at Stop");
+    Check(Count(SheetOf(Saved(folder / L"BetterDofus-stats.json"), 7), Counter::Quests) == 1, "And is written at Stop");
     // No module: nothing at all.
     module = nullptr;
     InstallStats();

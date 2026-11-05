@@ -415,8 +415,8 @@ constexpr const char* UiSpace = "UnityEngine.UIElements";
 constexpr const char* Figma = "Core.UILogic.Components.Figma";
 constexpr const char* DataImage = "Ankama.Dofus.Core.DataCenter.dll";
 constexpr const char* WorldSpace = "Core.DataCenter.Metadata.World";
-constexpr const char* ShapePrefix = "dofus_miniatures_ocre_";
-constexpr const char* LayerName = "dofus_miniatures_ocre";
+constexpr const char* ShapePrefix = "better_dofus_ocre_";
+constexpr const char* LayerName = "better_dofus_ocre";
 // The native layer AddAreaShape builds the mod's shapes in, until the mod adopts
 // them: fia 27, which no game code asks for (fhw.bexb creates it on first use,
 // on top of the map content).
@@ -1045,7 +1045,7 @@ std::unique_ptr<Detail> CreateDetail() {
     auto detail = std::make_unique<Detail>();
     detail->root.reset(Element());
     Obj root = detail->root.get();
-    Text(root, n.setName, "dofus_miniatures_ocre_detail");
+    Text(root, n.setName, "better_dofus_ocre_detail");
     Ignore(root);
     Classes(root, {"backgroundColor_black_black25"});
     Padding(root, 8, 12);

@@ -9,21 +9,16 @@ $ErrorActionPreference = 'Stop'
 # A launcher may inherit PSModulePath from PowerShell 7 or a build environment.
 # Resolve the installed Windows module explicitly instead of depending on it.
 Import-Module (Join-Path $PSHOME 'Modules/Microsoft.PowerShell.Utility/Microsoft.PowerShell.Utility.psd1') -ErrorAction Stop
-$script:Repository = 'Altansar69/dofus-enhanced'
-# Renamed from Altansar69/dofus-miniatures (GitHub redirects the old name):
-# assets published under either name stay trusted.
-$script:AssetRepositories = @('Altansar69/dofus-miniatures', 'Altansar69/dofus-enhanced')
-# Checked in this order. DAKK's version comes first and is never replaced while
-# it works: Altansar's repository is only a rescue, asked when no local release
-# verifies against the installed Dofus (a game update DAKK has not ported yet).
-# A source's listing can only designate that source's own assets.
-$script:Sources = @(
-    [pscustomobject]@{ Name = 'vDAKK/dofus-enhanced'; Assets = @('vDAKK/dofus-enhanced'); RescueOnly = $false },
-    [pscustomobject]@{ Name = $script:Repository; Assets = $script:AssetRepositories; RescueOnly = $true }
-)
-$script:Family = 'DofusMiniatures-3.7.11.11-r'
-$script:PayloadFiles = @('DofusMiniatures.dll', 'ModuleLoader.exe', 'ModuleAutoLoader.exe',
-    'TreasureOverlay.exe', 'Update-GitHub.ps1')
+$script:Repository = 'vDAKK/better-dofus'
+$script:Family = 'BetterDofus-'
+$script:PayloadFiles = @('BetterDofus.dll', 'BetterDofusLoader.exe', 'BetterDofusAutoLoader.exe',
+    'BetterDofusTreasure.exe', 'Update-GitHub.ps1')
+
+# X.Y.Z as one comparable number, as in release.ini; 0 for anything else.
+function Get-Revision([string]$Version) {
+    if ($Version -cnotmatch '^(0|[1-9][0-9]{0,2})\.(0|[1-9][0-9]{0,2})\.(0|[1-9][0-9]{0,2})$') { return 0 }
+    return [int]$Matches[1] * 1000000 + [int]$Matches[2] * 1000 + [int]$Matches[3]
+}
 
 function Assert-PlainPath([string]$Path, [bool]$Directory) {
     $item = Get-Item -LiteralPath $Path -Force
@@ -68,37 +63,36 @@ function Test-Package([string]$Folder, [int]$Revision, [string]$GameHash, [strin
             (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant() -cne $hashes[$name]) {
             throw 'Package file integrity check failed'
         }
-        if ($name -in @('DofusMiniatures.dll', 'ModuleLoader.exe', 'ModuleAutoLoader.exe') -and
+        if ($name -in @('BetterDofus.dll', 'BetterDofusLoader.exe', 'BetterDofusAutoLoader.exe') -and
             $manifest[$name] -cne $hashes[$name]) { throw 'Conflicting integrity manifests' }
     }
 }
 
-function Select-Update($Releases, [string]$GameHash, [string]$MetadataHash, [string[]]$Repositories = $script:AssetRepositories) {
+# A release is v<X.Y.Z> with the one asset BetterDofus-<X.Y.Z>.zip. The Dofus build
+# it supports is a comment of its notes, invisible on the page, so that nothing is
+# downloaded to know it; the unpacked release.ini must then say the same.
+function Select-Update($Releases, [string]$GameHash, [string]$MetadataHash) {
     $selected = $null
     foreach ($release in @($Releases)) {
-        # Since 1.13.1 a release is tagged with its public version (v1.13.1); an
-        # older revision tag (r112) must still name the archive's own revision.
         $tag = [string]$release.tag_name
-        $versioned = $tag -cmatch '^v?(0|[1-9][0-9]{0,3})\.(0|[1-9][0-9]{0,3})\.(0|[1-9][0-9]{0,3})$'
-        if ($release.draft -or $release.prerelease -or (!$versioned -and $tag -cnotmatch '^r[1-9][0-9]{0,5}$')) { continue }
+        if ($release.draft -or $release.prerelease -or $tag -cnotmatch '^v(.+)$') { continue }
+        $version = $Matches[1]
+        $revision = Get-Revision $version
+        if ($revision -lt 2000000) { continue }
+        $body = if ($release.PSObject.Properties['body']) { [string]$release.body } else { '' }
+        if ($body -cnotmatch '<!-- better-dofus game=([a-f0-9]{64}) metadata=([a-f0-9]{64}) -->' -or
+            $Matches[1] -cne $GameHash -or $Matches[2] -cne $MetadataHash) { continue }
         foreach ($asset in @($release.assets)) {
-            if ($asset.name -cnotmatch '^DofusMiniatures-r([1-9][0-9]{0,5})-([a-f0-9]{64})-([a-f0-9]{64})\.zip$') { continue }
-            $revision = [int]$Matches[1]
-            if ($revision -lt 75 -or (!$versioned -and $tag -cne "r$revision") -or
-                $Matches[2] -cne $GameHash -or $Matches[3] -cne $MetadataHash) { continue }
+            if ($asset.name -cne "BetterDofus-$version.zip") { continue }
             if ($asset.state -cne 'uploaded' -or $asset.size -le 0 -or $asset.size -gt 32MB) { continue }
             # GitHub computes the digest on upload; never trust a checksum from
             # an arbitrary asset URL or silently accept an absent digest.
             if (!$asset.PSObject.Properties['digest'] -or $asset.digest -cnotmatch '^sha256:[a-f0-9]{64}$') { continue }
-            $expected = $null
-            foreach ($repository in $Repositories) {
-                $candidate = "https://github.com/$repository/releases/download/$tag/$($asset.name)"
-                if ($asset.browser_download_url -ceq $candidate) { $expected = $candidate }
-            }
-            if (!$expected) { continue }
+            $expected = "https://github.com/$script:Repository/releases/download/$tag/$($asset.name)"
+            if ($asset.browser_download_url -cne $expected) { continue }
             if (!$selected -or $revision -gt $selected.revision) {
                 $selected = [pscustomobject]@{
-                    revision = $revision; url = $expected; size = [long]$asset.size
+                    revision = $revision; version = $version; url = $expected; size = [long]$asset.size
                     hash = $asset.digest.Substring(7)
                 }
             }
@@ -116,7 +110,7 @@ function Get-TrustedDownload([string]$Url, [string]$Destination, [long]$Limit,
     $handler.UseDefaultCredentials = $false
     $client = New-Object Net.Http.HttpClient($handler)
     $client.Timeout = [TimeSpan]::FromSeconds(30)
-    $client.DefaultRequestHeaders.UserAgent.ParseAdd('DofusMiniatures-Updater/1')
+    $client.DefaultRequestHeaders.UserAgent.ParseAdd('BetterDofus-Updater/1')
     $client.DefaultRequestHeaders.Accept.ParseAdd('application/vnd.github+json')
     $client.DefaultRequestHeaders.Add('X-GitHub-Api-Version', '2022-11-28')
     try {
@@ -160,16 +154,18 @@ function Get-TrustedDownload([string]$Url, [string]$Destination, [long]$Limit,
 }
 
 function Install-Archive([string]$Archive, [string]$Stage, [string]$Root,
-    [int]$Revision, [string]$GameHash, [string]$MetadataHash, [string]$ExpectedHash) {
+    [string]$Version, [string]$GameHash, [string]$MetadataHash, [string]$ExpectedHash) {
     if ((Get-FileHash -LiteralPath $Archive -Algorithm SHA256).Hash.ToLowerInvariant() -cne $ExpectedHash) {
         throw 'GitHub asset digest mismatch'
     }
     Assert-PlainPath $Root $true
     Assert-PlainPath $Stage $true
-    $name = "$script:Family$Revision"
+    $revision = Get-Revision $Version
+    if (!$revision) { throw 'Invalid version' }
+    $name = "$script:Family$Version"
     $destination = Join-Path $Root $name
     if (Test-Path -LiteralPath $destination) {
-        Test-Package $destination $Revision $GameHash $MetadataHash
+        Test-Package $destination $revision $GameHash $MetadataHash
         return 'ALREADY_INSTALLED'
     }
     Add-Type -AssemblyName System.IO.Compression
@@ -200,26 +196,26 @@ function Install-Archive([string]$Archive, [string]$Stage, [string]$Root,
             [IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $file, $false)
         }
     } finally { $zip.Dispose() }
-    Test-Package $unpacked $Revision $GameHash $MetadataHash
+    Test-Package $unpacked $revision $GameHash $MetadataHash
     # A complete verified release becomes visible in a single directory rename.
     # Existing releases and shared settings are never overwritten.
     [IO.Directory]::Move($unpacked, $destination)
     return 'INSTALLED'
 }
 
-function Find-SourceUpdate($Source, [string]$Folder, [string]$GameHash, [string]$MetadataHash,
+function Find-Update([string]$Folder, [string]$GameHash, [string]$MetadataHash,
     [Threading.CancellationToken]$Cancellation) {
     $listing = Join-Path $Folder 'releases.json'
-    Get-TrustedDownload "https://api.github.com/repos/$($Source.Name)/releases?per_page=100" $listing 4MB $Cancellation
+    Get-TrustedDownload "https://api.github.com/repos/$script:Repository/releases?per_page=100" $listing 4MB $Cancellation
     $releases = [IO.File]::ReadAllText($listing) | ConvertFrom-Json
-    if (@($releases).Count -ne 0) { return Select-Update $releases $GameHash $MetadataHash $Source.Assets }
+    if (@($releases).Count -ne 0) { return Select-Update $releases $GameHash $MetadataHash }
     # A degraded GitHub can answer the listing with an empty page (seen on
     # 2026-10-22); the newest published release has its own endpoint. A listing
     # with releases but none compatible stays a definitive answer.
     Write-Output 'UPDATE_LISTING_EMPTY'
     $newest = Join-Path $Folder 'latest.json'
-    Get-TrustedDownload "https://api.github.com/repos/$($Source.Name)/releases/latest" $newest 1MB $Cancellation
-    return Select-Update ([IO.File]::ReadAllText($newest) | ConvertFrom-Json) $GameHash $MetadataHash $Source.Assets
+    Get-TrustedDownload "https://api.github.com/repos/$script:Repository/releases/latest" $newest 1MB $Cancellation
+    return Select-Update ([IO.File]::ReadAllText($newest) | ConvertFrom-Json) $GameHash $MetadataHash
 }
 
 function Invoke-GitHubUpdate([string]$Root, [string]$Exe) {
@@ -231,74 +227,47 @@ function Invoke-GitHubUpdate([string]$Root, [string]$Exe) {
     $parent = [IO.Path]::GetDirectoryName($Exe)
     $gameHash = (Get-FileHash -LiteralPath (Join-Path $parent 'GameAssembly.dll')).Hash.ToLowerInvariant()
     $metadataHash = (Get-FileHash -LiteralPath (Join-Path $parent 'Dofus_Data/il2cpp_data/Metadata/global-metadata.dat')).Hash.ToLowerInvariant()
-    $stage = Join-Path $Root ('.dofus-update-' + [Guid]::NewGuid().ToString('N'))
+    $stage = Join-Path $Root ('.better-dofus-update-' + [Guid]::NewGuid().ToString('N'))
     $null = [IO.Directory]::CreateDirectory($stage)
     $cancellation = New-Object Threading.CancellationTokenSource
-    # The loader kills this worker after 45 seconds: a silent source keeps time
-    # for the next one and for the download.
+    # The loader kills this worker after 45 seconds.
     $cancellation.CancelAfter(40000)
     try {
         # Only a release that verifies against the installed Dofus counts: an
         # incompatible sibling is not a fallback.
         $localRevision = 0
+        $localVersion = ''
         foreach ($directory in Get-ChildItem -LiteralPath $Root -Directory) {
-            if ($directory.Name -cmatch '^DofusMiniatures-3\.7\.11\.11-r([1-9][0-9]{0,5})$') {
-                $revision = [int]$Matches[1]
+            if ($directory.Name.StartsWith($script:Family, [StringComparison]::Ordinal)) {
+                $version = $directory.Name.Substring($script:Family.Length)
+                $revision = Get-Revision $version
                 if ($revision -gt $localRevision) {
                     try {
                         Test-Package $directory.FullName $revision $gameHash $metadataHash
                         $localRevision = $revision
+                        $localVersion = $version
                     } catch { }
                 }
             }
         }
         $update = $null
-        $known = $null
-        $failure = $null
-        $answered = $false
-        foreach ($source in $script:Sources) {
-            if ($source.RescueOnly -and $localRevision) { continue }
-            $sourceLimit =[Threading.CancellationTokenSource]::CreateLinkedTokenSource($cancellation.Token)
-            $sourceLimit.CancelAfter(14000)
-            $folder = Join-Path $stage ([Guid]::NewGuid().ToString('N'))
-            $null = [IO.Directory]::CreateDirectory($folder)
-            try {
-                $found = @(Find-SourceUpdate $source $folder $gameHash $metadataHash $sourceLimit.Token)
-                $answered = $true
-            } catch {
-                # A silent source must not hide the next one. If none answers,
-                # the failure is reported and the local release stays in use.
-                $failure = $_
-                Write-Output "UPDATE_SOURCE_UNAVAILABLE $($source.Name) $($_.Exception.Message)"
-                continue
-            } finally { $sourceLimit.Dispose() }
-            $candidate = $null
-            foreach ($entry in $found) {
-                if ($entry -is [string]) { Write-Output $entry } elseif ($entry) { $candidate = $entry }
-            }
-            if ($candidate) {
-                if (!$known -or $candidate.revision -gt $known.revision) { $known = $candidate }
-                if ($candidate.revision -gt $localRevision) { $update = $candidate; break }
-            }
+        foreach ($entry in @(Find-Update $stage $gameHash $metadataHash $cancellation.Token)) {
+            if ($entry -is [string]) { Write-Output $entry } elseif ($entry) { $update = $entry }
         }
-        if (!$answered) { throw $failure }
-        if (!$known -and !$localRevision) { Write-Output 'UPDATE_NO_COMPATIBLE_RELEASE'; return }
-        if (!$update) {
-            if ($known -and $known.revision -eq $localRevision) { Write-Output "UPDATE_ALREADY_INSTALLED r$localRevision" }
-            else { Write-Output "UPDATE_LOCAL_NEWER r$localRevision" }
-            return
-        }
+        if (!$update -and !$localRevision) { Write-Output 'UPDATE_NO_COMPATIBLE_RELEASE'; return }
+        if (!$update -or $update.revision -lt $localRevision) { Write-Output "UPDATE_LOCAL_NEWER $localVersion"; return }
+        if ($update.revision -eq $localRevision) { Write-Output "UPDATE_ALREADY_INSTALLED $localVersion"; return }
         $archive = Join-Path $stage 'package.zip'
         Get-TrustedDownload $update.url $archive $update.size $cancellation.Token
         if ((Get-Item -LiteralPath $archive).Length -ne $update.size) { throw 'Truncated asset' }
-        $result = Install-Archive $archive $stage $Root $update.revision $gameHash $metadataHash $update.hash
-        Write-Output "UPDATE_$result r$($update.revision)"
+        $result = Install-Archive $archive $stage $Root $update.version $gameHash $metadataHash $update.hash
+        Write-Output "UPDATE_$result $($update.version)"
     } finally {
         $cancellation.Dispose()
         # This exact freshly created staging directory is the only recursive
         # deletion target. Reject a changed parent or a substituted junction.
         if ([IO.Path]::GetDirectoryName([IO.Path]::GetFullPath($stage)) -ne $Root -or
-            [IO.Path]::GetFileName($stage) -cnotmatch '^\.dofus-update-[a-f0-9]{32}$') {
+            [IO.Path]::GetFileName($stage) -cnotmatch '^\.better-dofus-update-[a-f0-9]{32}$') {
             throw 'Invalid staging cleanup target'
         }
         Assert-PlainPath $stage $true

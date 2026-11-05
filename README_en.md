@@ -1,23 +1,23 @@
 [Français](README.md) | English
 
-# 🐉 **Dofus Enhanced**
-![License](https://img.shields.io/badge/License-UNLICENSE-red) [![Version](https://img.shields.io/github/v/release/vDAKK/dofus-enhanced?label=Version&color=blue)](../../releases/latest) ![Dofus Unity](https://img.shields.io/badge/Dofus%20Unity-3.7.13.17-orange) ![OS](https://img.shields.io/badge/OS-Windows-green)
+# 🐉 **Better Dofus**
+![License](https://img.shields.io/badge/License-UNLICENSE-red) [![Version](https://img.shields.io/github/v/release/vDAKK/better-dofus?label=Version&color=blue)](../../releases/latest) ![Dofus Unity](https://img.shields.io/badge/Dofus%20Unity-3.7.13.17-orange) ![OS](https://img.shields.io/badge/OS-Windows-green)
 
 > [!WARNING]
 > **Unofficial project: please read before using it**
 >
-> - **I am not affiliated with Ankama.** Dofus Enhanced is an unofficial fan project, not endorsed or sponsored by Ankama.
+> - **I am not affiliated with Ankama.** Better Dofus is an unofficial fan project, not endorsed or sponsored by Ankama.
 > - **Dofus**, its name, its assets and **all rights to the game belong to Ankama**.
 > - **I don’t know whether using this mod is allowed** by the terms of use of Dofus and Ankama: **a ban cannot be completely ruled out**.
 > - Use it **at your own risk**. The software is provided **“as is”, without any warranty**.
 
-**Dofus Enhanced** brings a good dose of quality of life to **Dofus Unity**, right inside the game’s interface: miniatures your way, combat animations à la carte, resources on the maps, missing archmonsters zone by zone, one-click travel (zaaps, Havenbag and the Roublards’ secret passage included), soul capture helper with Metamob sync, Kralamoure openings in the calendar, treasure hunt, notebook, profession XP, on-screen FPS, per-character statistics, Dofus-style cursors and vertical gauges.
+**Better Dofus** brings a good dose of quality of life to **Dofus Unity**, right inside the game’s interface: miniatures your way, combat animations à la carte, resources on the maps, missing archmonsters zone by zone, one-click travel (zaaps, Havenbag and the Roublards’ secret passage included), soul capture helper with Metamob sync, Kralamoure openings in the calendar, treasure hunt, notebook, profession XP, on-screen FPS, per-character statistics, Dofus-style cursors and vertical gauges.
 
 Everything is set up in the game’s options, the mod’s panels are built from the game’s own components, and the mod updates itself when the game starts. Free and open source.
 
 ## ✨ Features
 
-**A “Dofus Enhanced” tab in the game’s own options**, split into blocks like the other options: Apparence (appearance), Animations, Surbrillance (highlight), Curseur (cursor), Jauges (gauges), Affichages enregistrés (saved layouts), Cartes (maps), Carnet (notebook), Chasse au trésor (treasure hunt), Déplacements (travel), Pierre d’âme (soul stone), Chat, Calendrier (calendar), Performances (performance), Statistiques (statistics), Chargement et mises à jour (loading and updates), À propos (about). Almost everything is switched on, off or tuned there.
+**A “Better Dofus” tab in the game’s own options**, split into blocks like the other options: Apparence (appearance), Animations, Surbrillance (highlight), Curseur (cursor), Jauges (gauges), Affichages enregistrés (saved layouts), Cartes (maps), Carnet (notebook), Chasse au trésor (treasure hunt), Déplacements (travel), Pierre d’âme (soul stone), Chat, Calendrier (calendar), Performances (performance), Statistiques (statistics), Chargement et mises à jour (loading and updates), À propos (about). Almost everything is switched on, off or tuned there.
 
 ### Appearance
 - **Miniatures, Créatures (creatures) or Normal**, chosen separately in and out of combat. Miniatures shrinks to 60% of the original size, never below 50% of a player’s height for monsters and summons.
@@ -86,24 +86,12 @@ Everything is set up in the game’s options, the mod’s panels are built from 
 
 ## 🔨 Installation
 
-1. On the **[latest release](../../releases/latest)** (Releases page), download the `DofusMiniatures-….zip` archive (not “Source code”).
-2. Extract **the whole archive** into a folder you keep, with a short path and outside the game folder (for example `C:\DofusEnhanced`). It contains a `DofusMiniatures-3.7.11.11-rN` folder: this historical name is normal, the targeted Dofus version is written in `release.ini`.
-3. Open a terminal in that `DofusMiniatures-3.7.11.11-rN` folder (in File Explorer, type `powershell` in the address bar, then Enter), then pick one of the two methods:
+1. On the **[latest release](../../releases/latest)** (Releases page), download `BetterDofus-X.Y.Z.zip` (not “Source code”).
+2. Extract it into a folder you keep, outside the game folder (for example `C:\BetterDofus`).
+3. In the `BetterDofus-X.Y.Z` folder, double-click **`BetterDofusLoader.exe`**. It finds Dofus by itself and turns on automatic loading.
+4. Start Dofus as usual, then go to **Options → Better Dofus**. Have fun!
 
-   **A. Game already running**: log in to your character, run the command below and type the Dofus PID it shows. After this first load, automatic loading is turned on by default for the next launches.
-
-   ```powershell
-   .\ModuleLoader.exe --interactive
-   ```
-
-   **B. Automatic loading right away**: give the path of your `Dofus.exe`, then start the game as usual. The mod will load at every launch; a game that is already running is left alone.
-
-   ```powershell
-   .\ModuleLoader.exe --enable-auto "C:\path\to\Dofus.exe"
-   ```
-
-To find `Dofus.exe`: with the game running, Task Manager → right-click Dofus → *Open file location*.
-4. In game: **Options → Dofus Enhanced**. Have fun!
+If Dofus is not where the Ankama launcher puts it, the program asks for the path of `Dofus.exe` (with the game running: Task Manager → right-click Dofus → *Open file location*).
 
 **Updates**: with automatic loading and the **Mises à jour GitHub** (GitHub updates) option, on by default, each new version is downloaded, verified and installed automatically when the game starts. Your settings are kept from one version to the next. A game that is already running keeps its version until the next launch.
 
@@ -112,13 +100,13 @@ To find `Dofus.exe`: with the game running, Task Manager → right-click Dofus �
 - **Windows only** (64-bit).
 - **One Dofus version per mod version**: currently **Dofus Unity 3.7.13.17**. The mod checks the game’s exact fingerprints before loading.
 - **Ankama updated Dofus?** The mod may need an update: until a compatible version is published, it does not load and the game is left untouched. As soon as it is out, the automatic update installs it.
-- **On a version older than 1.13.1?** Since the repository was renamed to `dofus-enhanced` and releases are named by version (`v1.15.0`…), its automatic update no longer finds new versions. Download the latest one, extract it into the folder that already contains `DofusMiniatures-3.7.11.11-rN` (not into a subfolder), then untick and tick **Chargement automatique** in game (or run `.\ModuleLoader.exe --enable-auto "C:\path\to\Dofus.exe"` from the new folder). Your settings are kept.
-- **Logs**: `module.log` in the folder of the loaded version (`DofusMiniatures-3.7.11.11-rN`), `autoload.log` in the folder of the automatic loading helper. **Options → Dofus Enhanced → À propos → Dossier du mod** (mod folder, **Ouvrir** button) opens the loaded version’s folder in Windows Explorer; the shared settings and the statistics are in the folder above.
+- **Coming from Dofus Enhanced or Dofus Miniatures (before 2.0.0)?** Its automatic update no longer finds new versions. Extract the latest archive **into the folder that already holds your old versions** and double-click `BetterDofusLoader.exe`. Your settings, statistics, notebook, layouts and Metamob key are picked up at the first launch, and the old automatic loading is removed. Once everything works, you can delete the old `DofusMiniatures-…` folders and files.
+- **Logs**: `module.log` in the folder of the loaded version (`BetterDofus-X.Y.Z`), `autoload.log` in the folder of the automatic loading helper. **Options → Better Dofus → À propos → Dossier du mod** (mod folder, **Ouvrir** button) opens the loaded version’s folder in Windows Explorer; the shared settings and the statistics are in the folder above.
 - **Connections**: GitHub for updates, DofusDB for the treasure hunt and profession XP, Metamob only if you save your key.
 - **Language**: the mod’s interface is in French. Metamob sync needs the game in French, English or Spanish.
 - **Experimental mod**: every version passes its offline tests before release, but some features are still marked experimental and bugs are possible.
-- **Uninstall**: untick **Chargement automatique** (automatic loading), or run `.\ModuleLoader.exe --disable-auto`, close the game, then delete the mod’s folder. Your Metamob key stays valid on metamob.fr until you regenerate it.
-- **Found a bug?** Open an [issue](../../issues) with your version (Options → Dofus Enhanced → À propos) and the last lines of `module.log`.
+- **Uninstall**: untick **Chargement automatique** (automatic loading), or run `.\BetterDofusLoader.exe --disable-auto`, close the game, then delete the mod’s folder. Your Metamob key stays valid on metamob.fr until you regenerate it.
+- **Found a bug?** Open an [issue](../../issues) with your version (Options → Better Dofus → À propos) and the last lines of `module.log`.
 
 ## 📖 Documentation
 
@@ -129,12 +117,12 @@ To find `Dofus.exe`: with the game running, Task Manager → right-click Dofus �
 
 ## 🔢 Versioning
 
-This project is following [semantic versioning schema](https://semver.org/). Each version has an **x.y.z** number, shown in game in **Options → Dofus Enhanced → À propos** (about), which is also its GitHub tag (`v1.13.0`, `v1.14.0`…). The revisions published before 1.0.0 are numbered 0.y.0 (`v0.75.0` to `v0.91.0`).
+This project is following [semantic versioning schema](https://semver.org/). Each version has an **x.y.z** number, shown in game in **Options → Better Dofus → À propos** (about), which is also its GitHub tag (`v1.13.0`, `v1.14.0`…). The revisions published before 1.0.0 are numbered 0.y.0 (`v0.75.0` to `v0.91.0`).
 
 ## 🤝 Credits
 
 - [vDAKK](https://github.com/vDAKK) - Maintains this version
-- [Altansar69](https://github.com/Altansar69) - Has created the project
+- [Altansar69](https://github.com/Altansar69) - Has created the project, first named Dofus Miniatures, then [Dofus Enhanced](https://github.com/Altansar69/dofus-enhanced)
 - [MinHook](https://github.com/TsudaKageyu/minhook) (Tsuda Kageyu) - hooking library
 - [nlohmann/json](https://github.com/nlohmann/json) (Niels Lohmann) - JSON parsing
 - [DofusDB](https://dofusdb.fr) - resource data, treasure hunt API and profession recipes
@@ -146,4 +134,4 @@ This software is under the [Unlicense](https://unlicense.org/), terms of which a
 
 Third-party components keep their own licenses: MinHook (BSD 2-Clause, `third_party/minhook`), nlohmann/json (MIT, `third_party/nlohmann`) and Microsoft’s WebView2 SDK (`third_party/webview2/LICENSE.txt`). The MinHook and nlohmann/json texts are also reproduced at the end of `package/LISEZ-MOI.txt`.
 
-The Unlicense only covers the code written for Dofus Enhanced: not the third-party components above, not the DofusDB resource data (`src/maps/resource-map-generated.hpp`, see [RESOURCE-DATA.md](docs/RESOURCE-DATA.md)), and not Dofus and its content, which remain Ankama’s property.
+The Unlicense only covers the code written for Better Dofus: not the third-party components above, not the DofusDB resource data (`src/maps/resource-map-generated.hpp`, see [RESOURCE-DATA.md](docs/RESOURCE-DATA.md)), and not Dofus and its content, which remain Ankama’s property.

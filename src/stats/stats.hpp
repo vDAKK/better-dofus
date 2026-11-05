@@ -1,7 +1,7 @@
 #pragma once
 // « Statistiques »: cumulative counters per character, counted from the first
 // release that has them (1.15.0), kept beside the shared settings in
-// DofusMiniatures-stats.json: one record per character id, merged under a file
+// BetterDofus-stats.json: one record per character id, merged under a file
 // lock with the other game clients (one client per character). With
 // settings.statsEnabled off nothing is counted and the trackers read nothing.
 #include <array>

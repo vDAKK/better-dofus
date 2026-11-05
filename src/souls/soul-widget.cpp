@@ -205,10 +205,10 @@ void TickSoulWidget() {
         int index=api.Value<int>(api.Call(target.get(),"IndexOf",{anchor.get()}));if(index<0){Missing("menu-anchor-not-in-parent");return;}
         parent.reset(target.get());manager.reset(widget.get());service.reset(candidate.get());compositor.reset(module->compositor.get());
         menu.reset(anchor.get());tooltipService.reset(tips.get());
-        if(soul)CreateControl(button,tooltip,"dofus_miniatures_soul_toggle","Capture d’âme\nAfficher ou masquer le panneau dans les combats capturables.",128);
+        if(soul)CreateControl(button,tooltip,"better_dofus_soul_toggle","Capture d’âme\nAfficher ou masquer le panneau dans les combats capturables.",128);
         for(const auto& entry:tools){
             shortcuts.push_back({entry.key,{},{}});auto& c=shortcuts.back();
-            CreateControl(c.button,c.tooltip,("dofus_miniatures_"+entry.key+"_toggle").c_str(),
+            CreateControl(c.button,c.tooltip,("better_dofus_"+entry.key+"_toggle").c_str(),
                 entry.title+"\nAfficher ou masquer ce panneau.",entry.icon);
         }
         SyncLayout();Sync();toolbarReady=true;reported=false;

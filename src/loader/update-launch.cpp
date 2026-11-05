@@ -60,7 +60,7 @@ void CheckGithubUpdates(const std::filesystem::path& folder, const std::filesyst
         wchar_t system[MAX_PATH]{};
         if (!GetSystemDirectoryW(system, MAX_PATH)) throw std::runtime_error("Cannot locate Windows PowerShell");
         const auto powershell = std::filesystem::path(system) / L"WindowsPowerShell/v1.0/powershell.exe";
-        log << "UPDATE_CHECK GitHub vDAKK/dofus-enhanced; Altansar69/dofus-enhanced if no local release fits this Dofus\n"; log.flush();
+        log << "UPDATE_CHECK GitHub vDAKK/better-dofus\n"; log.flush();
         const auto active = [&] { return (!enabled || enabled()) && Settings::Read(settings).githubUpdates; };
         if (!active()) return;
         const auto result = Child(powershell, L"-NoProfile -NonInteractive -ExecutionPolicy Bypass -File " +
@@ -81,7 +81,7 @@ DWORD DispatchVerifiedLoader(const std::filesystem::path& folder, DWORD pid, uin
     log.flush();
     // The selected release's loader rechecks its own pinned native snapshot.
     // The stable watcher never injects using another version's addresses.
-    return Child(folder / L"ModuleLoader.exe", L"--auto-load " + std::to_wstring(pid) + L" " +
+    return Child(folder / L"BetterDofusLoader.exe", L"--auto-load " + std::to_wstring(pid) + L" " +
         std::to_wstring(creation) + L" " + Quote(client.wstring()), folder,
         folder / L"autoload.log", 240000, false, {});
 }

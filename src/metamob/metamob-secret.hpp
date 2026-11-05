@@ -21,7 +21,7 @@ public:
 private:
     std::string text;
 };
-// DofusMiniatures-metamob.key next to the active settings file.
+// BetterDofus-metamob.key next to the active settings file.
 std::filesystem::path KeyPath(const std::filesystem::path& settingsPath);
 // CryptProtectData (current user, no UI, fixed entropy), magic header, atomic
 // replace through a temporary file; refuses reparse points and invalid keys.

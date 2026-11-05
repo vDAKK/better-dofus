@@ -288,7 +288,7 @@ void Settings::Save(const std::filesystem::path& path, bool withMetamobSync) con
         std::ofstream file(temporary, std::ios::trunc);
         // noAnimations and animationMode: for revisions before 1.12.0 only.
         const int legacyAnimationMode = LegacyAnimationMode();
-        file << "# Dofus Miniatures - 3.7.11.11\nmode=" << mode
+        file << "# Better Dofus\nmode=" << mode
              << "\nnoAnimations=" << (legacyAnimationMode != 0 ? 1 : 0)
              << "\nanimationMode=" << legacyAnimationMode
              << "\nautoLoad=" << (autoLoad ? 1 : 0)

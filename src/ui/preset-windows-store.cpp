@@ -228,7 +228,7 @@ Snapshot FromJson(const nlohmann::json& windows) {
     return snapshot;
 }
 std::filesystem::path DataPath(const std::filesystem::path& settingsPath) {
-    return settingsPath.parent_path() / L"DofusMiniatures-layouts.json";
+    return settingsPath.parent_path() / L"BetterDofus-layouts.json";
 }
 std::optional<Snapshot> Load(const std::filesystem::path& path, int uid) {
     if (!ValidUid(uid)) return std::nullopt;

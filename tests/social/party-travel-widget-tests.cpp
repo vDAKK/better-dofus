@@ -242,7 +242,7 @@ int main() { using namespace fake; try {
         Check(Logged("PARTY_TRAVEL_WIDGET_STATE slots=6 filled=6 buttons=2 skipped=self,spouse,companion,guest"), "Discovery explains each skipped slot");
         auto b = f.Button(1);
         Check(Get(b).numbers["set_iconValue"] == 336 && Get(b).numbers["set_mainStyle"] == 2 && Get(b).numbers["set_toggleSize"] == 1 &&
-            Get(b).text == "dofus_miniatures_party_travel", "Spouse button's native style, zaap icon");
+            Get(b).text == "better_dofus_party_travel", "Spouse button's native style, zaap icon");
         Check(Get(f.slots[1].portrait).items.size() == 4, "Native slot children kept, one owned button added");
         Check(f.Enabled(1) && f.Enabled(5), "Known, reachable positions enable the button");
         Check(f.Tip(1).starts_with("Aller jusqu’à Alpha — [3,-3] Plaine des Scarafeuilles (12 cases)") &&

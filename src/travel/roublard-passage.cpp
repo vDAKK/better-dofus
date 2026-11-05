@@ -332,7 +332,7 @@ void Write(const std::filesystem::path& path, const Knowledge& known) {
 }
 
 std::filesystem::path DataPath(const std::filesystem::path& settingsPath) {
-    return settingsPath.parent_path() / L"DofusMiniatures-roublard-passage.json";
+    return settingsPath.parent_path() / L"BetterDofus-roublard-passage.json";
 }
 Knowledge Read(const std::filesystem::path& path) {
     Plain(path);

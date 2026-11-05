@@ -244,7 +244,7 @@ void CreateView(View& v,const Frame& f) {
     v.compositor.reset(module->compositor.get()); v.service.reset(f.service.get()); v.dictionary.reset(f.dictionary.get());
     v.owner.reset(f.owner.get()); v.world.reset(f.world.get()); v.root.reset(f.root.get()); v.panel.reset(f.panel.get()); v.manager.reset(f.manager.get());
     v.worldId=f.worldId;
-    const auto group = "dofus_miniatures_resources_"+std::to_string(++serial);
+    const auto group = "better_dofus_resources_"+std::to_string(++serial);
     v.group.reset(api.string_new(group.c_str()));
     Ref groups(api.Field(v.manager.get(),"dttw"));
     if (StringItem(groups.get(),v.group.get())) throw std::runtime_error("Resource map group collision");

@@ -59,8 +59,8 @@ std::string Names(const std::vector<std::string>& names) {
 }
 std::string NoKeyText(const std::vector<std::string>& names) {
     return names.size() == 1 ?
-        "Metamob : capture de " + Names(names) + " non synchronisée : aucune clé enregistrée (Options › Dofus Enhanced › Pierre d’âme)." :
-        "Metamob : captures de " + Names(names) + " non synchronisées : aucune clé enregistrée (Options › Dofus Enhanced › Pierre d’âme).";
+        "Metamob : capture de " + Names(names) + " non synchronisée : aucune clé enregistrée (Options › Better Dofus › Pierre d’âme)." :
+        "Metamob : captures de " + Names(names) + " non synchronisées : aucune clé enregistrée (Options › Better Dofus › Pierre d’âme).";
 }
 std::string NoKeyText(const std::string& name) { return NoKeyText(std::vector<std::string>{name}); }
 std::string UnmatchedText(const std::string& name) { return "Metamob : " + Quoted(name) + " introuvable dans ta quête Ocre, rien n’a été modifié."; }
@@ -103,7 +103,7 @@ constexpr int DefaultRetryAfter = 60, MaxPending = 500, MaxPages = 10, CycleRequ
 // looked at again at most every second for it.
 constexpr uint64_t RefreshMs = 10 * 60 * 1000, WantedMs = 60000, StatusMs = 1000;
 constexpr size_t MaxWrites = 64;
-constexpr wchar_t SenderName[] = L"Local\\DofusMiniatures.Metamob";
+constexpr wchar_t SenderName[] = L"Local\\BetterDofus.Metamob";
 constexpr char QuestsRoute[] = "/quests", ListRoute[] = "/quests/*/monsters", WriteRoute[] = "/quests/*/monsters/*";
 // « Ouvertures Kralamoure »: the calendar's list, asked from a week before this
 // PC's date (the week shown when the calendar opens is read whole, whatever
@@ -174,7 +174,7 @@ struct Flight {
 // write. Named after a hash: no slug in the name.
 std::wstring FlightName(const std::string& slug, int64_t id) {
     const auto hash = Hash(slug + "/" + std::to_string(id));
-    std::wstring name = L"Local\\DofusMiniatures.Metamob.";
+    std::wstring name = L"Local\\BetterDofus.Metamob.";
     for (int shift = 60; shift >= 0; shift -= 4) name += L"0123456789abcdef"[(hash >> shift) & 15];
     return name;
 }
@@ -482,7 +482,7 @@ std::optional<int> Current(Session& s, const std::string& slug, int64_t id, int 
     return std::nullopt;
 }
 // One sender at a time among this PC's game clients: the read, the write and its
-// check happen under Local\DofusMiniatures.Metamob. A mutex abandoned by a client
+// check happen under Local\BetterDofus.Metamob. A mutex abandoned by a client
 // that ended while holding it is owned all the same.
 class Sender {
 public:

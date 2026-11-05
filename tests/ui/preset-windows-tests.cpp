@@ -244,7 +244,7 @@ struct Fixture {
     Fixture() {
         folder = std::filesystem::temp_directory_path() / ("preset-windows-" + std::to_string(GetCurrentProcessId()) + "-" + std::to_string(GetTickCount64()));
         std::filesystem::create_directories(folder);
-        owner.settingsPath = folder / L"DofusMiniatures-3.7.11.11-settings.ini";
+        owner.settingsPath = folder / L"BetterDofus-settings.ini";
         module = &owner; owner.ready = true; owner.servicesReady = true;
         cached = Make("CachedDataService"); owner.cached.reset(cached);
         container = Make("UiPresetOptionsContainer");

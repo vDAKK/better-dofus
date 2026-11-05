@@ -9,13 +9,16 @@
 
 namespace {
 constexpr wchar_t RunKey[] = L"Software\\Microsoft\\Windows\\CurrentVersion\\Run";
-constexpr wchar_t RunValue[] = L"DofusMiniatures";
+constexpr wchar_t RunValue[] = L"BetterDofus";
+// The startup entry of the versions before 2.0.0, named DofusMiniatures: left in
+// place, its watcher would load a second mod into the same game.
+constexpr wchar_t LegacyRunValue[] = L"DofusMiniatures";
 struct RegistryKey {
     HKEY value = nullptr;
     ~RegistryKey() { if (value) RegCloseKey(value); }
 };
 struct ConfigurationLock {
-    Handle mutex{CreateMutexW(nullptr, FALSE, L"Local\\DofusMiniatures.AutoLoadConfiguration")};
+    Handle mutex{CreateMutexW(nullptr, FALSE, L"Local\\BetterDofus.AutoLoadConfiguration")};
     bool locked = false;
     ConfigurationLock() {
         if (!mutex) throw std::runtime_error("Cannot lock auto-load configuration");
@@ -36,7 +39,7 @@ bool SameInstallation(const std::filesystem::path& a, const std::filesystem::pat
 }
 std::filesystem::path InstallationIdentity(const std::filesystem::path& folder) {
     return LocalRelease::FolderRevision(folder.filename().wstring()) ?
-        folder.parent_path() / L"DofusMiniatures-3.7.11.11" : folder;
+        folder.parent_path() / L"BetterDofus" : folder;
 }
 bool PlainPath(const std::filesystem::path& path, bool directory) {
     const auto flags = GetFileAttributesW(path.c_str());
@@ -75,8 +78,8 @@ std::optional<LocalRelease::Candidate> VerifiedRelease(const std::filesystem::pa
                 if (split == std::string::npos || !hashes.emplace(line.substr(0, split), line.substr(split + 1)).second) return {};
             }
             if (hashes.size() != 5) return {};
-            for (const auto entry : {"DofusMiniatures.dll", "ModuleLoader.exe", "ModuleAutoLoader.exe",
-                                    "TreasureOverlay.exe", "Update-GitHub.ps1"}) {
+            for (const auto entry : {"BetterDofus.dll", "BetterDofusLoader.exe", "BetterDofusAutoLoader.exe",
+                                    "BetterDofusTreasure.exe", "Update-GitHub.ps1"}) {
                 const auto item = folder / entry;
                 if (!PlainPath(item, false) || std::filesystem::file_size(item) > 64ULL * 1024 * 1024 ||
                     !LocalRelease::Hash(hashes[entry]) || FileHash(item) != hashes[entry]) return {};
@@ -88,7 +91,7 @@ std::optional<LocalRelease::Candidate> VerifiedRelease(const std::filesystem::pa
 std::vector<std::filesystem::path> ReleaseFolders(const std::filesystem::path& folder) {
     const auto absolute = std::filesystem::path(NormalPath(folder));
     if (!LocalRelease::FolderRevision(absolute.filename().wstring()) || !PlainPath(absolute.parent_path(), true))
-        throw std::runtime_error("Use a packaged DofusMiniatures-3.7.11.11-rN folder for automatic updates");
+        throw std::runtime_error("Use a packaged BetterDofus-X.Y.Z folder for automatic updates");
     std::vector<std::filesystem::path> result;
     size_t entries = 0;
     // One directory level, only exact family names. Never recurse or follow a
@@ -102,18 +105,18 @@ std::vector<std::filesystem::path> ReleaseFolders(const std::filesystem::path& f
     }
     return result;
 }
-std::optional<std::wstring> ReadRegistration() {
+std::optional<std::wstring> ReadRegistration(const wchar_t* name = RunValue) {
     RegistryKey key;
     const auto opened = RegOpenKeyExW(HKEY_CURRENT_USER, RunKey, 0, KEY_QUERY_VALUE, &key.value);
     if (opened == ERROR_FILE_NOT_FOUND) return std::nullopt;
     if (opened != ERROR_SUCCESS) throw std::runtime_error("Cannot read auto-load startup entry");
     DWORD type = 0, bytes = 0;
-    auto result = RegQueryValueExW(key.value, RunValue, nullptr, &type, nullptr, &bytes);
+    auto result = RegQueryValueExW(key.value, name, nullptr, &type, nullptr, &bytes);
     if (result == ERROR_FILE_NOT_FOUND) return std::nullopt;
     if (result != ERROR_SUCCESS || type != REG_SZ || bytes < sizeof(wchar_t) || bytes > 65536 || bytes % sizeof(wchar_t))
-        throw std::runtime_error("Unexpected DofusMiniatures startup entry; left unchanged");
+        throw std::runtime_error("Unexpected BetterDofus startup entry; left unchanged");
     std::vector<wchar_t> text(bytes / sizeof(wchar_t));
-    result = RegQueryValueExW(key.value, RunValue, nullptr, &type, reinterpret_cast<BYTE*>(text.data()), &bytes);
+    result = RegQueryValueExW(key.value, name, nullptr, &type, reinterpret_cast<BYTE*>(text.data()), &bytes);
     if (result != ERROR_SUCCESS || type != REG_SZ || text.back() != L'\0')
         throw std::runtime_error("Cannot read auto-load startup entry");
     std::wstring command(text.data(), text.size() - 1);
@@ -134,6 +137,16 @@ void WriteRegistration(const std::optional<std::wstring>& command) {
             throw std::runtime_error("Cannot remove auto-load startup entry");
     }
 }
+// Its watcher sees the entry gone within a second and stops by itself.
+void RemoveLegacyRegistration() {
+    try {
+        const auto legacy = ReadRegistration(LegacyRunValue);
+        if (!legacy || legacy->find(L"ModuleAutoLoader.exe\" --watch \"") == std::wstring::npos) return;
+        RegistryKey key;
+        if (RegOpenKeyExW(HKEY_CURRENT_USER, RunKey, 0, KEY_SET_VALUE, &key.value) == ERROR_SUCCESS)
+            RegDeleteValueW(key.value, LegacyRunValue);
+    } catch (const std::exception&) {} // An entry that is not ours stays; the load guard still refuses a double load.
+}
 bool ParseOwnedCommand(const std::wstring& command, std::filesystem::path& loader, std::filesystem::path* clientPath = nullptr) {
     const std::wstring separator = L"\" --watch \"";
     if (command.empty() || command.front() != L'\"' || command.back() != L'\"') return false;
@@ -141,7 +154,7 @@ bool ParseOwnedCommand(const std::wstring& command, std::filesystem::path& loade
     if (split == std::wstring::npos) return false;
     loader = command.substr(1, split - 1);
     const auto client = command.substr(split + separator.size(), command.size() - split - separator.size() - 1);
-    const bool valid = loader.is_absolute() && Equal(loader.filename().wstring(), L"ModuleAutoLoader.exe") &&
+    const bool valid = loader.is_absolute() && Equal(loader.filename().wstring(), L"BetterDofusAutoLoader.exe") &&
         loader.wstring().find(L'\"') == std::wstring::npos && client.find(L'\"') == std::wstring::npos &&
         std::filesystem::path(client).is_absolute() && Equal(std::filesystem::path(client).filename().wstring(), L"Dofus.exe");
     if (valid && clientPath) *clientPath = client;
@@ -163,24 +176,24 @@ void SpawnWatcher(const std::filesystem::path& folder, const std::wstring& comma
     auto mutableCommand = command;
     STARTUPINFOW startup{}; startup.cb = sizeof(startup);
     PROCESS_INFORMATION process{};
-    const auto loader = std::filesystem::path(NormalPath(folder)) / L"ModuleAutoLoader.exe";
+    const auto loader = std::filesystem::path(NormalPath(folder)) / L"BetterDofusAutoLoader.exe";
     if (!CreateProcessW(loader.c_str(), mutableCommand.data(), nullptr, nullptr, FALSE, CREATE_NO_WINDOW,
             nullptr, folder.c_str(), &startup, &process))
-        throw std::runtime_error("Cannot start DofusMiniatures auto-loader; startup entry restored");
+        throw std::runtime_error("Cannot start BetterDofus auto-loader; startup entry restored");
     CloseHandle(process.hThread);
     CloseHandle(process.hProcess);
 }
 }
 
 std::wstring AutoLoadCommand(const std::filesystem::path& folder, const std::filesystem::path& clientExe) {
-    return L"\"" + NormalPath(folder / L"ModuleAutoLoader.exe") + L"\" --watch \"" + NormalPath(clientExe) + L"\"";
+    return L"\"" + NormalPath(folder / L"BetterDofusAutoLoader.exe") + L"\" --watch \"" + NormalPath(clientExe) + L"\"";
 }
 std::wstring AutoLoadMutexName(const std::filesystem::path& folder) {
     // Stable case-insensitive FNV-1a identity; the mutex only avoids duplicate
     // helpers for this installation and carries no security boundary.
     uint64_t hash = 14695981039346656037ULL;
     for (auto character : NormalPath(InstallationIdentity(folder))) { hash ^= static_cast<uint64_t>(towlower(character)); hash *= 1099511628211ULL; }
-    return L"Local\\DofusMiniatures.AutoLoader." + std::to_wstring(hash);
+    return L"Local\\BetterDofus.AutoLoader." + std::to_wstring(hash);
 }
 bool AutoLoadEnabled(const std::filesystem::path& folder, const std::filesystem::path& clientExe) {
     const auto current = ReadRegistration();
@@ -193,6 +206,7 @@ bool AutoLoadOwnedByFolder(const std::filesystem::path& folder) {
 }
 void ConfigureAutoLoad(bool enabled, const std::filesystem::path& folder, const std::filesystem::path& clientExe) {
     ConfigurationLock lock;
+    RemoveLegacyRegistration();
     const auto command = AutoLoadCommand(folder, clientExe);
     const auto previous = ReadRegistration();
     if (!enabled) {
@@ -201,11 +215,11 @@ void ConfigureAutoLoad(bool enabled, const std::filesystem::path& folder, const 
     }
     std::filesystem::path previousLoader;
     if (previous && !ParseOwnedCommand(*previous, previousLoader))
-        throw std::runtime_error("An unrelated DofusMiniatures startup entry exists; left unchanged");
-    if (!std::filesystem::is_regular_file(folder / L"ModuleLoader.exe") ||
-        !std::filesystem::is_regular_file(folder / L"ModuleAutoLoader.exe") ||
-        !std::filesystem::is_regular_file(folder / L"DofusMiniatures.dll"))
-        throw std::runtime_error("Keep ModuleLoader.exe, ModuleAutoLoader.exe and DofusMiniatures.dll together before enabling auto-load");
+        throw std::runtime_error("An unrelated BetterDofus startup entry exists; left unchanged");
+    if (!std::filesystem::is_regular_file(folder / L"BetterDofusLoader.exe") ||
+        !std::filesystem::is_regular_file(folder / L"BetterDofusAutoLoader.exe") ||
+        !std::filesystem::is_regular_file(folder / L"BetterDofus.dll"))
+        throw std::runtime_error("Keep BetterDofusLoader.exe, BetterDofusAutoLoader.exe and BetterDofus.dll together before enabling auto-load");
     if (!VerifiedRelease(folder)) throw std::runtime_error("This release.ini or its binary fingerprints are invalid; auto-load not enabled");
     if (!SupportedClient(clientExe)) throw std::runtime_error("Unsupported client: auto-load not enabled");
     // Run entries have a documented 260-character command line limit.
@@ -220,6 +234,7 @@ void ConfigureAutoLoad(bool enabled, const std::filesystem::path& folder, const 
 }
 void DisableAutoLoadFromFolder(const std::filesystem::path& folder) {
     ConfigurationLock lock;
+    RemoveLegacyRegistration();
     if (AutoLoadOwnedByFolder(folder)) WriteRegistration(std::nullopt);
 }
 
@@ -282,13 +297,31 @@ size_t RequestStopLocalReleases(const std::filesystem::path& folder) {
     return destinations.size();
 }
 
+// The files of a version before 2.0.0, in the same folder as this one, copied once
+// under their new names and left where they are. The settings come last: they
+// mark the copy as done. Only the first launch of the new names does this.
+void MigrateLegacyData(const std::filesystem::path& parent) {
+    static constexpr const wchar_t* Files[][2] = {
+        {L"DofusMiniatures-stats.json", L"BetterDofus-stats.json"},
+        {L"DofusMiniatures-stats.json.bak", L"BetterDofus-stats.json.bak"},
+        {L"DofusMiniatures-layouts.json", L"BetterDofus-layouts.json"},
+        {L"DofusMiniatures-notebook.json", L"BetterDofus-notebook.json"},
+        {L"DofusMiniatures-roublard-passage.json", L"BetterDofus-roublard-passage.json"},
+        {L"DofusMiniatures-metamob.key", L"BetterDofus-metamob.key"},
+        {L"DofusMiniatures-3.7.11.11-settings.ini", L"BetterDofus-settings.ini"}};
+    for (const auto& file : Files) {
+        const auto source = parent / file[0];
+        if (PlainPath(source, false)) CopyFileW(source.c_str(), (parent / file[1]).c_str(), TRUE);
+    }
+}
+
 std::filesystem::path ReleaseSettingsPath(const std::filesystem::path& folder) {
     const auto fallback = folder / L"settings.ini";
     std::filesystem::path temporary;
     try {
         const auto folders = ReleaseFolders(folder);
         if (!VerifiedRelease(folder)) return fallback;
-        const auto shared = std::filesystem::path(NormalPath(folder)).parent_path() / L"DofusMiniatures-3.7.11.11-settings.ini";
+        const auto shared = std::filesystem::path(NormalPath(folder)).parent_path() / L"BetterDofus-settings.ini";
         if (std::filesystem::exists(shared) && !PlainPath(shared, false)) return fallback;
         // Check the parent without replacing preferences. Atomic Settings::Save
         // needs permission to create a temporary file in this same directory.
@@ -299,6 +332,7 @@ std::filesystem::path ReleaseSettingsPath(const std::filesystem::path& folder) {
                 FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE, nullptr));
             if (!probe) return fallback;
         }
+        if (!std::filesystem::exists(shared)) MigrateLegacyData(shared.parent_path());
         if (std::filesystem::exists(shared)) {
             Handle writable(CreateFileW(shared.c_str(), GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
                 nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr));

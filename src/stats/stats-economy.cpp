@@ -132,7 +132,7 @@ uint64_t (*scriptedClock)() = nullptr;
 // recognized by both. Ids only; the block goes with the last client.
 struct SharedList { volatile LONG64 ids[ListSlots]; volatile LONG next; };
 struct SharedCharacters {
-    std::wstring name = L"Local\\DofusMiniatures-stats-characters-1";
+    std::wstring name = L"Local\\BetterDofus-stats-characters-1";
     HANDLE mapping = nullptr;
     SharedList* list = nullptr;
     bool failed = false;
@@ -716,5 +716,5 @@ void UseStatsEconomyCharacterList(const wchar_t* name) {
     using namespace stats_economy;
     ownCharacters.Close();
     ownCharacters.failed = false;
-    ownCharacters.name = name ? name : L"Local\\DofusMiniatures-stats-characters-1";
+    ownCharacters.name = name ? name : L"Local\\BetterDofus-stats-characters-1";
 }

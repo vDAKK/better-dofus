@@ -14,7 +14,7 @@ Page Fetch(const Query& query,const std::atomic_bool& cancelled) {
     const auto path=RequestPath(query); const auto deadline=GetTickCount64()+20000;
     auto active=[&]{if(cancelled.load()||GetTickCount64()>deadline)throw std::runtime_error("Recherche interrompue.");};
     active();
-    Internet session(WinHttpOpen(L"DofusMiniatures (jobs XP planner)",WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY,
+    Internet session(WinHttpOpen(L"BetterDofus (jobs XP planner)",WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY,
         WINHTTP_NO_PROXY_NAME,WINHTTP_NO_PROXY_BYPASS,0));
     Require(!!session);Require(WinHttpSetTimeouts(session.get(),4000,4000,4000,4000));
     Internet connection(WinHttpConnect(session.get(),L"api.dofusdb.fr",INTERNET_DEFAULT_HTTPS_PORT,0));Require(!!connection);

@@ -91,7 +91,7 @@ Secret& Secret::operator=(Secret&& other) noexcept {
 }
 Secret::~Secret() { Wipe(text); }
 std::filesystem::path KeyPath(const std::filesystem::path& settingsPath) {
-    return settingsPath.parent_path() / L"DofusMiniatures-metamob.key";
+    return settingsPath.parent_path() / L"BetterDofus-metamob.key";
 }
 void StoreKey(const std::filesystem::path& file, const Secret& key) {
     if (!Valid(key.value())) throw std::runtime_error(Invalid);

@@ -12,7 +12,7 @@ void Require(bool okay) { if (!okay) throw std::runtime_error("DofusDB est injoi
 }
 std::vector<Clue> Fetch(const Query& query, const std::atomic_bool& cancelled) {
     if (!Valid(query)) throw std::runtime_error("Coordonnées invalides.");
-    Internet session(WinHttpOpen(L"DofusMiniatures/76 (manual treasure helper)", WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY,
+    Internet session(WinHttpOpen(L"BetterDofus/76 (manual treasure helper)", WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY,
         WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0));
     Require(!!session);
     Require(WinHttpSetTimeouts(session.get(), 4000, 4000, 4000, 4000));

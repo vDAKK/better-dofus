@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(DofusEnhanced LANGUAGES C CXX)
+project(BetterDofus LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -17,7 +17,7 @@ add_subdirectory(third_party/minhook EXCLUDE_FROM_ALL)
 
 # The in-game module. The source order is the link order of every previous
 # release; keep it and append new files at the end.
-add_library(DofusMiniatures SHARED
+add_library(BetterDofus SHARED
   src/core/module.cpp src/core/runtime.cpp src/core/world-exit.cpp src/core/relogin-guard.cpp src/ui/ui-timing.cpp src/appearance/features.cpp
   src/animations/animations.cpp src/animations/movement.cpp src/animations/movement-dispatch.cpp
   src/animations/movement-waits.cpp src/animations/push-movement.cpp src/animations/throw-movement.cpp
@@ -53,31 +53,31 @@ add_library(DofusMiniatures SHARED
   src/ui/cursor-art.cpp src/ui/custom-cursor.cpp
   src/ui/vertical-gauges.cpp src/ui/game-theme.cpp
   src/ui/preset-windows-store.cpp src/ui/preset-windows.cpp src/ui/mod-folder.cpp)
-target_link_libraries(DofusMiniatures PRIVATE bcrypt minhook advapi32 winhttp normaliz user32 crypt32 pdh shell32 ole32)
+target_link_libraries(BetterDofus PRIVATE bcrypt minhook advapi32 winhttp normaliz user32 crypt32 pdh shell32 ole32)
 
 # Loader (console and silent automatic variants) and the runtime probe.
 set(LOADER_SOURCES src/loader/launcher.cpp src/core/common.cpp src/loader/autoload.cpp
   src/core/settings.cpp src/loader/update-launch.cpp)
-add_executable(ModuleLoader ${LOADER_SOURCES})
-target_link_libraries(ModuleLoader PRIVATE bcrypt advapi32 user32)
-add_executable(ModuleAutoLoader WIN32 ${LOADER_SOURCES} src/loader/notify.cpp)
-target_compile_definitions(ModuleAutoLoader PRIVATE DOFUS_AUTOLOADER)
-target_link_libraries(ModuleAutoLoader PRIVATE bcrypt advapi32 user32 shell32)
+add_executable(BetterDofusLoader ${LOADER_SOURCES})
+target_link_libraries(BetterDofusLoader PRIVATE bcrypt advapi32 user32)
+add_executable(BetterDofusAutoLoader WIN32 ${LOADER_SOURCES} src/loader/notify.cpp)
+target_compile_definitions(BetterDofusAutoLoader PRIVATE DOFUS_AUTOLOADER)
+target_link_libraries(BetterDofusAutoLoader PRIVATE bcrypt advapi32 user32 shell32)
 add_library(RuntimeProbe SHARED src/loader/probe.cpp src/core/common.cpp)
 target_link_libraries(RuntimeProbe PRIVATE bcrypt)
 
 # Treasure hunt overlay window (WebView2).
-add_executable(TreasureOverlay WIN32 src/treasure/treasure-overlay.cpp)
-target_include_directories(TreasureOverlay PRIVATE third_party/webview2/include)
-target_link_libraries(TreasureOverlay PRIVATE
+add_executable(BetterDofusTreasure WIN32 src/treasure/treasure-overlay.cpp)
+target_include_directories(BetterDofusTreasure PRIVATE third_party/webview2/include)
+target_link_libraries(BetterDofusTreasure PRIVATE
   "${CMAKE_CURRENT_SOURCE_DIR}/third_party/webview2/lib/x64/WebView2LoaderStatic.lib"
   user32 shell32 ole32 uuid version gdi32 advapi32)
 
 if(MSVC)
-  target_compile_options(DofusMiniatures PRIVATE /W4 /EHsc /utf-8)
-  target_compile_options(TreasureOverlay PRIVATE /W4 /EHsc /utf-8)
-  foreach(tool IN ITEMS ModuleLoader ModuleAutoLoader RuntimeProbe)
-    target_compile_options(${tool} PRIVATE /W4 /EHsc)
+  target_compile_options(BetterDofus PRIVATE /W4 /EHsc /utf-8)
+  target_compile_options(BetterDofusTreasure PRIVATE /W4 /EHsc /utf-8)
+  foreach(tool IN ITEMS BetterDofusLoader BetterDofusAutoLoader RuntimeProbe)
+    target_compile_options(${tool} PRIVATE /W4 /EHsc /utf-8)
   endforeach()
 endif()
 
@@ -231,7 +231,7 @@ dofus_test(TreasurePanelTests tests/treasure/treasure-panel-tests.cpp src/treasu
   src/treasure/treasure-data.cpp src/souls/soul-panel.cpp src/ui/tools-ui.cpp src/ui/native-click.cpp LIBS normaliz)
 dofus_test(TreasureHuntTests tests/treasure/treasure-hunt-tests.cpp src/treasure/treasure-hunt.cpp)
 dofus_test(TreasureOverlayTests tests/treasure/treasure-overlay-tests.cpp)
-add_test(NAME TreasureOverlayRuntimeTests COMMAND TreasureOverlay --self-test)
+add_test(NAME TreasureOverlayRuntimeTests COMMAND BetterDofusTreasure --self-test)
 set_tests_properties(TreasureOverlayRuntimeTests PROPERTIES TIMEOUT 25)
 
 # Notebook and job XP panels.

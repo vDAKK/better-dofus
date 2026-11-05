@@ -90,7 +90,7 @@ private:
         PWSTR localData = nullptr;
         const HRESULT result = SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, nullptr, &localData);
         if (FAILED(result) || !localData) return false;
-        root_ = fs::path(localData) / L"DofusMiniatures" / L"TreasureOverlay";
+        root_ = fs::path(localData) / L"BetterDofus" / L"TreasureOverlay";
         CoTaskMemFree(localData);
         if (selfTest_) {
             GUID id{};
@@ -430,7 +430,7 @@ private:
     }
 
     int RunInitialized() {
-        activateMessage_ = RegisterWindowMessageW(L"DofusMiniatures.TreasureOverlay.Activate.v1");
+        activateMessage_ = RegisterWindowMessageW(L"BetterDofus.TreasureOverlay.Activate.v1");
         if (ActivateExisting()) return exitCode_;
         if (!PrepareProfile()) return ReportStartupError(L"Profil du navigateur inaccessible.", 2);
         SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);

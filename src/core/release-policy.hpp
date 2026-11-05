@@ -12,10 +12,10 @@
 // Pure local-release policy. No registry, process access or filesystem actions.
 namespace LocalRelease {
 inline constexpr std::string_view ClientVersion = "3.7.13.17";
-// Historical installation family: retain shared preferences and owned startup identity.
-inline constexpr std::string_view FolderPrefix = "DofusMiniatures-3.7.11.11-r";
+// A release's folder: BetterDofus-X.Y.Z. Its siblings share the preferences.
+inline constexpr std::string_view FolderPrefix = "BetterDofus-";
 inline constexpr std::array<std::string_view, 3> BinaryNames{
-    "DofusMiniatures.dll", "ModuleLoader.exe", "ModuleAutoLoader.exe"};
+    "BetterDofus.dll", "BetterDofusLoader.exe", "BetterDofusAutoLoader.exe"};
 inline constexpr size_t ManifestLimit = 4096;
 struct Manifest {
     int revision = 0;
@@ -42,13 +42,33 @@ inline std::optional<int> Revision(std::string_view value) {
     if (value.empty() || value.front() == '0') return {};
     int revision = 0;
     const auto parsed = std::from_chars(value.data(), value.data() + value.size(), revision);
-    if (parsed.ec != std::errc{} || parsed.ptr != value.data() + value.size() || revision < 1 || revision > 1000000)
+    if (parsed.ec != std::errc{} || parsed.ptr != value.data() + value.size() || revision < 1 || revision > 999999999)
         return {};
     return revision;
 }
+// X.Y.Z as one comparable number, the revision of release.ini.
+inline std::optional<int> VersionRevision(std::string_view version) {
+    int revision = 0;
+    for (int part = 0; part != 3; ++part) {
+        const auto end = version.find('.');
+        if ((part == 2) != (end == std::string_view::npos)) return {};
+        const auto text = version.substr(0, end);
+        if (text.empty() || text.size() > 3 || (text.size() > 1 && text.front() == '0')) return {};
+        int value = 0;
+        const auto parsed = std::from_chars(text.data(), text.data() + text.size(), value);
+        if (parsed.ec != std::errc{} || parsed.ptr != text.data() + text.size()) return {};
+        revision = revision * 1000 + value;
+        if (part != 2) version.remove_prefix(end + 1);
+    }
+    return revision ? std::optional<int>(revision) : std::nullopt;
+}
+inline std::string FolderName(int revision) {
+    return std::string(FolderPrefix) + std::to_string(revision / 1000000) + "." +
+        std::to_string(revision / 1000 % 1000) + "." + std::to_string(revision % 1000);
+}
 inline std::optional<int> FolderRevision(std::string_view name) {
     if (!name.starts_with(FolderPrefix)) return {};
-    return Revision(name.substr(FolderPrefix.size()));
+    return VersionRevision(name.substr(FolderPrefix.size()));
 }
 inline std::optional<int> FolderRevision(std::wstring_view name) {
     std::string ascii;

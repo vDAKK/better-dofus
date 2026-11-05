@@ -1,10 +1,10 @@
 #pragma once
-inline constexpr unsigned ModRevision = 130;
-inline constexpr char ModVersion[] = "r130";
-// Public x.y.z version shown in the options tab, README and release name, and
-// the GitHub tag (vX.Y.Z) after 1.13.1, itself tagged r113 for older updaters.
-// The integer revision stays the updater's identifier in the archive and
-// folder names and release.ini.
-inline constexpr char ModSemanticVersion[] = "1.21.1";
-inline constexpr char ModDisplayName[] = "Dofus Enhanced";
-inline constexpr char ModCategoryTitle[] = "Dofus Enhanced";
+// The public version X.Y.Z is the mod's only name for a release: its folder
+// (BetterDofus-X.Y.Z), archive (BetterDofus-X.Y.Z.zip), GitHub tag (vX.Y.Z) and the
+// text in game. ModRevision is the same version as one number (X*1000000 + Y*1000
+// + Z), written in release.ini to compare releases.
+inline constexpr unsigned ModRevision = 2000000;
+inline constexpr char ModVersion[] = "2.0.0";
+inline constexpr char ModSemanticVersion[] = "2.0.0";
+inline constexpr char ModDisplayName[] = "Better Dofus";
+inline constexpr char ModCategoryTitle[] = "Better Dofus";

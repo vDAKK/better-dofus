@@ -361,10 +361,10 @@ void StoreTests() {
     const auto root = std::filesystem::temp_directory_path() / ("DofusRoublardPassageTests-" + std::to_string(GetCurrentProcessId()));
     std::filesystem::create_directories(root);
     try {
-        const auto settings = root / L"DofusMiniatures-3.7.11.11-settings.ini";
+        const auto settings = root / L"BetterDofus-settings.ini";
         const auto path = DataPath(settings);
         auto lockPath = path; lockPath += L".lock";
-        Check(path == root / L"DofusMiniatures-roublard-passage.json", "The file sits beside the shared settings");
+        Check(path == root / L"BetterDofus-roublard-passage.json", "The file sits beside the shared settings");
         Check(Read(path) == Knowledge{}, "No file: nothing learned yet");
         const std::vector<Change> first{Made(Change::Kind::Npc, Side::Temple, Side::None, TempleRoom), Made(Change::Kind::Arrival, Side::Astrub, Side::Temple, Door),
             Made(Change::Kind::Offered, Side::Astrub, Side::None, 0, 77, {8779, 8758}), Made(Change::Kind::Absent, Side::None, Side::None, Elsewhere),

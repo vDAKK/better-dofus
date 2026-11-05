@@ -639,12 +639,12 @@ int64_t CursorAsked(Obj label) {
 int64_t CursorShown() { return cursorRequests.empty() ? 0 : cursorRequests.back().type; }
 std::vector<Obj> Grips(Obj layer) {
     std::vector<Obj> result;
-    for (auto child : Get(layer).children) if (Get(child).name == "dofus_miniatures_perf_overlay_grip") result.push_back(child);
+    for (auto child : Get(layer).children) if (Get(child).name == "better_dofus_perf_overlay_grip") result.push_back(child);
     return result;
 }
 std::vector<Obj> Owned(Obj layer) {
     std::vector<Obj> result;
-    for (auto child : Get(layer).children) if (Get(child).name == "dofus_miniatures_perf_overlay") result.push_back(child);
+    for (auto child : Get(layer).children) if (Get(child).name == "better_dofus_perf_overlay") result.push_back(child);
     return result;
 }
 void Tick() { nowMs += 200; TickPerfOverlay(); }

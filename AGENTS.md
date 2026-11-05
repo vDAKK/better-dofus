@@ -1,20 +1,15 @@
-# Dofus Enhanced maintenance
+# Better Dofus maintenance
 
-- The public repository is https://github.com/Altansar69/dofus-enhanced (renamed
-  from dofus-miniatures on 2026-10-23; the old name redirects). Its owner's
-  display name is Altansar; use the Altansar69 GitHub credential.
-- This checkout is the fork https://github.com/vDAKK/dofus-enhanced (`origin`),
-  the user's own version, shown in game as « par DAKK ». The user has read-only
-  access to Altansar69's repository: releases go to the fork, with
-  `python tools/publish-release.py ... --repository vDAKK/dofus-enhanced`. The
-  updater checks the fork, and Altansar69's repository only when no local release
-  fits the installed Dofus (since r129). A fork revision must be above any Altansar
-  revision already installed: the same number is one folder, so it would be ignored.
-  Keep Altansar credited as the mod's creator.
+- This project is **Better Dofus**, https://github.com/vDAKK/better-dofus (`origin`),
+  shown in game as « par DAKK ». It was renamed on 2026-11-05 from vDAKK/dofus-enhanced
+  (GitHub redirects the old name), a fork of Altansar's Dofus Enhanced, first named
+  Dofus Miniatures. Keep Altansar credited as the mod's creator, with
+  https://github.com/Altansar69/dofus-enhanced, which the user can only read and
+  which is not an update source any more: its releases keep the former names.
 - Always build with `build.ps1`: its clean build is required, because incremental
   builds miss header changes with this localized compiler.
 - The user requested automatic delivery: after an authorized mod update, increment
-  the revision, build, test, package, commit/push the reviewed sources and publish
+  the version, build, test, package, commit/push the reviewed sources and publish
   a GitHub release. Do not leave a completed revision local-only.
 - Never add Claude or Anthropic attribution (Co-Authored-By trailers, "Generated
   with" lines) to commits, release notes or documentation.
@@ -33,26 +28,26 @@
   publishing and data generation. `third_party/`: MinHook (submodule),
   nlohmann/json and the WebView2 SDK.
 - The shipped names are part of the release format, and installed loaders and
-  updaters depend on them: `DofusMiniatures.dll`, `ModuleLoader.exe`,
-  `ModuleAutoLoader.exe`, `TreasureOverlay.exe`, the
-  `DofusMiniatures-3.7.11.11-rN` folders and the shared
-  `DofusMiniatures-3.7.11.11-settings.ini`. Never rename them.
+  updaters depend on them: `BetterDofus.dll`, `BetterDofusLoader.exe`,
+  `BetterDofusAutoLoader.exe`, `BetterDofusTreasure.exe`, `Update-GitHub.ps1`, the
+  `BetterDofus-X.Y.Z` folders, the `BetterDofus-X.Y.Z.zip` asset, the
+  `<!-- better-dofus game=... metadata=... -->` comment of the release notes and the
+  shared `BetterDofus-settings.ini`. Never rename them.
+- Two old names must stay, because data saved under them would be lost: the Metamob
+  key's entropy `DofusEnhanced/Metamob/v1` and the game's saved panel key
+  `DofusMiniatures.SoulStonePanel`. `MigrateLegacyData` and the `DofusMiniatures` run
+  value and DLL checks exist for installs from before 2.0.0.
 
 ## Build, test and release
 
 - Use `build.ps1`, then `ctest --test-dir build --output-on-failure --output-junit test-results.xml`.
   Package with `python tools/package-release.py --output <absolute output directory>`.
-  Commit/push before `python tools/publish-release.py --package <rN-package.json> --notes <notes.md>`.
-  Keep revisions immutable. Do not overwrite a published asset or reuse a tag.
-- Since 1.13.1 (r113), releases are tagged with the public version `vX.Y.Z`
-  (`tools/publish-release.py`'s default). The archive, folder and `release.ini`
-  keep the revision `rN`, which the updater checks. Updaters before 1.13.1 only
-  read `rN` tags: 1.13.1 itself was published as `r113` (`--revision-tag`), then
-  renamed `v1.13.1` on 2026-10-23 at the owner's request once the owner's game
-  ran 1.14.0; installs still below 1.13.1 need a manual reinstall (README FAQ).
-  Never use `--revision-tag` again. At the owner's request (2026-10-23), the
-  older releases were renamed: r92–r112 to `v1.0.0`–`v1.13.0`, and r75–r91
-  (before 1.0.0) to `v0.75.0`–`v0.91.0`. No release tag starts with `r` any more.
+  Commit/push before `python tools/publish-release.py --package <X.Y.Z-package.json> --notes <notes.md>`.
+  Keep versions immutable. Do not overwrite a published asset or reuse a tag.
+- The version X.Y.Z is the only name of a release. A new one sets `ModSemanticVersion`,
+  `ModVersion` and `ModRevision` (X*1000000 + Y*1000 + Z) in `src/core/version.hpp`.
+  The releases before 2.0.0 keep their tags and `DofusMiniatures-rN-...` assets;
+  installs below 2.0.0 cannot update by themselves and need the README's manual step.
 - Never publish game assemblies/metadata, installed game assets, user settings,
   logs, personal paths, credentials or analysis snapshots. The runtime archive
   has nine explicitly allowed entries. Keep all third-party licenses.

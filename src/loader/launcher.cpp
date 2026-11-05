@@ -68,7 +68,7 @@ static void WaitForStartup(HANDLE process, DWORD pid, const std::filesystem::pat
         if (status == "WAITING_ACCOUNT_OPTIONS") deadline = started + 180000;
         if (status == "STOPPED") throw std::runtime_error("Le module s'est desactive; consulter module.log.");
         if (status == "READY") {
-            output << "Initialisation confirmee. Ouvre ou rouvre Options > Dofus Enhanced.\n"
+            output << "Initialisation confirmee. Ouvre ou rouvre Options > Better Dofus.\n"
                          "Cela ne valide pas encore le rendu ni les fonctions en combat.\n";
             return;
         }
@@ -93,7 +93,7 @@ struct LoadLock {
     Handle mutex;
     bool acquired = false;
     LoadLock(DWORD pid, uint64_t creation) : mutex(CreateMutexW(nullptr, FALSE,
-        (L"Local\\DofusMiniatures.Load." + std::to_wstring(pid) + L"." + std::to_wstring(creation)).c_str())) {
+        (L"Local\\BetterDofus.Load." + std::to_wstring(pid) + L"." + std::to_wstring(creation)).c_str())) {
         if (!mutex) throw std::runtime_error("Cannot create module load lock");
         const auto result = WaitForSingleObject(mutex.value, 0);
         acquired = result == WAIT_OBJECT_0 || result == WAIT_ABANDONED;
@@ -118,7 +118,8 @@ static void LoadModule(DWORD pid, const std::filesystem::path& requestedDll, std
     if (!SupportedClient(exe)) throw std::runtime_error("Unsupported client: no module loaded");
     if (!RemoteModule(pid, L"GameAssembly.dll") || !RemoteModule(pid, L"UnityPlayer.dll"))
         throw std::runtime_error("Game runtime is not loaded");
-    if (RemoteModule(pid, L"DofusMiniatures.dll") || RemoteModule(pid, dll.filename().wstring()))
+    // DofusMiniatures.dll: the mod under its former name, in a game opened before 2.0.0.
+    if (RemoteModule(pid, L"BetterDofus.dll") || RemoteModule(pid, L"DofusMiniatures.dll") || RemoteModule(pid, dll.filename().wstring()))
         throw std::runtime_error("Module already loaded");
     auto localLoad = GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "LoadLibraryW");
     HMODULE owner = nullptr;
@@ -249,8 +250,43 @@ static int Watch(const std::filesystem::path& folder, const std::filesystem::pat
         LogEvent(log, "WATCH_ERROR"); log << error.what() << '\n'; log.flush(); return 1;
     }
 }
+// A double-click on the loader: nothing to type when Dofus is where its launcher puts it.
+static int Install() {
+    std::cout << ModDisplayName << " " << ModSemanticVersion << " - installation\n\n";
+    int result = 0;
+    try {
+        wchar_t* local = nullptr; size_t size = 0;
+        std::filesystem::path client;
+        if (_wdupenv_s(&local, &size, L"LOCALAPPDATA") == 0 && local) {
+            client = std::filesystem::path(local) / L"Ankama" / L"Dofus-dofus3" / L"Dofus.exe";
+            free(local);
+        }
+        std::error_code missing;
+        if (client.empty() || !std::filesystem::is_regular_file(client, missing)) {
+            std::wcout << L"Dofus.exe introuvable. Colle son chemin complet puis Entree : ";
+            std::wstring line;
+            std::getline(std::wcin, line);
+            line.erase(std::remove(line.begin(), line.end(), L'"'), line.end());
+            client = line;
+            if (!client.is_absolute() || _wcsicmp(client.filename().c_str(), L"Dofus.exe") != 0)
+                throw std::runtime_error("Il faut le chemin complet de Dofus.exe");
+        }
+        ConfigureAutoLoad(true, ModulePath(nullptr).parent_path(), client.lexically_normal());
+        std::cout << "C'est installe. Lance Dofus normalement : le mod se chargera tout seul.\n"
+                     "Tes reglages sont dans Options > " << ModCategoryTitle << ".\n"
+                     "Un jeu deja ouvert reste inchange jusqu'au prochain lancement.\n";
+    } catch (const std::exception& error) {
+        std::cout << "Installation impossible : " << error.what() << '\n';
+        result = 1;
+    }
+    std::cout << "\nAppuie sur Entree pour fermer.\n";
+    std::string ignored;
+    std::getline(std::cin, ignored);
+    return result;
+}
 int wmain(int argc, wchar_t** argv) {
     try {
+        if (argc == 1) return Install();
         std::wstring selectedPid, selectedDll;
         wchar_t* selectedArgs[3]{};
         if (argc == 2 && std::wstring(argv[1]) == L"--interactive") {
@@ -261,28 +297,28 @@ int wmain(int argc, wchar_t** argv) {
             std::cout << "Revision locale compatible choisie : r" << release.revision << '\n';
             const auto logPath = (release.folder / L"module.log").u8string();
             std::cout << "Journal du module : " << std::string(logPath.begin(), logPath.end()) << '\n';
-            selectedDll = (release.folder / L"DofusMiniatures.dll").wstring();
+            selectedDll = (release.folder / L"BetterDofus.dll").wstring();
             selectedArgs[0] = argv[0]; selectedArgs[1] = selectedPid.data(); selectedArgs[2] = selectedDll.data();
             argv = selectedArgs; argc = 3;
         }
         if (argc == 2 && std::wstring(argv[1]) == L"--help") {
-            std::cout << "ModuleLoader --interactive\nModuleLoader <Dofus PID> <absolute module DLL>\n"
-                         "ModuleLoader --verify-files <GameAssembly.dll> <global-metadata.dat>\n"
-                         "ModuleLoader --watch <absolute Dofus.exe>\n"
-                         "  Runs while its startup entry exists (Options > Dofus Enhanced > Chargement et mises a jour >\n"
+            std::cout << "BetterDofusLoader (double-click): installs automatic loading\nBetterDofusLoader --interactive\nBetterDofusLoader <Dofus PID> <absolute module DLL>\n"
+                         "BetterDofusLoader --verify-files <GameAssembly.dll> <global-metadata.dat>\n"
+                         "BetterDofusLoader --watch <absolute Dofus.exe>\n"
+                         "  Runs while its startup entry exists (Options > Better Dofus > Chargement et mises a jour >\n"
                          "  Chargement automatique, or --enable-auto); watches newly started clients, never existing ones.\n"
                          "  Chooses the newest compatible sibling rN folder using release.ini and SHA256.\n"
                          "  Before each load, runs the GitHub updater (as --check-updates) if Mises a jour GitHub is on;\n"
                          "  otherwise or offline, local files only. Never changes an already running game.\n"
-                         "ModuleLoader --disable-auto\n"
+                         "BetterDofusLoader --disable-auto\n"
                          "  Removes only this release family's startup entry; no client is accessed.\n"
-                         "ModuleLoader --enable-auto <absolute Dofus.exe>\n"
+                         "BetterDofusLoader --enable-auto <absolute Dofus.exe>\n"
                          "  Registers this verified helper for future launches; existing clients are ignored.\n"
-                         "ModuleLoader --check-updates <absolute Dofus.exe>\n"
+                         "BetterDofusLoader --check-updates <absolute Dofus.exe>\n"
                          "  Checks GitHub and installs a verified compatible package; never accesses a game process.\n"
-                         "ModuleLoader --resolve-client <absolute Dofus.exe>\n"
+                         "BetterDofusLoader --resolve-client <absolute Dofus.exe>\n"
                          "  Reports the newest verified package matching installed files, without loading it.\n"
-                         "ModuleLoader --stop-local-releases\n"
+                         "BetterDofusLoader --stop-local-releases\n"
                          "  Writes stop.request in verified sibling releases only; no process is accessed.\n";
             return 0;
         }
@@ -315,7 +351,7 @@ int wmain(int argc, wchar_t** argv) {
                 throw std::runtime_error("Invalid verified loader request");
             const auto enabled = [&] { return AutoLoadEnabled(folder, client); };
             if (!enabled()) throw std::runtime_error("Automatic loading disabled");
-            LoadModule(static_cast<DWORD>(pid), folder / L"DofusMiniatures.dll", std::cout,
+            LoadModule(static_cast<DWORD>(pid), folder / L"BetterDofus.dll", std::cout,
                 client, creation, enabled);
             return 0;
         }
@@ -349,7 +385,7 @@ int wmain(int argc, wchar_t** argv) {
                 throw std::runtime_error("Auto-loader requires the exact absolute Dofus.exe path");
             return Watch(ModulePath(nullptr).parent_path(), client.lexically_normal());
         }
-        if (argc != 3) throw std::runtime_error("Usage: ModuleLoader <Dofus PID> <absolute module DLL>");
+        if (argc != 3) throw std::runtime_error("Usage: BetterDofusLoader <Dofus PID> <absolute module DLL>");
         wchar_t* end = nullptr;
         const auto parsed = wcstoull(argv[1], &end, 10);
         if (!parsed || *end || parsed > MAXDWORD) throw std::runtime_error("Invalid PID");

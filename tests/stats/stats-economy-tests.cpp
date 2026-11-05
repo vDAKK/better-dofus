@@ -269,7 +269,7 @@ bool Achievement(World& world, int32_t id, int64_t by) {
 }
 
 // The list of this PC's characters as another game client writes it.
-const std::wstring listName = L"Local\\DofusMiniatures-stats-characters-tests-" + std::to_wstring(GetCurrentProcessId());
+const std::wstring listName = L"Local\\BetterDofus-stats-characters-tests-" + std::to_wstring(GetCurrentProcessId());
 struct SharedBlock { volatile LONG64 ids[64]; volatile LONG next; };
 HANDLE otherMapping = nullptr;
 SharedBlock* otherList = nullptr;

@@ -27,7 +27,7 @@ std::string Read(const std::filesystem::path& path) {
 }
 std::filesystem::path MakeRelease(const std::filesystem::path& parent, int revision,
     const std::string& game = ExpectedGameHash) {
-    const auto folder = parent / (std::string(LocalRelease::FolderPrefix) + std::to_string(revision));
+    const auto folder = parent / LocalRelease::FolderName(revision);
     std::filesystem::create_directory(folder);
     std::array<std::string, 3> hashes;
     for (size_t i = 0; i != hashes.size(); ++i) {
@@ -40,7 +40,7 @@ std::filesystem::path MakeRelease(const std::filesystem::path& parent, int revis
         std::ostringstream integrity;
         for (size_t i = 0; i != hashes.size(); ++i)
             integrity << LocalRelease::BinaryNames[i] << '=' << hashes[i] << '\n';
-        for (const auto name : {"TreasureOverlay.exe", "Update-GitHub.ps1"}) {
+        for (const auto name : {"BetterDofusTreasure.exe", "Update-GitHub.ps1"}) {
             Write(folder / name, "synthetic companion");
             integrity << name << '=' << FileHash(folder / name) << '\n';
         }
@@ -78,15 +78,22 @@ void PolicyTests() {
     Check(!LocalRelease::Parse(text + std::string(1, '\0')), "NUL must fail");
     Check(!LocalRelease::Parse(std::string(4097, 'x')), "Oversized manifest must fail");
     Check(!LocalRelease::Parse(ManifestText(8, hashes, std::string(64, 'X'))), "Malformed fingerprint must fail");
-    Check(!LocalRelease::FolderRevision("DofusMiniatures-3.7.11.11-r08"), "Leading-zero revision ambiguous");
-    Check(!LocalRelease::FolderRevision("DofusMiniatures-3.7.11.11-r8-old"), "Backup directory must not be scanned");
-    Check(!LocalRelease::FolderRevision("DofusMiniatures-3.7.11.12-r9"), "Other client family must be excluded");
-    Check(!LocalRelease::FolderRevision(L"DofusMiniatures-3.7.11.11-r\u00e9"), "Non-ASCII sibling must be ignored safely");
+    Check(LocalRelease::FolderRevision("BetterDofus-2.0.0") == 2000000 && LocalRelease::FolderRevision("BetterDofus-2.10.3") == 2010003, "Version folder");
+    Check(*LocalRelease::FolderRevision("BetterDofus-2.9.9") < *LocalRelease::FolderRevision("BetterDofus-2.10.0"), "Versions compare numerically");
+    Check(LocalRelease::FolderName(2010003) == "BetterDofus-2.10.3", "Folder name of a revision");
+    Check(!LocalRelease::FolderRevision("BetterDofus-02.0.0"), "Leading zero ambiguous");
+    Check(!LocalRelease::FolderRevision("BetterDofus-2.0.0-old"), "Backup directory must not be scanned");
+    Check(!LocalRelease::FolderRevision("BetterDofus-2.0"), "Partial version must be excluded");
+    Check(!LocalRelease::FolderRevision("BetterDofus-2.0.0.1"), "Longer version must be excluded");
+    Check(!LocalRelease::FolderRevision("BetterDofus-0.0.0"), "Empty version must be excluded");
+    Check(!LocalRelease::FolderRevision("BetterDofus-settings.ini"), "A sibling file name must be excluded");
+    Check(!LocalRelease::FolderRevision("DofusMiniatures-3.7.11.11-r130"), "A release of the former names is not one of ours");
+    Check(!LocalRelease::FolderRevision(L"BetterDofus-2.0.\u00e9"), "Non-ASCII sibling must be ignored safely");
     Check(!LocalRelease::Revision("9999999999999999999999") && !LocalRelease::Revision("-1"), "Invalid revision must fail");
     std::vector<LocalRelease::Candidate> candidates;
     for (const int revision : {9, 8, 10, 11}) {
         auto value = *manifest; value.revision = revision;
-        candidates.push_back({std::string(LocalRelease::FolderPrefix) + std::to_string(revision), value, hashes});
+        candidates.push_back({LocalRelease::FolderName(revision), value, hashes});
     }
     candidates[3].actualHashes[1] = std::string(64, 'd');
     auto selected = LocalRelease::Latest(candidates, ExpectedGameHash, ExpectedMetadataHash);
@@ -110,7 +117,7 @@ void FileTests() {
     const auto r10 = MakeRelease(files.root, 10);
     const auto r11 = MakeRelease(files.root, 11);
     MakeRelease(files.root, 12, std::string(64, '0'));
-    Write(r11 / "ModuleAutoLoader.exe", "incomplete replacement");
+    Write(r11 / "BetterDofusAutoLoader.exe", "incomplete replacement");
     Check(LatestLocalRelease(r8).folder == r10, "Actual resolver must select verified newest sibling");
     Check(LatestLocalRelease(r10).revision == 10, "Selection must include current folder");
     Write(r10 / "release.ini", Read(r10 / "release.ini") + "revision=10\n");
@@ -122,7 +129,7 @@ void FileTests() {
     std::filesystem::last_write_time(r8 / "settings.ini", now - std::chrono::hours(1));
     std::filesystem::last_write_time(r9 / "settings.ini", now);
     const auto shared = ReleaseSettingsPath(r8);
-    Check(shared == files.root / "DofusMiniatures-3.7.11.11-settings.ini", "Known releases must share preferences");
+    Check(shared == files.root / "BetterDofus-settings.ini", "Known releases must share preferences");
     Check(Read(shared) == Read(r9 / "settings.ini"), "Migration must choose most recently changed verified preferences");
     Write(r9 / "settings.ini", "mode=0\n");
     Check(ReleaseSettingsPath(r9) == shared && Read(shared).find("animationMode=3") != std::string::npos,
@@ -142,13 +149,13 @@ void FileTests() {
         "Exact owned command parser must preserve folder and client");
     Check(!ParseOwnedCommand(AutoLoadCommand(r8, exe) + L" --extra", loader), "Unrelated command must never be owned");
     Check(SameInstallation(r8, r9) && AutoLoadMutexName(r8) == AutoLoadMutexName(r9), "Revisions must share enable/disable and singleton identity");
-    const auto r7 = files.root / "DofusMiniatures-3.7.11.11-r7";
+    const auto r7 = files.root / LocalRelease::FolderName(7);
     Check(!OwnedForClient(AutoLoadCommand(r7, exe), r8, exe, true), "Legacy watcher must not masquerade as latest-release watcher");
     Check(OwnedForClient(AutoLoadCommand(r7, exe), r8, exe, false), "Legacy watcher remains removable by family");
     Check(OwnedForClient(AutoLoadCommand(r8, exe), r9, exe, true), "New release must recognize shared opt-in");
     Check(!OwnedForClient(AutoLoadCommand(r8, exe), r9, files.root / "other" / "Dofus.exe", true), "Client path must remain exact");
     Check(!SameInstallation(r8, custom / r8.filename()), "Different parent must stay a separate installation");
-    Check(!SameInstallation(r8, files.root / "DofusMiniatures-3.7.11.12-r8"), "Different game must stay separate");
+    Check(!SameInstallation(r8, files.root / "DofusMiniatures-3.7.11.11-r8"), "The former names must stay separate");
     const auto other = files.root / "other";
     std::filesystem::create_directory(other);
     const auto unrelated = MakeRelease(other, 99);
@@ -164,6 +171,34 @@ void FileTests() {
     bool rejected = false;
     try { RequestStopLocalReleases(r8); } catch (const std::exception&) { rejected = true; }
     Check(rejected && std::filesystem::is_directory(r8 / "stop.request"), "Stop may not overwrite an unexpected object");
+}
+// A version before 2.0.0 in the same folder: its data follows, under the new names.
+void LegacyDataTests() {
+    Fixtures files;
+    const auto release = MakeRelease(files.root, 2000000);
+    const auto old = [&](const char* name) { return files.root / name; };
+    Write(old("DofusMiniatures-3.7.11.11-settings.ini"), "mode=2\nfromLegacy=1\n");
+    Write(old("DofusMiniatures-stats.json"), "legacy stats");
+    Write(old("DofusMiniatures-stats.json.bak"), "legacy backup");
+    Write(old("DofusMiniatures-layouts.json"), "legacy layouts");
+    Write(old("DofusMiniatures-notebook.json"), "legacy notebook");
+    Write(old("DofusMiniatures-roublard-passage.json"), "legacy passage");
+    Write(old("DofusMiniatures-metamob.key"), "legacy key");
+    Write(old("DofusMiniatures-stats.json.lock"), "");
+    Write(files.root / "BetterDofus-notebook.json", "already here");
+    const auto shared = ReleaseSettingsPath(release);
+    Check(shared == files.root / "BetterDofus-settings.ini" && Read(shared) == "mode=2\nfromLegacy=1\n", "Former settings must follow");
+    Check(Read(old("BetterDofus-stats.json")) == "legacy stats" && Read(old("BetterDofus-stats.json.bak")) == "legacy backup" &&
+        Read(old("BetterDofus-layouts.json")) == "legacy layouts" && Read(old("BetterDofus-roublard-passage.json")) == "legacy passage" &&
+        Read(old("BetterDofus-metamob.key")) == "legacy key", "Former data must follow");
+    Check(Read(old("BetterDofus-notebook.json")) == "already here", "Migration must never overwrite");
+    Check(!std::filesystem::exists(old("BetterDofus-stats.json.lock")), "Lock files are not data");
+    Check(Read(old("DofusMiniatures-stats.json")) == "legacy stats", "The former files stay in place");
+    // Once done, a later launch leaves the new files alone.
+    Write(shared, "mode=1\n");
+    Write(old("BetterDofus-stats.json"), "newer stats");
+    Check(ReleaseSettingsPath(release) == shared && Read(shared) == "mode=1\n" && Read(old("BetterDofus-stats.json")) == "newer stats",
+        "Migration happens once");
 }
 void CrossVersionTests() {
     Fixtures files;
@@ -193,7 +228,7 @@ void CrossVersionTests() {
 }
 int main() {
     try {
-        PolicyTests(); FileTests(); CrossVersionTests();
+        PolicyTests(); FileTests(); LegacyDataTests(); CrossVersionTests();
         std::cout << "PASS: manifest, numeric latest, fingerprints, compatibility, bounded family, settings migration/fallback, command ownership; fixtures only\n";
         return 0;
     } catch (const std::exception& error) { std::cerr << error.what() << '\n'; return 1; }

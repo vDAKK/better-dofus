@@ -68,8 +68,8 @@ Obj Owned(){
     Check(Get(root).children.size()==6,"Exactly three additional native toolbar controls");
     auto b=Get(root).children[1];
     Check(Get(root).children[0]==nativeToggle&&Get(root).children[4]==menuToggle&&Get(root).children[5]==nativeItem,"Soul and its adjacent tools precede Menu; foreign siblings preserved");
-    Check(Get(Get(Get(root).children[2]).fields["set_name"]).text=="dofus_miniatures_treasure_toggle"&&
-        Get(Get(Get(root).children[3]).fields["set_name"]).text=="dofus_miniatures_notebook_toggle","Both tools sit directly beside Capture d'âme");
+    Check(Get(Get(Get(root).children[2]).fields["set_name"]).text=="better_dofus_treasure_toggle"&&
+        Get(Get(Get(root).children[3]).fields["set_name"]).text=="better_dofus_notebook_toggle","Both tools sit directly beside Capture d'âme");
     return b;
 }
 }
@@ -173,7 +173,7 @@ int main(){using namespace fake;try{Init();InstallSoulWidget();{
         // with every button off, nothing is created; each change rebuilds the bar.
         const bool reminder=owner.settings.soulReminder;const int settingChanges=changes,natives=foreign;
         auto soul=Get(root).children[1];
-        Check(Get(Get(soul).fields["set_name"]).text=="dofus_miniatures_soul_toggle","Capture d’âme comes first");
+        Check(Get(Get(soul).fields["set_name"]).text=="better_dofus_soul_toggle","Capture d’âme comes first");
         owner.settings.soulButton=false;toggle(soul,nullptr);
         Check(changes==settingChanges&&owner.settings.soulReminder==reminder&&foreign==natives,"Capture d’âme switched off but not yet removed toggles nothing");
         int adds=tooltipAdds;TickSoulWidget();
@@ -198,7 +198,7 @@ int main(){using namespace fake;try{Init();InstallSoulWidget();{
         toggle(treasureTool,nullptr);Check(toolToggles==clicks+1&&!treasure,"A removed tool button is inert");
         // Capture d’âme alone, then every button back in its place.
         owner.settings.soulButton=true;TickSoulWidget();
-        Check(Get(root).children.size()==4&&Get(Get(Get(root).children[1]).fields["set_name"]).text=="dofus_miniatures_soul_toggle"&&
+        Check(Get(root).children.size()==4&&Get(Get(Get(root).children[1]).fields["set_name"]).text=="better_dofus_soul_toggle"&&
             Get(root).children[2]==menuToggle&&Get(Get(root).children[1]).ints["isOn"]==int(reminder),"Capture d’âme alone, right before Menu, showing the alert");
         toolsUi::tools=tools;TickSoulWidget();Owned();
         Check(owner.settings.soulReminder==reminder&&changes==settingChanges,"Hiding and showing the buttons never changed the alert");

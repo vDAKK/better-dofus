@@ -36,7 +36,7 @@ using Path = std::filesystem::path;
 // no 4-byte piece of them may reach a log or a notice.
 const std::string FakeKey = "TEST-KEY-0123456789-NOT-REAL", OtherKey = "TEST-KEY-9876543210-NOT-REAL";
 const std::string Slug = "s1ugZq9xQw", OtherSlug = "s2ugRt7yUi", Character = "Altanzorg", User = "Zyxwvut99", Marker = "Corps-Prive-Zorglub";
-constexpr wchar_t SenderName[] = L"Local\\DofusMiniatures.Metamob";
+constexpr wchar_t SenderName[] = L"Local\\BetterDofus.Metamob";
 constexpr int64_t FakeEpochValue = 1792670000; // a fixed date for Retry-After
 
 void Check(bool value, const std::string& message) { if (!value) throw std::runtime_error(message); }
@@ -249,7 +249,7 @@ std::string Added(const std::vector<Part>& parts) {
     return text + ".";
 }
 std::string NoKey(const std::string& name) {
-    return "Metamob : capture de « " + name + " » non synchronisée : aucune clé enregistrée (Options › Dofus Enhanced › Pierre d’âme).";
+    return "Metamob : capture de « " + name + " » non synchronisée : aucune clé enregistrée (Options › Better Dofus › Pierre d’âme).";
 }
 std::string Unmatched(const std::string& name) { return "Metamob : « " + name + " » introuvable dans ta quête Ocre, rien n’a été modifié."; }
 std::string Capped(const Row& row) { return "Metamob : « " + row.name + " » est déjà à 30, la quantité maximale."; }
@@ -322,7 +322,7 @@ Path root;
 Path Folder(const std::string& name) {
     const auto folder = root / name;
     std::filesystem::create_directories(folder);
-    return folder / "DofusMiniatures-3.7.11.11-settings.ini";
+    return folder / "BetterDofus-settings.ini";
 }
 void Noted(const std::string& text) { notices.push_back(text); allNotices.push_back(text); }
 void Begin(const Path& settings, bool key) {
@@ -480,7 +480,7 @@ void CaptureWithoutKey() {
     Begin(Folder("nokey"), false);
     EnqueueCapture(Captured(Tofu));
     Tick();
-    Said({"Metamob : capture de « Tofumanchou l'Empereur » non synchronisée : aucune clé enregistrée (Options › Dofus Enhanced › Pierre d’âme)."},
+    Said({"Metamob : capture de « Tofumanchou l'Empereur » non synchronisée : aucune clé enregistrée (Options › Better Dofus › Pierre d’âme)."},
         "A capture without a key");
     // A name with markup is shown without it.
     auto odd = Captured(Mob);
@@ -660,7 +660,7 @@ void RoomCaptures() {
     EnqueueCapture(Captured(RatBlanc));
     Tick();
     Said({"Metamob : captures de « Sphincter Cell », « Rat Blanc » et « Rat Noir » non synchronisées : aucune clé enregistrée "
-          "(Options › Dofus Enhanced › Pierre d’âme)."}, "No key: one notice for the room");
+          "(Options › Better Dofus › Pierre d’âme)."}, "No key: one notice for the room");
     EnqueueCapture(Captured(Ahuri));
     Tick();
     Said({NoKey("Tynril Ahuri")}, "A single capture keeps its own text");
@@ -1030,7 +1030,7 @@ void NetworkThenResume() {
 std::wstring FlightName(const std::string& slug, int64_t id) {
     uint64_t hash = 14695981039346656037ULL;
     for (const unsigned char c : slug + "/" + std::to_string(id)) { hash ^= c; hash *= 1099511628211ULL; }
-    std::wstring name = L"Local\\DofusMiniatures.Metamob.";
+    std::wstring name = L"Local\\BetterDofus.Metamob.";
     for (int shift = 60; shift >= 0; shift -= 4) name += L"0123456789abcdef"[(hash >> shift) & 15];
     return name;
 }

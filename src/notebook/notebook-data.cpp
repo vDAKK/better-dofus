@@ -175,7 +175,7 @@ template<class Change> auto Locked(const std::filesystem::path& path, Change cha
 }
 }
 std::filesystem::path DataPath(const std::filesystem::path& settingsPath) {
-    return settingsPath.parent_path() / L"DofusMiniatures-notebook.json";
+    return settingsPath.parent_path() / L"BetterDofus-notebook.json";
 }
 bool Coordinate(const std::string& text, int& value) {
     if (text.empty() || text.size() > 5) return false;

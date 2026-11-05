@@ -1,13 +1,13 @@
 #pragma once
 // « Statistiques »: the store behind stats/stats.hpp, without any game access.
 //
-// DofusMiniatures-stats.json, beside the shared settings, holds one sheet per
+// BetterDofus-stats.json, beside the shared settings, holds one sheet per
 // character id. Each game client (one per character) keeps what it counted
 // since its last write in memory and adds it to the file's current content
-// under the file's lock (DofusMiniatures-stats.json.lock): no client erases
+// under the file's lock (BetterDofus-stats.json.lock): no client erases
 // another's counts. A write replaces the file atomically and keeps the
-// previous one as DofusMiniatures-stats.json.bak; an unreadable file is moved
-// aside as DofusMiniatures-stats.json.corrupt and the backup is used instead.
+// previous one as BetterDofus-stats.json.bak; an unreadable file is moved
+// aside as BetterDofus-stats.json.corrupt and the backup is used instead.
 // A file written by a later revision (schema above 1) is never rewritten.
 // Erasing counts bumps a reset counter and records its time (the file's, or
 // the sheet's): a client drops its unwritten counts that predate a reset made

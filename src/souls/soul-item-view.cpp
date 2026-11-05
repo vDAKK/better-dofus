@@ -7,7 +7,7 @@ using namespace managed;
 constexpr const char* SlotSpace = "Core.UILogic.Components.Slots";
 constexpr const char* BuilderSpace = "Core.UILogic.Components.Tooltips.Builder";
 constexpr const char* PositionSpace = "Core.UILogic.Components.Tooltips.Builder.Internal";
-constexpr const char* TooltipName = "dofus_miniatures_soul_equipped_item";
+constexpr const char* TooltipName = "better_dofus_soul_equipped_item";
 struct ItemState {
     Ref slot, item, tooltip, tooltipService, tooltipName, compositor, dependencies, criteria;
     bool spell = false, cursorOwned = false;
@@ -90,7 +90,7 @@ void ShowTooltip(ItemState& state) {
     auto serviceClass = api.Class("Core.dll", "", "gbr");
     if (!api.class_is_assignable_from(serviceClass, api.object_get_class(tooltipService.get())))
         throw std::runtime_error("Unsupported tooltip service");
-    const auto tooltipName = state.spell ? "dofus_miniatures_capture_spell" : TooltipName;
+    const auto tooltipName = state.spell ? "better_dofus_capture_spell" : TooltipName;
     Ref name(api.string_new(tooltipName));
     if (api.Call(tooltipService.get(), "bfqc", {name.get()}))
         throw std::runtime_error("Item tooltip name is already owned");

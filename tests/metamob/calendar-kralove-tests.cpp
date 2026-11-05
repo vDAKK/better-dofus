@@ -404,7 +404,7 @@ const std::string Loading = "Metamob : lecture des ouvertures…", Unreachable =
         "détails ; clique dessus pour l’ouvrir sur metamob.fr.",
     BannerUnknown = "Ouvertures Kralamoure planifiées sur Metamob pour le serveur de ta quête Ocre, à l’heure de ce PC. Survole une "
         "ouverture pour ses détails ; clique dessus pour l’ouvrir sur metamob.fr.",
-    FilterTip = "Kralamoure (Dofus Enhanced) : les ouvertures planifiées sur Metamob pour le serveur de ta quête Ocre, en lignes sous "
+    FilterTip = "Kralamoure (Better Dofus) : les ouvertures planifiées sur Metamob pour le serveur de ta quête Ocre, en lignes sous "
         "les jours. Décoché, rien n’est affiché ni lu sur Metamob. C’est l’option « Ouvertures Kralamoure dans le calendrier ».";
 const std::array<float, 4> Violet{138 / 255.f, 92 / 255.f, 246 / 255.f, 1}, VioletCard{138 / 255.f, 92 / 255.f, 246 / 255.f, .3f},
     Grey{1, 1, 1, .15f};

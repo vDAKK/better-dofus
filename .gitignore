@@ -5,13 +5,13 @@
 *.request
 settings.ini
 *-settings.ini
-DofusMiniatures-notebook.json*
+BetterDofus-notebook.json*
 *.ini.crossings*
 __pycache__/
 *.pyc
 /.vs/
 offline-test-data/
 # Metamob personal key (DPAPI) and sync state: local only, never committed.
-DofusMiniatures-metamob*
-DofusMiniatures-roublard-passage.json*
-DofusMiniatures-stats.json*
+BetterDofus-metamob*
+BetterDofus-roublard-passage.json*
+BetterDofus-stats.json*

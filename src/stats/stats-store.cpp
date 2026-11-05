@@ -288,7 +288,7 @@ Sheet* Book::Find(int64_t id) {
 }
 
 std::filesystem::path DataPath(const std::filesystem::path& settingsPath) {
-    return settingsPath.parent_path() / L"DofusMiniatures-stats.json";
+    return settingsPath.parent_path() / L"BetterDofus-stats.json";
 }
 Book Parse(const std::string& bytes) {
     Json json;

@@ -247,7 +247,7 @@ void Refresh(Entry& e, size_t index, const Position& here) {
 }
 void Create(Entry& e) {
     e.button.reset(api.New(toggleClass));
-    Ref name(api.string_new("dofus_miniatures_party_travel")); api.Call(e.button.get(), "set_name", {name.get()});
+    Ref name(api.string_new("better_dofus_party_travel")); api.Call(e.button.get(), "set_name", {name.get()});
     // The spouse's teleport button's native component and place (party-slot-layout.hpp), the zaap icon.
     int icon = IconZaap, style = 2, medium = 1;
     api.Call(e.button.get(), "set_iconValue", {&icon}); api.Call(e.button.get(), "set_mainStyle", {&style});

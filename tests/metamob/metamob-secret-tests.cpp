@@ -104,11 +104,11 @@ bool Junction(const Path& link, const Path& target) {
 }
 int main() {
     const auto root = std::filesystem::temp_directory_path() / ("DofusMetamobSecretTests-" + std::to_string(GetCurrentProcessId()));
-    const auto file = metamob::KeyPath(root / "DofusMiniatures-3.7.11.11-settings.ini");
+    const auto file = metamob::KeyPath(root / "BetterDofus-settings.ini");
     folder = root.filename().string();
     try {
         std::filesystem::remove_all(root); std::filesystem::create_directory(root);
-        Check(file == root / "DofusMiniatures-metamob.key" && metamob::KeyPath(L"C:\\Jeu\\settings.ini") == L"C:\\Jeu\\DofusMiniatures-metamob.key",
+        Check(file == root / "BetterDofus-metamob.key" && metamob::KeyPath(L"C:\\Jeu\\settings.ini") == L"C:\\Jeu\\BetterDofus-metamob.key",
             "The key file sits next to the active settings file");
 
         // Nothing stored yet, even under a missing folder.
@@ -134,7 +134,7 @@ int main() {
         Check(!Leaks(stored, FakeKey, 6) && !Leaks(stored, wide, 12), "The key file holds no plain key");
         std::string opened; bool described = true;
         Check(Open(stored.substr(6), Entropy, opened, described) && opened == FakeKey && !described, "Blob with the fixed entropy and no description");
-        Check(!Open(stored.substr(6), nullptr, opened, described) && !Open(stored.substr(6), "DofusEnhanced/Metamob/v2", opened, described),
+        Check(!Open(stored.substr(6), nullptr, opened, described) && !Open(stored.substr(6), "BetterDofus/Metamob/v2", opened, described),
             "The blob needs the fixed entropy");
         Check(!Temporaries(root), "No temporary file left");
 
@@ -171,7 +171,7 @@ int main() {
             {"DEMK1\n" + blob + std::string(4097 - 6 - blob.size(), '\0'), BadFile}, // 4097 bytes
             {"DEMK1\n" + std::string(4090, 'x'), Unreadable}, // 4096 bytes: read, then refused by DPAPI
             {"DEMK1\n" + middle, Unreadable}, {"DEMK1\n" + last, Unreadable}, {"DEMK1\n" + blob.substr(0, blob.size() / 2), Unreadable},
-            {"DEMK1\n" + Seal(FakeKey, nullptr), Unreadable}, {"DEMK1\n" + Seal(FakeKey, "DofusEnhanced/Metamob/v2"), Unreadable},
+            {"DEMK1\n" + Seal(FakeKey, nullptr), Unreadable}, {"DEMK1\n" + Seal(FakeKey, "BetterDofus/Metamob/v2"), Unreadable},
             {"DEMK1\n" + Seal("short", Entropy), Unreadable}, {"DEMK1\n" + Seal(std::string(FakeKey) + " ", Entropy), Unreadable}};
         for (const auto& [bytes, expected] : unreadable) {
             Put(file, bytes);

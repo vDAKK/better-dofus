@@ -7,12 +7,12 @@
 // this PC (Shared/preset.json, every account), each known by its uid: unique
 // among them, never reused while it exists (UiPresetOptionsContainer.OnLoaded
 // starts new ones above the largest), kept through a rename. The mod never
-// writes into them: DofusMiniatures-layouts.json, beside the shared settings,
+// writes into them: BetterDofus-layouts.json, beside the shared settings,
 // holds for each uid the mod's windows as they were when the layout was
 // saved, under "shared" (the game's scope for these layouts). Every game
 // client (one per character) reads the file again for each layout applied,
 // and changes one layout's entry at a time under the file's lock
-// (DofusMiniatures-layouts.json.lock), the rest of the file kept as it is. A
+// (BetterDofus-layouts.json.lock), the rest of the file kept as it is. A
 // file of a later revision (schema above 1) is read, never rewritten.
 //
 // Each part of a layout is optional: a part missing or invalid in the file

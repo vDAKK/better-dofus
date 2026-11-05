@@ -6,8 +6,8 @@
 
 namespace TreasureOverlayPolicy {
 inline constexpr wchar_t HomeUrl[] = L"https://dofusdb.fr/fr/tools/treasure-hunt";
-inline constexpr wchar_t WindowClass[] = L"DofusMiniatures.TreasureOverlay.v1";
-inline constexpr wchar_t MutexName[] = L"Local\\DofusMiniatures.TreasureOverlay.v1";
+inline constexpr wchar_t WindowClass[] = L"BetterDofus.TreasureOverlay.v1";
+inline constexpr wchar_t MutexName[] = L"Local\\BetterDofus.TreasureOverlay.v1";
 inline constexpr int MinimumWidth = 560;
 inline constexpr int MinimumHeight = 420;
 

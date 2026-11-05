@@ -123,18 +123,18 @@ void Create(Obj hub, Obj display, Obj slot, Obj member, Obj root, Obj portrait) 
     state.tooltipService.reset(module->FindService("fou"));
     if (!state.tooltipService.get()) throw std::runtime_error("Spouse tooltip service unavailable");
     state.border.reset(api.New(api.Class("UnityEngine.UIElementsModule.dll", Ui, "VisualElement")));
-    Name(state.border.get(), "dofus_miniatures_spouse_border"); Ignore(state.border.get()); Style(state.border.get(), "position", 1);
+    Name(state.border.get(), "better_dofus_spouse_border"); Ignore(state.border.get()); Style(state.border.get(), "position", 1);
     for (auto edge : {"left", "right", "top", "bottom"}) Pixels(state.border.get(), edge, 0);
     const std::array<float, 4> pink{0.95f, 0.47f, 0.66f, 0.8f};
     for (auto edge : {"borderLeftColor", "borderRightColor", "borderTopColor", "borderBottomColor"}) Style(state.border.get(), edge, pink);
     for (auto edge : {"borderLeftWidth", "borderRightWidth", "borderTopWidth", "borderBottomWidth"}) Style(state.border.get(), edge, 2.0f);
     api.Call(portrait, "Add", {state.border.get()});
-    state.heart.reset(api.New(iconClass)); Name(state.heart.get(), "dofus_miniatures_spouse_heart");
+    state.heart.reset(api.New(iconClass)); Name(state.heart.get(), "better_dofus_spouse_heart");
     int heart = 166; api.Call(state.heart.get(), "set_icon", {&heart}); api.Call(state.heart.get(), "set_color", {const_cast<float*>(pink.data())});
     // Placed (left and top or bottom) with its size by Refresh: party-slot-layout.hpp.
     Ignore(state.heart.get()); Style(state.heart.get(), "position", 1);
     api.Call(portrait, "Add", {state.heart.get()});
-    state.button.reset(api.New(toggleClass)); Name(state.button.get(), "dofus_miniatures_spouse_teleport");
+    state.button.reset(api.New(toggleClass)); Name(state.button.get(), "better_dofus_spouse_teleport");
     // Same native secondary component as party auto-follow/join/ready, out of
     // their column on the right edge (a fourth item would overflow it).
     int icon = 304, style = 2, medium = 1;

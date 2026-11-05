@@ -706,8 +706,8 @@ DragStep Advance(Drag& drag, bool press, bool down, bool located, bool reached, 
 using namespace managed;
 constexpr const char* UiImage = "UnityEngine.UIElementsModule.dll";
 constexpr const char* UiSpace = "UnityEngine.UIElements";
-constexpr const char* OwnedName = "dofus_miniatures_perf_overlay";
-constexpr const char* GripName = "dofus_miniatures_perf_overlay_grip";
+constexpr const char* OwnedName = "better_dofus_perf_overlay";
+constexpr const char* GripName = "better_dofus_perf_overlay_grip";
 // gmo builds the named native layers in draw order: RootWorld, RootLow (HUD),
 // RootMedium (windows), RootHigh, RootTop (notifications), RootMenu,
 // RootPopup, RootTooltip, RootLoadingScreen, RootCursor. First in RootHigh:

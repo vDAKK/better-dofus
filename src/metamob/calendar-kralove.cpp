@@ -154,7 +154,7 @@ std::string BannerTooltip(const std::string& server) {
     return "Ouvertures Kralamoure planifiées sur Metamob pour " + (server.empty() ? std::string("le serveur de ta quête Ocre") : server) +
         ", à l’heure de ce PC. Survole une ouverture pour ses détails ; clique dessus pour l’ouvrir sur metamob.fr.";
 }
-constexpr const char* FilterTooltip = "Kralamoure (Dofus Enhanced) : les ouvertures planifiées sur Metamob pour le serveur de ta quête "
+constexpr const char* FilterTooltip = "Kralamoure (Better Dofus) : les ouvertures planifiées sur Metamob pour le serveur de ta quête "
     "Ocre, en lignes sous les jours. Décoché, rien n’est affiché ni lu sur Metamob. C’est l’option « Ouvertures Kralamoure "
     "dans le calendrier ».";
 std::string EmptyText(const std::string& server) {

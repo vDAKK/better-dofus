@@ -27,7 +27,7 @@ struct Folder {
         std::filesystem::create_directories(path);
     }
     ~Folder() { std::error_code ignored; std::filesystem::remove_all(path, ignored); }
-    std::filesystem::path File() const { return DataPath(path / L"DofusMiniatures-3.7.11.11-settings.ini"); }
+    std::filesystem::path File() const { return DataPath(path / L"BetterDofus-settings.ini"); }
 };
 // Every kind of window, away from its default.
 Snapshot Full() {
@@ -48,7 +48,7 @@ Snapshot Full() {
 }
 
 void FileBesideTheSettings() {
-    Check(DataPath(L"C:\\Mods\\DofusMiniatures-3.7.11.11-settings.ini") == std::filesystem::path(L"C:\\Mods\\DofusMiniatures-layouts.json"),
+    Check(DataPath(L"C:\\Mods\\BetterDofus-settings.ini") == std::filesystem::path(L"C:\\Mods\\BetterDofus-layouts.json"),
         "The file sits beside the shared settings");
 }
 void RoundTrip() {

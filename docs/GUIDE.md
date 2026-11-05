@@ -1,6 +1,6 @@
 # Guide détaillé (français)
 
-Mod expérimental pour **Dofus Unity 3.7.13.17**, version **1.21.1**.
+Mod expérimental pour **Dofus Unity 3.7.13.17**, version **2.0.0**.
 
 Miniatures au choix, animations à la carte, surbrillance, curseurs dans le style
 de Dofus, jauges à la verticale, aide à la capture d’âmes, trajets rapides
@@ -14,18 +14,16 @@ Les nouveautés depuis la 1.13.0 sont vérifiées hors jeu ; leur rendu en jeu r
 
 ## Mises à jour
 
-Les versions sont disponibles dans les [Releases](https://github.com/vDAKK/dofus-enhanced/releases).
-Extraire l’archive entière. Le nom historique `DofusMiniatures-3.7.11.11-rN`
+Les versions sont disponibles dans les [Releases](https://github.com/vDAKK/better-dofus/releases).
+Extraire l’archive entière. Le nom historique `BetterDofus-X.Y.Z`
 conserve les réglages partagés ; la version du jeu ciblée figure dans `release.ini`.
 
-Dans **Options → Dofus Enhanced → Chargement et mises à jour** :
+Dans **Options → Better Dofus → Chargement et mises à jour** :
 
 - **Chargement automatique** charge le mod lors des prochains lancements.
 - **Mises à jour GitHub** recherche, télécharge et vérifie une version compatible
   avant le chargement. Activé par défaut. Aucun compte GitHub requis. Le mod
-  regarde vDAKK/dofus-enhanced. Altansar69/dofus-enhanced sert de secours quand
-  aucune version installée ne convient à ton Dofus : une version qui marche n’est
-  jamais remplacée par la sienne.
+  regarde vDAKK/better-dofus.
 - **Après une mise à jour de Dofus**, si aucune version du mod ne lui correspond,
   une notification Windows te prévient (une seule fois, même avec plusieurs
   comptes). Le jeu reste intact et le mod revient au lancement qui suit la
@@ -53,11 +51,12 @@ de réseau, il utilise une version locale compatible. Il ne remplace pas un modu
 dans un jeu déjà ouvert. Il laisse intact un client sans version compatible.
 Depuis la 1.9.2, si GitHub renvoie une liste de publications vide (service
 dégradé), il consulte la dernière publication avant de conclure qu’aucune
-version n’est compatible. Les publications portent leur numéro de version
-(`v1.13.0`, `v1.14.0`…) ; les archives et les dossiers gardent la révision `rN`,
-que la mise à jour vérifie toujours. Une installation antérieure à la 1.13.1 ne
-lit que les anciennes étiquettes `rN` : elle se met à jour une fois à la main
-(voir la FAQ du README).
+version n’est compatible. Depuis la 2.0.0, une version n’a qu’un seul nom, son numéro : la publication
+`v2.0.0`, l’archive `BetterDofus-2.0.0.zip`, le dossier `BetterDofus-2.0.0`. Les
+empreintes de Dofus qu’elle accepte sont dans un commentaire des notes de la
+publication, invisible sur la page, et la mise à jour les vérifie toujours avant
+de télécharger puis dans `release.ini`. Une installation antérieure à la 2.0.0 se
+met à jour une fois à la main (voir la FAQ du README).
 
 L’assistant de démarrage peut reconnaître une future version du jeu et lancer
 le chargeur livré avec son correctif. Cela ne rend pas les fonctions natives du mod
@@ -67,17 +66,17 @@ une nouvelle publication.
 Pour enregistrer manuellement l’assistant, depuis le dossier extrait :
 
 ```powershell
-.\ModuleLoader.exe --enable-auto "C:\chemin\vers\Dofus.exe"
+.\BetterDofusLoader.exe --enable-auto "C:\chemin\vers\Dofus.exe"
 ```
 
 Pour vérifier les mises à jour sans charger quoi que ce soit dans le jeu :
 
 ```powershell
-.\ModuleLoader.exe --check-updates "C:\chemin\vers\Dofus.exe"
+.\BetterDofusLoader.exe --check-updates "C:\chemin\vers\Dofus.exe"
 ```
 
 Les diagnostics sont dans `autoload.log`, puis `module.log` après chargement.
-L’onglet des options s’appelle **Dofus Enhanced**, en blocs par sujet :
+L’onglet des options s’appelle **Better Dofus**, en blocs par sujet :
 Apparence, Animations, Surbrillance, Curseur, Jauges, Affichages enregistrés,
 Cartes, Carnet, Chasse au trésor, Déplacements, Pierre d’âme (avec Metamob),
 Chat, Calendrier, Performances, Statistiques, Chargement et mises à jour et À
@@ -88,10 +87,10 @@ figure dans le dernier bloc, **À propos**, avec le crédit de DAKK et un bouton
 
 Depuis la 1.20.1, la ligne **Dossier du mod** du même bloc a un bouton
 **Ouvrir** : il ouvre dans l’Explorateur de Windows le dossier de la version
-chargée, `DofusMiniatures-3.7.11.11-rN`, avec ses fichiers
-(`DofusMiniatures.dll`, `ModuleLoader.exe`…) et son journal `module.log`, à
+chargée, `BetterDofus-X.Y.Z`, avec ses fichiers
+(`BetterDofus.dll`, `BetterDofusLoader.exe`…) et son journal `module.log`, à
 joindre à un signalement. Les réglages partagés par toutes les versions
-(`DofusMiniatures-3.7.11.11-settings.ini`) et tes statistiques sont dans le
+(`BetterDofus-settings.ini`) et tes statistiques sont dans le
 dossier au-dessus, à côté des dossiers des autres versions. Le bouton ne
 modifie ni ne supprime aucun fichier.
 
@@ -108,7 +107,7 @@ du module « Chasse au trésor » du jeu, Carnet personnel, Statistiques) juste
 après les modules du jeu, sans icône comme eux, au-dessus de **Tout réduire** /
 **Tout agrandir** ; le choix est conservé entre les lancements et **Tout
 réduire** / **Tout agrandir** les suivent aussi.
-**Options → Dofus Enhanced → Chasse au trésor → Bouton dans la barre du haut**
+**Options → Better Dofus → Chasse au trésor → Bouton dans la barre du haut**
 (coché par défaut) affiche ce bouton. Décoché, le bouton disparaît et le
 panneau ne s’ouvre plus : recoche la case pour le retrouver. Un panneau déjà
 ouvert reste ouvert et se ferme toujours avec sa croix ou
@@ -137,7 +136,7 @@ Cliquer sur le bouton **Carnet personnel**, dans la même barre, après
 Un second clic, **⋯ → Masquer le module** ou le bouton de fermeture de la barre
 de titre ferme le carnet (une modification non enregistrée demande un second
 clic). Le menu ⋯ des modules ne le liste plus non plus, sauf dans **Réduire les
-titres des modules**. Dans **Options → Dofus Enhanced → Carnet**, **Bouton dans
+titres des modules**. Dans **Options → Better Dofus → Carnet**, **Bouton dans
 la barre du haut** (coché par défaut) affiche ce bouton. Décoché, le bouton
 disparaît et le carnet ne s’ouvre plus, faute d’autre raccourci : recoche la
 case pour le retrouver. Les entrées restent enregistrées, **Ajouter aux
@@ -195,7 +194,7 @@ enfoncé tant que le repère est affiché ; un second clic le retire. Le repère
 suit la position quand elle est modifiée et disparaît avec elle quand elle est
 supprimée ; il se retire aussi par le menu du drapeau sur la carte. Seul le
 repère du carnet est retiré, jamais les drapeaux posés par le joueur. Le bouton
-se masque dans **Options → Dofus Enhanced → Carnet**.
+se masque dans **Options → Better Dofus → Carnet**.
 
 À droite de chaque entrée, de petits boutons du jeu agissent sur l’entrée de
 leur ligne, dans les deux versions du carnet, sans changer l’entrée
@@ -250,7 +249,7 @@ Les requêtes sont anonymes et effectuées en arrière-plan ; une erreur reste v
 
 ## Apparence et animations
 
-**Options → Dofus Enhanced → Apparence** : **En combat** et **Hors combat**
+**Options → Better Dofus → Apparence** : **En combat** et **Hors combat**
 choisissent chacun Normal, Créatures ou Miniatures. Avec Miniatures, les cases
 placées sous chaque choix disent qui est réduit : en combat **Moi**, **Joueurs
 alliés**, **Invocations alliées**, **Mes invocations**, **Ennemis** et
@@ -263,7 +262,7 @@ case reste décochée. Les mêmes cases sont aussi dans le **clic droit sur la c
 Affichage**, sous Normal / Créatures / Miniatures : celles du combat en combat,
 celles du hors combat en dehors, comme les cases de **Surbrillance**.
 
-**Options → Dofus Enhanced → Animations** (en combat uniquement) compte six
+**Options → Better Dofus → Animations** (en combat uniquement) compte six
 cases indépendantes :
 
 - **Sans effets des sorts** (cochée par défaut) : le jeu fait comme si son
@@ -288,7 +287,7 @@ animations ne disparaissent pas.
 
 ## Surbrillance
 
-**Options → Dofus Enhanced → Surbrillance** choisit le niveau : derrière
+**Options → Better Dofus → Surbrillance** choisit le niveau : derrière
 les modules d’affichage, derrière ces modules et les murs, ou tout le temps.
 Sous le niveau, six cases indépendantes choisissent ce qui est entouré hors
 combat : **Monstres** (cochée par défaut), **PNJ**, **Éléments interactifs**,
@@ -312,7 +311,7 @@ monstres, les PNJ, les éléments interactifs et enfin les autres joueurs.
 
 ## Curseur
 
-**Options → Dofus Enhanced → Curseur → Curseur Dofus** (décoché par défaut)
+**Options → Better Dofus → Curseur → Curseur Dofus** (décoché par défaut)
 remplace la souris de Windows, dans le jeu, par des curseurs dessinés par le
 mod dans le style de Dofus. Le jeu décide quand le curseur change et le mod en
 change le dessin, à deux exceptions près (le curseur de texte dans les champs
@@ -472,7 +471,7 @@ place. Seule limite connue : après un passage à un écran moins haut
 (résolution, échelle de l’interface), une jauge verticale plus longue que la
 hauteur de l’écran peut dépasser en haut pendant au plus 0,2 seconde.
 
-**Options → Dofus Enhanced → Jauges →** « Affichage vertical dans le menu … des
+**Options → Better Dofus → Jauges →** « Affichage vertical dans le menu … des
 jauges » (cochée par défaut) : décochée, la case disparaît des menus et toutes
 les jauges reviennent à l’horizontale ; le choix de chaque jauge est gardé et
 revient quand tu la recoches.
@@ -486,7 +485,7 @@ enregistrés**).
 Le jeu enregistre tes affichages : la place de ses fenêtres, que tu remets
 d’un clic, et l’affichage de combat, qu’il prend seul au début d’un combat.
 Depuis la 1.20.0, **Garder les fenêtres du mod dans les affichages
-enregistrés** (Options → Dofus Enhanced → Affichages enregistrés, cochée par
+enregistrés** (Options → Better Dofus → Affichages enregistrés, cochée par
 défaut) fait garder à chaque affichage que tu enregistres, nouveau ou
 par-dessus un ancien, les fenêtres du mod telles qu’elles sont :
 
@@ -517,7 +516,7 @@ enregistré avant la 1.20.0, ou avec la case décochée, laisse les fenêtres du
 mod comme elles sont : enregistre-le à nouveau pour qu’il les garde.
 
 Le mod ne modifie jamais les affichages du jeu. Il garde ses fenêtres dans
-`DofusMiniatures-layouts.json`, à côté des préférences partagées, pour tous
+`BetterDofus-layouts.json`, à côté des préférences partagées, pour tous
 les personnages de ce PC, comme le jeu ses affichages. Un affichage supprimé
 dans le jeu y est oublié ; renommé, il garde ses fenêtres. Décochée, la case
 laisse les fenêtres du mod de côté : enregistrer ou appliquer un affichage ne
@@ -610,7 +609,7 @@ barre des six métiers et sa liste ; les repères des ressources choisies resten
 affichés tant que **Ressources sur la mini-carte** est cochée, et le choix se
 fait depuis la grande carte.
 
-Dans le chat, **Options → Dofus Enhanced → Chat → Dimension avec les coordonnées
+Dans le chat, **Options → Better Dofus → Chat → Dimension avec les coordonnées
 dans le chat** affiche les positions et les groupes de monstres partagés sous la
 forme [x,y, dimension], avec les mêmes choix : **Oui, sauf dans le Monde des
 Douze** (par défaut depuis la 1.16.0), **Oui** ou **Non**. Le lien reste celui
@@ -621,7 +620,7 @@ choisis **Oui** à nouveau pour voir la dimension partout.
 
 ## Mode « Ocre » de la carte
 
-Avec **Options → Dofus Enhanced → Cartes → Archimonstres manquants sur la
+Avec **Options → Better Dofus → Cartes → Archimonstres manquants sur la
 grande carte** (coché par défaut), la colonne des modes de la grande carte (**M**)
 gagne un carré **Ocre** sous **Conquête**, du même type que ceux du jeu. Un clic
 active le mode Ocre et quitte Anomalies ou Conquête ; un second clic, la croix du
@@ -663,7 +662,7 @@ hors jeu ; son rendu en jeu reste à confirmer.
 
 Au clic droit sur la mini-carte, le menu du jeu se termine par un séparateur
 et les réglages du mod pour la mini-carte, les mêmes que dans **Options →
-Dofus Enhanced → Cartes** : les cases **Ressources**, **Barre des
+Better Dofus → Cartes** : les cases **Ressources**, **Barre des
 ressources**, **Bouton de recentrage**, **Nom de la zone au survol** et
 **Archimonstres manquants**, puis le sous-menu **Dimension avec les
 coordonnées** (**Non**, **Oui, sauf dans le Monde des Douze**, **Oui**). Au
@@ -683,7 +682,7 @@ Le bouton TP du chat, le double-clic sur la grande carte ou la mini-carte et
 l’entrée « Voyager jusqu’à cette position » de leur clic droit lancent le trajet
 du mod : zaaps, directs ou par le Havre-Sac, puis l’autopilote du jeu. Ctrl +
 double-clic, le menu d’un point de repère et `/travel` gardent l’autopilote du jeu.
-**Options → Dofus Enhanced → Déplacements → Remplacer l’autopilote du jeu**,
+**Options → Better Dofus → Déplacements → Remplacer l’autopilote du jeu**,
 décoché, rend le double-clic et cette entrée à l’autopilote du jeu.
 
 Dans le groupe, **Bouton de trajet sur les membres du groupe** (Déplacements,
@@ -731,12 +730,12 @@ l’autopilote du jeu, l’option décochée) arrête le trajet. Le mod apprend 
 voyant où Bad Aboum se tient côté temple (dès un premier passage dans ce sens,
 ou quand tu passes près de lui) et où arrive chaque trajet, y compris ceux que
 tu fais toi-même ; il le garde, par personnage, dans
-`DofusMiniatures-roublard-passage.json`, à côté des préférences partagées. Le
+`BetterDofus-roublard-passage.json`, à côté des préférences partagées. Le
 trajet peut aussi traverser le temple ; sa statue reste réservée aux Roublards
 par le jeu. Décoché, le mod n’emprunte ni le passage ni le temple ; l’autopilote
 du jeu, qui finit le trajet, garde ses propres chemins.
 
-**Options → Dofus Enhanced → Chat** affiche ou masque séparément, à côté des
+**Options → Better Dofus → Chat** affiche ou masque séparément, à côté des
 positions et des archimonstres ou boss de L’éternelle moisson partagés dans le
 chat, le bouton TP, « Âme en sac » et l’avancement Ocre (une âme de salle de
 donjon compte pour chaque boss de la salle, y compris ceux sans âme à eux,
@@ -754,7 +753,7 @@ monstre, aucun message en cas d’échec.
 
 ## Pierre d’âme
 
-**Options → Dofus Enhanced → Pierre d’âme** règle l’alerte pierre d’âme et
+**Options → Better Dofus → Pierre d’âme** règle l’alerte pierre d’âme et
 l’équipement automatique de la bonne pierre, puis la synchro Metamob décrite
 ci-dessous. Le bouton **Capture d’âme**, en haut à droite, avant les autres
 boutons du mod, active ou désactive l’alerte comme la case **Alerte pierre
@@ -770,7 +769,7 @@ plus rien à la barre.
 
 ## Metamob
 
-Dans **Options → Dofus Enhanced → Pierre d’âme**, sous l’alerte, l’équipement
+Dans **Options → Better Dofus → Pierre d’âme**, sous l’alerte, l’équipement
 automatique et le bouton de la barre du haut, deux lignes synchronisent les
 captures avec ta quête Ocre sur [metamob.fr](https://www.metamob.fr) :
 
@@ -831,7 +830,7 @@ peuvent n’en compter qu’une. Ne coche la synchro que sur un seul PC, et
 redémarre les clients encore ouverts avec une ancienne version avant de la cocher.
 
 La clé est personnelle (CGU de Metamob) : aucune clé n’est incluse dans le mod.
-Elle est chiffrée pour ton compte Windows dans `DofusMiniatures-metamob.key`, à
+Elle est chiffrée pour ton compte Windows dans `BetterDofus-metamob.key`, à
 côté des réglages, et n’est jamais affichée, journalisée ni publiée. Supprimée
 avec la corbeille, elle reste valable sur Metamob : régénère-la sur le site pour
 la révoquer. Les captures faites pendant que Metamob est injoignable sont
@@ -839,7 +838,7 @@ renvoyées automatiquement pendant la session.
 
 ## Kralamoures dans le calendrier
 
-**Options → Dofus Enhanced → Calendrier → Ouvertures Kralamoure dans le
+**Options → Better Dofus → Calendrier → Ouvertures Kralamoure dans le
 calendrier** (coché par défaut) n’agit qu’avec une clé Metamob enregistrée. Dans
 le calendrier du jeu, « Mes calendriers » gagne une entrée « Kralamoure », en
 tête de liste, avec son icône (une vague et un monstre) et sa couleur violette.
@@ -870,7 +869,7 @@ jeu, leurs cases et leurs couleurs ne sont pas modifiés.
 
 ## Performances
 
-**Options → Dofus Enhanced → Performances** affiche un petit cadre sombre et
+**Options → Better Dofus → Performances** affiche un petit cadre sombre et
 semi-transparent dès qu’une de ses trois cases de mesure est cochée, avec
 seulement les mesures cochées ; seul ce qui est affiché est mesuré. Les trois
 cases sont décochées par défaut :
@@ -949,7 +948,7 @@ avant devient sa largeur et sa hauteur ; sa place est gardée.
 
 ## Statistiques
 
-**Options → Dofus Enhanced → Statistiques** compte, pour chacun de tes
+**Options → Better Dofus → Statistiques** compte, pour chacun de tes
 personnages, ce que le jeu ne garde pas, à partir de la 1.15.0 et seulement
 pendant que le mod est chargé. **Compter mes statistiques** (coché par défaut)
 les active ; décoché, plus rien n’est compté et ce qui l’a été reste affiché.
@@ -1009,7 +1008,7 @@ nom à gauche, sa valeur à droite, ce qu’elle compte au survol) :
 - Téléportations : zaaps, zaapis, prismes, potions de rappel, entrées dans un
   Havre-Sac, trajets du mod et téléportations par une anomalie.
 
-Tout reste sur ce PC, dans `DofusMiniatures-stats.json`, à côté des préférences
+Tout reste sur ce PC, dans `BetterDofus-stats.json`, à côté des préférences
 partagées ; plusieurs jeux ouverts (un par personnage) y écrivent sans
 s’effacer. Il est écrit au plus toutes les 15 secondes et dès que le comptage
 s’arrête (déconnexion, choix du personnage) : fermer le jeu peut perdre les
@@ -1033,8 +1032,8 @@ jusqu’à ce que tu le relances.
 Windows x64, outils C++ Visual Studio, CMake, Ninja, Python 3 et Windows PowerShell.
 
 ```powershell
-git clone --recurse-submodules https://github.com/vDAKK/dofus-enhanced.git
-cd dofus-enhanced
+git clone --recurse-submodules https://github.com/vDAKK/better-dofus.git
+cd better-dofus
 .\build.ps1
 ctest --test-dir build --output-on-failure --output-junit test-results.xml
 python tools/package-release.py --output "C:\chemin\vers\releases"
@@ -1047,8 +1046,8 @@ fonction, déclaré avec `dofus_test()` dans `CMakeLists.txt`), `package/` pour 
 fichiers livrés tels quels dans l’archive et `tools/` pour l’empaquetage et la
 publication.
 
-Après incrément de révision, validation, commit et push sur `main`, publier
-avec `tools/publish-release.py --package <rN-package.json> --notes <notes.md>`.
+Après incrément de version, validation, commit et push sur `main`, publier
+avec `tools/publish-release.py --package <X.Y.Z-package.json> --notes <notes.md>`.
 Cet outil utilise la connexion Git Credential Manager du propriétaire, vérifie
 l’empreinte calculée par GitHub, puis publie la release. Il ne remplace jamais
 une version déjà publiée.

@@ -14,12 +14,8 @@ source = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser()
 parser.add_argument("--package", type=Path, required=True)
 parser.add_argument("--notes", type=Path, required=True)
-parser.add_argument("--repository", default="Altansar69/dofus-enhanced", choices=("Altansar69/dofus-enhanced", "vDAKK/dofus-enhanced"),
-                    help="the repository receiving the release, which must be origin; the updater checks Altansar69's first, then vDAKK's")
-# Updaters older than 1.13.1 only read rN tags: 1.13.1 alone was published as r113.
-parser.add_argument("--revision-tag", action="store_true", help="tag rN instead of vX.Y.Z (1.13.1 only)")
 args = parser.parse_args()
-REPO = args.repository
+REPO = "vDAKK/better-dofus"
 ACCOUNT = REPO.split("/")[0]
 package = json.loads(args.package.read_text(encoding="utf8"))
 asset = Path(package["asset"])
@@ -47,7 +43,7 @@ if credential.returncode or not fields.get("password"):
     fields = {"password": subprocess.check_output(["gh", "auth", "token"], text=True, timeout=20).strip()}
 headers = {
     "Authorization": "Bearer " + fields["password"], "Accept": "application/vnd.github+json",
-    "User-Agent": "DofusMiniatures-release-maintenance", "X-GitHub-Api-Version": "2022-11-28",
+    "User-Agent": "BetterDofus-release-maintenance", "X-GitHub-Api-Version": "2022-11-28",
 }
 def request(method, path, data=None, upload=False):
     url = path if upload else "https://api.github.com" + path
@@ -64,12 +60,16 @@ def request(method, path, data=None, upload=False):
 assert request("GET", "/user")["login"] == ACCOUNT, "Wrong GitHub account"
 repo = request("GET", f"/repos/{REPO}")
 assert not repo["private"] and repo["permissions"]["push"], "Public writable repository required"
-tag = f"r{package['revision']}" if args.revision_tag else f"v{package['version']}"
-# A revision is published once: every other release must hold an older archive.
+tag = f"v{package['version']}"
+# The updater reads the supported Dofus build here: invisible on the release's page,
+# and known without downloading the archive.
+compatibility = f"<!-- better-dofus game={package['gameHash']} metadata={package['metadataHash']} -->"
+# A version is published once, and only upward.
+number = lambda version: tuple(int(part) for part in version.split("."))
 for other in request("GET", f"/repos/{REPO}/releases?per_page=100"):
-    for item in other["assets"] if other["tag_name"] != tag else []:
-        published = re.match(r"DofusMiniatures-r([1-9][0-9]*)-", item["name"])
-        assert not published or int(published.group(1)) < package["revision"], "Revision already published; increment ModRevision"
+    published = re.fullmatch(r"v([0-9]+\.[0-9]+\.[0-9]+)", other["tag_name"])
+    if other["tag_name"] != tag and published:
+        assert number(published.group(1)) < number(package["version"]), "Version already published; increment the version"
 try:
     release = request("GET", f"/repos/{REPO}/releases/tags/{tag}")
 except urllib.error.HTTPError as error:
@@ -77,8 +77,8 @@ except urllib.error.HTTPError as error:
         raise
     release = request("POST", f"/repos/{REPO}/releases", {
         "tag_name": tag, "target_commitish": commit,
-        "name": f"Dofus Enhanced {package['version']} — Dofus {package['clientVersion']}",
-        "body": args.notes.read_text(encoding="utf8"), "draft": True, "prerelease": False,
+        "name": f"Better Dofus {package['version']} — Dofus {package['clientVersion']}",
+        "body": args.notes.read_text(encoding="utf8").rstrip() + "\n\n" + compatibility + "\n", "draft": True, "prerelease": False,
     })
 assets = request("GET", f"/repos/{REPO}/releases/{release['id']}/assets")
 existing = next((item for item in assets if item["name"] == asset.name), None)

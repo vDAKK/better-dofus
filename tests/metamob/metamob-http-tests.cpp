@@ -182,7 +182,7 @@ int main() {
     auto response = Send(Get("/me"));
     Check(response.status == 200 && response.sent && response.json && response.error == 0, "GET answered");
     Check(response.body == R"({"data":{"username":"x"}})", "The whole body is kept");
-    Check(fake::seen.agent.rfind(L"DofusEnhanced/", 0) == 0 && fake::seen.access == WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY, "Session");
+    Check(fake::seen.agent.rfind(L"BetterDofus/", 0) == 0 && fake::seen.access == WINHTTP_ACCESS_TYPE_AUTOMATIC_PROXY, "Session");
     Check(fake::seen.timeouts[0] == 5000 && fake::seen.timeouts[1] == 5000 && fake::seen.timeouts[2] == 10000 && fake::seen.timeouts[3] == 15000,
         "Timeouts 5/5/10/15 s");
     Check(fake::seen.host == L"www.metamob.fr" && fake::seen.port == INTERNET_DEFAULT_HTTPS_PORT, "The www host on 443 (no 308 to follow)");
