@@ -76,6 +76,7 @@ struct Settings {
     bool craftListButton = true;
     bool bossAchievements = true;
     bool combatAchievements = true;
+    bool bossAchievementsShowDone = true;
     // Jauges (1.18.1) : la longueur et la place de chaque jauge à la verticale
     // choisies à la souris, une par bit de fqd+GaugesType (à l'index du bit).
     // length : en pixels de l'interface, 0 pour sa largeur à l'horizontale ;

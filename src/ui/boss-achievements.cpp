@@ -28,12 +28,12 @@ constexpr uint64_t RefreshMs = 2000, FightRetryMs = 1000;
 struct RowView { Ref line, card, name, points, description, icon; int shownIcon = 0; };
 struct State {
     Ref root, window, header, dragger, dependencies, cached, compositor, closeButton;
-    Ref status, todoHead, todoBox, doneHead, doneBox;
+    Ref status, todoHead, todoBox, doneHead, doneBox, showDone;
     std::array<Ref, 4> inputEvents;
     std::vector<Ref> manipulators;
     std::vector<RowView> todo, done;
     uint64_t nextRefresh = 0;
-    bool cleanup = false;
+    bool cleanup = false, doneShown = true;
 } state;
 struct Target { std::string boss; std::vector<int> ids; };
 Target shown; // What the window shows.
@@ -46,10 +46,19 @@ Method categoryOf = nullptr, categoryVisible = nullptr, settingsOf = nullptr, ca
 void* iconTypeField = nullptr;
 std::string doneClass;
 std::set<int> hiddenLogged;
-// The window as opened for a fight: only what is left, and closed with the fight.
-bool fightWindow = false, fightHandled = false;
-Ref fightSeen;
+// The window as opened from a fight: only what is left at first, closed with the fight.
+bool fightWindow = false;
 uint64_t nextFightRead = 0;
+// The icons of the fight's challenge panel (UIChallengeSelectionDisplay).
+constexpr size_t SuccessListOffset = 0x10 + 72 - 16; // Its binding's field, in the object.
+constexpr size_t MaxPanelIcons = 6;
+constexpr int TipTooltipLeft = 3, TipSourceRight = 5, TipLeave = 0;
+struct Panel { Ref display; std::vector<Ref> icons; std::vector<int> enemies; Target target; bool dirty = false; } panel;
+using DisplayFn = void (*)(Obj, Method);
+DisplayFn originalDisplay = nullptr;
+Method updateIcon = nullptr, addManipulator = nullptr, clickableCtor = nullptr, tooltipCtor = nullptr, objectivesRoot = nullptr, objectiveName = nullptr;
+Klass iconClass = nullptr, clickableClass = nullptr, tooltipClass = nullptr;
+std::set<int> objectivesLogged;
 // fcv's handler of a finished achievement always adds it to the account's set, and to
 // the character's set only when it was achieved by the character in play.
 Klass serviceClass = nullptr;
@@ -337,20 +346,33 @@ void Fill(std::vector<RowView>& rows, Obj box, const std::vector<Item>& items, b
 void Refresh() {
     const auto finished = ReadFinished();
     auto sorted = Sort(ReadItems(shown.ids, finished));
-    if (fightWindow) sorted.done.clear();
+    const auto doneCount = sorted.done.size();
+    if (!state.doneShown) sorted.done.clear();
     Text(state.window.get(), "Succès : " + shown.boss, "set_headerTitle");
     Text(state.todoHead.get(), "À faire (" + std::to_string(sorted.todo.size()) + ")");
-    Text(state.doneHead.get(), "Déjà faits (" + std::to_string(sorted.done.size()) + ")");
+    Text(state.doneHead.get(), "Déjà faits (" + std::to_string(doneCount) + ")");
+    Text(state.showDone.get(), "Afficher ceux déjà faits (" + std::to_string(doneCount) + ")", "set_rightText");
     Show(state.todoHead.get(), !sorted.todo.empty());
     Show(state.doneHead.get(), !sorted.done.empty());
     Fill(state.todo, state.todoBox.get(), sorted.todo, false);
     Fill(state.done, state.doneBox.get(), sorted.done, true);
     Show(state.status.get(), !finished.known);
 }
+// The checkbox says what the player chose last, but opened from a fight, only what is left.
+void SyncShowDone() {
+    bool value = state.doneShown = !fightWindow && module->settings.bossAchievementsShowDone;
+    api.Call(state.showDone.get(), "set_value", {&value});
+}
 bool Action(Obj owner) {
-    if (!owner || owner != state.closeButton.get()) return false;
-    wanted = false;
-    return true;
+    if (!owner) return false;
+    if (owner == state.closeButton.get() && state.window.get()) { wanted = false; return true; }
+    for (const auto& icon : panel.icons) {
+        if (icon.get() != owner) continue;
+        shown = panel.target;
+        wanted = true; newTarget = true; fightWindow = true;
+        return true;
+    }
+    return false;
 }
 Obj Root() {
     Ref hud(soul::GetUiRoot()); if (!hud.get()) return nullptr;
@@ -412,6 +434,9 @@ void Create(Obj root) {
     Ref content(toolsUi::ScrollBody(state.window.get(), root, true));
     Set<float>(content.get(), "flexGrow", 1.f);
     for (const auto* side : {"paddingLeft", "paddingRight", "paddingTop", "paddingBottom"}) Pixels(content.get(), side, 10);
+    state.showDone.reset(api.New(api.Class("Core.dll", "Core.UILogic.Components.Figma", "CheckboxCustom")));
+    Pixels(state.showDone.get(), "marginBottom", 8);
+    Add(content.get(), state.showDone.get());
     state.status.reset(Label(content.get(), "Le jeu n’a pas encore donné les succès terminés : ouvre une fois la fenêtre des succès.", nativeStyle::Secondary));
     Pixels(state.status.get(), "marginBottom", 8);
     state.todoHead.reset(Label(content.get(), "", nativeStyle::Heading));
@@ -420,35 +445,107 @@ void Create(Obj root) {
     state.doneHead.reset(Label(content.get(), "", nativeStyle::Heading));
     Pixels(state.doneHead.get(), "marginTop", 4); Pixels(state.doneHead.get(), "marginBottom", 6);
     state.doneBox.reset(Element(content.get()));
+    SyncShowDone();
     Refresh();
     Add(root, state.window.get());
     Log("BOSS_ACHIEVEMENTS_OPEN items=" + std::to_string(shown.ids.size()));
 }
-// Once per fight: when its monsters have achievements left, the window shows them.
+// The names of an achievement's objectives. Logged once each: what they say decides how
+// a missing monster can be told, which the game's data does not state.
+std::vector<std::string> Objectives(int id) {
+    std::vector<std::string> names;
+    const bool logged = !objectivesLogged.insert(id).second;
+    try {
+        Ref root(api.Invoke(achievementsRoot, nullptr));
+        int64_t key = id;
+        Ref data(root.get() ? api.Invoke(achievementById, root.get(), {&key}) : nullptr);
+        Ref objectives(api.Invoke(objectivesRoot, nullptr));
+        if (!data.get() || !objectives.get()) return names;
+        Ref list(api.Field(data.get(), "objectiveIds"));
+        for (const int objectiveId : Numbers(list.get())) {
+            int64_t objectiveKey = objectiveId;
+            Ref objective(api.Call(objectives.get(), "GetObjectById", {&objectiveKey}));
+            if (!objective.get()) continue;
+            Ref name(api.Invoke(objectiveName, objective.get())), criterion(api.Field(objective.get(), "criterion"));
+            const auto text = name.get() ? Plain(api.String(name.get())) : "";
+            if (!text.empty() && names.size() < 12) names.push_back(text);
+            if (!logged) Log("BOSS_ACHIEVEMENTS_OBJECTIVE achievement=" + std::to_string(id) + " id=" + std::to_string(objectiveId) + " name=" + text + " criterion=" + (criterion.get() ? api.String(criterion.get()) : ""));
+        }
+    } catch (const std::exception& error) {
+        if (!logged) Log(std::string("BOSS_ACHIEVEMENTS_OBJECTIVE_ERROR ") + error.what());
+    }
+    return names;
+}
+void ClearPanelIcons() {
+    for (const auto& icon : panel.icons) {
+        try { if (icon.get()) api.Call(icon.get(), "RemoveFromHierarchy"); }
+        catch (const std::exception& error) { Log(std::string("BOSS_ACHIEVEMENTS_PANEL_ERROR ") + error.what()); }
+    }
+    panel.icons.clear();
+}
+void AddPanelIcon(Obj list, const Item& item) {
+    Ref icon(api.New(iconClass));
+    if (iconTypeField && item.icon > 0) {
+        Ref address(resourceMap::IconAddress(iconTypeField, item.icon));
+        api.Invoke(updateIcon, icon.get(), {api.object_unbox(address.get())});
+    }
+    Ref service(module->FindService("fou"));
+    if (service.get()) {
+        Ref tip(api.string_new(Tip(item, Objectives(item.id)).c_str()));
+        Ref manipulator(api.object_new(tooltipClass));
+        int origin = TipTooltipLeft, source = TipSourceRight, behavior = TipLeave;
+        bool front = false;
+        api.Invoke(tooltipCtor, manipulator.get(), {service.get(), tip.get(), &origin, &source, &behavior, &front});
+        api.Invoke(addManipulator, nullptr, {icon.get(), manipulator.get()});
+    }
+    if (!api.Call(icon.get(), "get_clickable")) {
+        Ref clickable(api.object_new(clickableClass));
+        Obj none = nullptr;
+        api.Invoke(clickableCtor, clickable.get(), {none});
+        api.Invoke(addManipulator, nullptr, {icon.get(), clickable.get()});
+    }
+    api.Call(list, "Add", {icon.get()});
+    panel.icons.emplace_back(icon.get());
+}
+void DisplayHook(Obj self, Method method) {
+    originalDisplay(self, method);
+    try { panel.display.reset(self); panel.dirty = true; } catch (...) {}
+}
+// The panel's list of achievements, for what the enemies still have to give. The game
+// empties it whenever it redraws the panel: the next look draws them again.
 void WatchFight() {
     if (!module->InCombat()) {
+        ClearPanelIcons();
         if (fightWindow && wanted) wanted = false;
-        fightWindow = false; fightHandled = false; fightSeen.reset();
+        fightWindow = false; panel.display.reset(); panel.enemies.clear(); panel.dirty = false;
         return;
     }
-    if (!module->settings.combatAchievements) return;
+    if (!module->settings.combatAchievements) { ClearPanelIcons(); panel.enemies.clear(); return; }
     const auto now = GetTickCount64();
-    if (now < nextFightRead) return;
+    if (now < nextFightRead || !panel.display.get()) return;
     nextFightRead = now + FightRetryMs;
     const auto enemies = soul::ReadEnemyMonsters(module->fight.get());
-    if (!enemies.context) return;
-    if (fightSeen.get() != enemies.context) { fightSeen.reset(enemies.context); fightHandled = false; }
-    if (fightHandled || enemies.ids.empty()) return;
-    fightHandled = true;
+    if (enemies.ids.empty() || (!panel.dirty && enemies.ids == panel.enemies)) return;
+    Ref list(*reinterpret_cast<Obj*>(reinterpret_cast<char*>(panel.display.get()) + SuccessListOffset));
+    if (!list.get() || !api.Call(list.get(), "get_panel") || api.String(api.Call(list.get(), "get_name")) != "success_list") return;
+    const auto finished = ReadFinished();
+    if (!finished.known) return; // Tried again at the next look.
+    panel.dirty = false; panel.enemies = enemies.ids;
+    ClearPanelIcons();
     auto target = FromMonsters(enemies.ids);
     if (!target) return;
-    const auto finished = ReadFinished();
-    if (!finished.known) return;
     const auto sorted = Sort(ReadItems(target->ids, finished));
-    if (sorted.todo.empty()) return;
-    shown = std::move(*target);
-    wanted = true; newTarget = true; fightWindow = true;
-    Log("BOSS_ACHIEVEMENTS_FIGHT todo=" + std::to_string(sorted.todo.size()));
+    // What the panel shows already, from the fight's challenges.
+    Ref native(api.Field(panel.display.get(), "m_successList"));
+    for (const auto& item : sorted.todo) {
+        if (panel.icons.size() >= MaxPanelIcons) break;
+        int id = item.id;
+        if (native.get() && api.Value<bool>(api.Call(native.get(), "ContainsKey", {&id}))) continue;
+        AddPanelIcon(list.get(), item);
+    }
+    panel.target = std::move(*target);
+    if (!panel.icons.empty()) Show(list.get(), true);
+    Log("BOSS_ACHIEVEMENTS_PANEL icons=" + std::to_string(panel.icons.size()) + " todo=" + std::to_string(sorted.todo.size()));
 }
 }
 
@@ -472,6 +569,27 @@ void InstallBossAchievements() {
         resourceMap::InstallIcons();
         iconTypeField = api.class_get_field_from_name(api.Class("Core.dll", "", "rz"), "deuy");
         if (!iconTypeField || api.field_get_offset(iconTypeField) != 800) throw std::runtime_error("Achievement icon catalog layout");
+        const auto display = api.Class("Core.dll", "Core.UILogic.Fight", "UIChallengeSelectionDisplay");
+        Field(display, "m_successList", 312);
+        Field(api.Class("Core.dll", "Core.UILogic.Bindings", "ChallengeSelectionDisplayBinding"), "_success_list", 72);
+        iconClass = api.Class("Core.dll", "Core.UILogic.Components.Figma", "ChallengeIcon");
+        api.FindVerified(iconClass, ".ctor", 0, 0x16FCD40);
+        api.FindVerified(iconClass, "get_clickable", 0, 0x158B930);
+        updateIcon = api.FindVerified(iconClass, "UpdateChallengeIcon", 1, 0x16FC960);
+        addManipulator = api.FindVerified(api.Class(Ui, UiSpace, "VisualElementExtensions"), "AddManipulator", 2, 0x563A930);
+        clickableClass = api.Class("Core.dll", "Core.UILogic.Components.Figma", "ExtendedClickable");
+        clickableCtor = api.FindVerified(clickableClass, ".ctor", 1, 0x1725300);
+        tooltipClass = api.Class("Core.dll", "Core.UILogic.Components.Tooltips", "TooltipManipulator");
+        tooltipCtor = api.FindVerified(tooltipClass, ".ctor", 6, 0x15D9580);
+        Field(achievement, "objectiveIds", 56);
+        objectivesRoot = api.FindVerified(data, "get_achievementObjectivesDataRoot", 0, 0x7B1130);
+        const auto objective = api.Class(DataImage, QuestSpace, "AchievementObjectiveData");
+        Field(objective, "criterion", 32);
+        objectiveName = api.FindVerified(objective, "get_name", 0, 0x7AEB40);
+        const auto checkbox = api.Class("Core.dll", "Core.UILogic.Components.Figma", "CheckboxCustom");
+        api.FindVerified(checkbox, ".ctor", 0, 0x16FE760); api.FindVerified(checkbox, "get_value", 0, 0x16FEAE0);
+        api.FindVerified(checkbox, "set_value", 1, 0x16FF100); api.FindVerified(checkbox, "set_rightText", 1, 0x16FF020);
+        AddHook(api.FindVerified(display, "DisplayChallenges", 0, 0x2CA08D0), 0x2CA08D0, reinterpret_cast<void*>(&DisplayHook), reinterpret_cast<void**>(&originalDisplay));
         // The card's class of a finished achievement (AchievementItem.Init). Without it,
         // the section's title still says so.
         try {
@@ -507,6 +625,7 @@ void InstallBossAchievements() {
 
 void RestoreBossAchievements() {
     wanted = false; newTarget = false; row.armed = false; fightWindow = false;
+    if (!Session()) ClearPanelIcons();
     if (!state.window.get()) { state = State{}; return; }
     state.cleanup = true;
     try {
@@ -563,6 +682,18 @@ void TickBossAchievements() {
     }
     try {
         const auto now = GetTickCount64();
+        if (newTarget) { SyncShowDone(); state.nextRefresh = 0; }
+        const bool chosen = api.Value<bool>(api.Call(state.showDone.get(), "get_value"));
+        if (chosen != state.doneShown) {
+            state.doneShown = chosen; state.nextRefresh = 0;
+            if (!fightWindow && module->settings.bossAchievementsShowDone != chosen) {
+                Settings next = module->settings;
+                next.bossAchievementsShowDone = chosen;
+                const bool withMetamobSync = module->KeepSharedMetamobSync(next);
+                module->settings = next;
+                module->SaveSettings(withMetamobSync);
+            }
+        }
         if (newTarget || now >= state.nextRefresh) {
             newTarget = false; state.nextRefresh = now + RefreshMs;
             Refresh();

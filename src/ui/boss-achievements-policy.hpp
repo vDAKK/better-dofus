@@ -44,6 +44,13 @@ inline std::string Title(const std::vector<std::string>& monsters) {
     if (monsters.size() == 1) return monsters.front();
     return monsters.front() + " et " + std::to_string(monsters.size() - 1) + (monsters.size() == 2 ? " autre" : " autres");
 }
+// What an achievement's icon says when hovered in the fight's panel.
+inline std::string Tip(const Item& item, const std::vector<std::string>& objectives) {
+    std::string tip = item.name + "\nSuccès à faire : " + std::to_string(item.points) + " points";
+    if (!item.description.empty()) tip += "\n" + item.description;
+    for (const auto& objective : objectives) tip += "\n- " + objective;
+    return tip;
+}
 // known: the game has told which achievements are finished.
 inline std::string MenuLabel(const std::string& monster, const Sorted& sorted, bool known) {
     std::string label = "Succès : " + monster;

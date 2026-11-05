@@ -89,8 +89,8 @@ constexpr CheckRow ExtraRows[] = {
     {"Liste de crafts : bouton dans la barre du haut", "Ajoute à la barre du haut le bouton de la liste de crafts, et à la fiche de recette son bouton Ajouter à la liste. La liste additionne les ressources de tes crafts, retire ce que tu as déjà et suit ce que tu fabriques ; à l’hôtel de vente, un clic sur une ressource l’y affiche."},
     // 2.6.0: boss-achievements.cpp.
     {"Succès au clic droit sur un monstre", "Le clic droit sur un groupe dont les monstres ont des succès les propose dans une petite fenêtre, avec ceux du donjon pour un boss : ceux à faire, avec leur description, et ceux que ce personnage a déjà faits."},
-    // 2.8.0: the same window in fights.
-    {"Succès à faire au début d’un combat", "Au début d’un combat, ouvre la fenêtre des succès des monstres adverses s’il en reste à faire pour ce personnage. Elle se ferme avec le combat."}};
+    // 2.8.0, in the fight's panel since 2.9.0.
+    {"Succès dans le panneau de combat", "En combat, ajoute au panneau des challenges une icône pour chaque succès des monstres adverses qu’il reste à faire à ce personnage. Le survol le détaille, le clic ouvre la fenêtre des succès."}};
 // « Dimension avec les coordonnées » on the big map, the mini-map and in the
 // chat: the same three choices, each id the saved mode (Settings'
 // coordsWorld*Mode), « Oui, sauf dans le Monde des Douze » by default.
