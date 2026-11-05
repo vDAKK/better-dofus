@@ -282,6 +282,22 @@ Obj Named(Obj parent, const char* name, int depth = 0) {
     }
     return nullptr;
 }
+// The card is laid out for the game's wide window: everything around a text may shrink
+// here, and the text wraps instead of being cut by the card's edge.
+void FitToWidth(Obj label, Obj stop) {
+    int percent = 1; float full = 100;
+    Ref length(api.New(api.Class(Ui, UiSpace, "Length"), {&full, &percent}));
+    Ref box(Style(label, "maxWidth")); api.Call(box.get(), "set_value", {api.object_unbox(length.get())}); WriteStyle(label, "maxWidth", box.get());
+    Set<int>(label, "whiteSpace", 0);
+    bool multiline = false;
+    api.Call(label, "set_isSingleLine", {&multiline});
+    Ref current(label);
+    for (int depth = 0; depth < 12 && current.get() && current.get() != stop; ++depth) {
+        Pixels(current.get(), "minWidth", 0);
+        Set<float>(current.get(), "flexShrink", 1.f);
+        current.reset(api.Call(current.get(), "get_parent"));
+    }
+}
 // The game's own card of its achievements window; plain labels if it cannot be had.
 bool NativeCard(RowView& view) {
     try {
@@ -294,7 +310,11 @@ bool NativeCard(RowView& view) {
         view.points.reset(Named(view.line.get(), "lbl_pointsAchievement"));
         view.description.reset(Named(view.line.get(), "lbl_description"));
         view.icon.reset(Named(view.line.get(), "tx_iconAchievement"));
-        if (view.card.get() && view.name.get() && view.points.get() && view.description.get()) return true;
+        if (view.card.get() && view.name.get() && view.points.get() && view.description.get()) {
+            FitToWidth(view.description.get(), view.line.get());
+            FitToWidth(view.name.get(), view.line.get());
+            return true;
+        }
         Log("BOSS_ACHIEVEMENTS_CARD_ERROR template");
     } catch (const std::exception& error) { Log(std::string("BOSS_ACHIEVEMENTS_CARD_ERROR ") + error.what()); }
     return false;
@@ -418,7 +438,7 @@ void Create(Obj root) {
         api.Call(state.window.get(), setter, {&yes});
     api.Call(state.window.get(), "set_hasBackground", {&yes});
     Set<int>(state.window.get(), "position", 1); Set<float>(state.window.get(), "flexGrow", 0.f);
-    Pixels(state.window.get(), "width", 400); Pixels(state.window.get(), "height", 420);
+    Pixels(state.window.get(), "width", 460); Pixels(state.window.get(), "height", 420);
     Pixels(state.window.get(), "minWidth", 280); Pixels(state.window.get(), "minHeight", 180);
     Pixels(state.window.get(), "left", 200); Pixels(state.window.get(), "top", 140);
     state.header.reset(api.Call(state.window.get(), "get_headerWidget"));
