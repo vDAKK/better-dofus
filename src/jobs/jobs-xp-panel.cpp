@@ -5,7 +5,7 @@
 #include "core/module.hpp"
 #include "souls/soul-panel.hpp"
 #include "ui/native-click.hpp"
-#include "ui/native-text.hpp"
+#include "ui/native-style.hpp"
 #include <array>
 #include <algorithm>
 #include <thread>
@@ -37,7 +37,6 @@ struct State {
     std::array<Ref,jobsxp::PageSize> rows,recipeLines;
     std::array<ItemView,jobsxp::PageSize> recipeItems;
     std::vector<ItemView> ingredients;
-    std::vector<Ref> texts;
     jobsxp::Page page;
     jobsxp::Query query;
     std::shared_ptr<Request> request;
@@ -83,17 +82,12 @@ void Text(Obj element,const std::string& text,const char* setter="set_text") {
 }
 void Add(Obj parent,Obj child) {api.Call(parent,"Add",{child});}
 void Enabled(Obj element,bool value){api.Call(element,"SetEnabled",{&value});}
-// The game's own label: its font and the colors of the chosen theme. Secondary text
-// only fades, so that it follows the theme too.
+// The game's label and text styles, which follow the chosen theme.
 Obj Label(Obj parent,const std::string& text,bool secondary=false) {
-    Ref label(api.New(api.Class("Core.dll","Core.UILogic.Components","DofusLabel")));
-    bool multiline=false;api.Call(label.get(),"set_isSingleLine",{&multiline});
+    Ref label(nativeStyle::NewLabel());
     Enum(label.get(),"whiteSpace",0);Pixels(label.get(),"marginBottom",secondary?0.f:4.f);
-    if(secondary)Float(label.get(),"opacity",.7f);
-    Text(label.get(),text);Add(parent,label.get());
-    // Its color comes when the tab is shown: a hidden model has no resolved style yet.
-    if(state.active)nativeText::Follow(label.get(),state.epic.get());else state.texts.emplace_back(label.get());
-    return label.get();
+    if(secondary)nativeStyle::Secondary(label.get());else nativeStyle::Body(label.get());
+    Text(label.get(),text);Add(parent,label.get());return label.get();
 }
 Obj Row(Obj parent) {
     Ref row(api.New(api.Class(Ui,UiSpace,"VisualElement")));Enum(row.get(),"flexDirection",2);
@@ -290,7 +284,6 @@ void Enter() {
     // SetValueWithoutNotify(false) alone refuses to clear its final selected item.
     api.Call(state.tabGroup.get(),"ForceAllSelectionsOff");TabValue(state.tab.get(),true);
     Enum(state.pane.get(),"display",0);
-    for(const auto& text:state.texts)nativeText::Follow(text.get(),state.epic.get());
     UpdateCharacter();Render();state.nextPoll=GetTickCount64()+500;
 }
 bool Parameters(int& target,int& coefficient,bool& epic) {
@@ -405,13 +398,14 @@ void Create(Obj owner) {
     Ref body(api.Call(state.pane.get(),"get_contentContainer"));
     for(const char* property:{"paddingLeft","paddingRight","paddingTop","paddingBottom"})Pixels(body.get(),property,8);
     Ref goal(Section(body.get(),"Objectif"));
-    state.epic.reset(api.New(api.Class("Core.dll",Figma,"CheckboxCustom"))); // The labels' model.
     state.title.reset(Label(goal.get(),"Métier"));
+    nativeStyle::Strong(state.title.get());
     Ref controls(Row(goal.get()));
     Ref targetName(Label(controls.get(),"Niveau visé"));Pixels(targetName.get(),"marginRight",8);Pixels(targetName.get(),"marginBottom",0);
     state.target.reset(Input(controls.get(),"200","Le niveau à atteindre, de 1 à 200.",3));
     Ref bonusName(Label(controls.get(),"Bonus d'XP (%)"));Pixels(bonusName.get(),"marginRight",8);Pixels(bonusName.get(),"marginBottom",0);
     state.coefficient.reset(Input(controls.get(),"100","100 % sans bonus. Compte ici les bonus d'XP de fabrication, comme celui de l'Almanax.",3));
+    state.epic.reset(api.New(api.Class("Core.dll",Figma,"CheckboxCustom")));
     Text(state.epic.get(),"Serveur Épique","set_rightText");Add(goal.get(),state.epic.get());
     Ref list(Section(body.get(),"Recettes"));
     for(size_t i=0;i<state.rows.size();++i){

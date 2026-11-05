@@ -10,6 +10,7 @@
 #include <cstring>
 #include <iostream>
 #include <map>
+#include <set>
 #include <memory>
 #include <unordered_map>
 #include <vector>
@@ -22,6 +23,7 @@ using namespace managed;
 struct Class { std::string name; };
 struct MethodInfo { Class* type; std::string name; int count; };
 struct Object {
+    std::set<std::string> classes;
     Class* type = nullptr;
     std::map<std::string, Obj> fields;
     std::map<std::string, float> dimensions;
@@ -281,6 +283,8 @@ Obj Invoke(Method method,Obj self,std::initializer_list<void*> arguments) {
     if(obj.type->name=="StyleLength"&&m.name=="get_value") {
         auto length=Make("Length");std::memcpy(Get(length).value.data(),obj.value.data(),8);return length;
     }
+    if(m.name=="AddToClassList"){obj.classes.insert(Get(args[0]).text);return nullptr;}
+    if(m.name=="EnableInClassList"){if(*static_cast<bool*>(args[1]))obj.classes.insert(Get(args[0]).text);else obj.classes.erase(Get(args[0]).text);return nullptr;}
     if(m.name=="set_isSingleLine"||m.name=="set_isMultiline"||m.name=="set_enableRichText") {obj.enums[m.name]=*static_cast<bool*>(args[0]);return nullptr;}
     if(m.name=="get_text") return String(obj.text);
     if(m.name=="set_tooltip"||m.name=="set_placeholderText") {obj.fields[m.name]=args[0];return nullptr;}
@@ -352,7 +356,7 @@ Obj Api::New(Klass klass,std::initializer_list<void*> arguments) const {
     if(name=="Length") { Check(args.size()==2,"Length argc");auto box=Make(name);std::memcpy(Get(box).value.data(),args[0],4);std::memcpy(Get(box).value.data()+4,args[1],4);return box; }
     if(name=="Color") { Check(args.size()==4,"Color argc");auto box=Make(name);for(size_t i=0;i<4;++i)std::memcpy(Get(box).value.data()+i*4,args[i],4);return box; }
     if(name=="ScrollView") {auto scroll=Element(name),content=Element("ScrollContent");Add(scroll,content);Get(scroll).fields["content"]=content;return scroll;}
-    if(name=="Label"||name=="ListElementBasic"||name=="VisualElement"||name=="TextInput"||name=="DofusTab"||name=="Divider"||name=="DofusButtonCustom") {Check(args.empty(),"Native element ctor argc");auto obj=name=="DofusButtonCustom"?NativeButton():Element(name);if(name=="ListElementBasic"){latestAction=obj;auto label=Element("DofusLabel");Get(obj).fields["m_textLabel"]=label;Add(obj,label);}return obj;}
+    if(name=="Label"||name=="DofusLabel"||name=="ListElementBasic"||name=="VisualElement"||name=="TextInput"||name=="DofusTab"||name=="Divider"||name=="DofusButtonCustom") {Check(args.empty(),"Native element ctor argc");auto obj=name=="DofusButtonCustom"?NativeButton():Element(name);if(name=="ListElementBasic"){latestAction=obj;auto label=Element("DofusLabel");Get(obj).fields["m_textLabel"]=label;Add(obj,label);}return obj;}
     if(name=="SectionHeader") {Check(args.size()==5&&*static_cast<bool*>(args[0])&&*static_cast<bool*>(args[1])&&!*static_cast<bool*>(args[2])&&*static_cast<bool*>(args[3])&&!*static_cast<bool*>(args[4]),"Native section header ctor ABI");auto section=Element(name);auto content=Element("SectionContent");Add(section,content);Get(section).fields["content"]=content;return section;}
     if(name=="Dropdown") {Check(args.empty(),"Native dropdown ctor argc");auto dropdown=Element(name);auto list=Element("DropdownList");Add(dropdown,list);Get(dropdown).fields["list"]=list;return dropdown;}
     if(name=="DofusContextualMenuManipulator") {

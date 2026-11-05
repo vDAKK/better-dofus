@@ -255,6 +255,7 @@ Obj Invoke(Method method, Obj self, std::initializer_list<void*> arguments) {
     if (m.name == "set_name") { obj.name = Str(args[0]); return nullptr; }
     if (m.name == "set_text" || m.name == "set_title") { obj.text = Str(args[0]); ++obj.enums["texts"]; return nullptr; }
     if (m.name == "set_tooltip") { obj.tooltip = Str(args[0]); ++obj.enums["tooltips"]; return nullptr; }
+    if (m.name == "set_isSingleLine" || m.name == "AddToClassList") return nullptr;
     if (m.name == "set_enableRichText") { obj.enums[m.name] = *static_cast<bool*>(args[0]) ? 1 : 0; return nullptr; }
     if (m.name == "get_enabledInHierarchy") return Box(Enabled(self));
     if (m.name == "set_size" || m.name == "set_fontCase" || m.name == "set_mainStyle" || m.name == "set_icon" || m.name == "set_status" ||
@@ -296,7 +297,7 @@ const std::map<uintptr_t, Contract> Contracts = {
     {0x55A5C20, {"VisualElement", "BringToFront", 0}}, {0x55BC4C0, {"VisualElement", "get_parent", 0}}, {0x55BC4B0, {"VisualElement", "get_panel", 0}},
     {0x55BC7E0, {"VisualElement", "get_style", 0}}, {0x55BC620, {"VisualElement", "get_resolvedStyle", 0}}, {0x55BE9B0, {"VisualElement", "set_name", 1}},
     {0x55BEDF0, {"VisualElement", "set_tooltip", 1}}, {0x55BB230, {"VisualElement", "get_enabledInHierarchy", 0}},
-    {0x56EEAA0, {"Label", ".ctor", 0}}, {0x5610AC0, {"TextElement", "set_text", 1}}, {0x5610520, {"TextElement", "set_enableRichText", 1}},
+    {0x158D3E0, {"DofusLabel", ".ctor", 0}}, {0x158DA50, {"DofusLabel", "set_isSingleLine", 1}}, {0x55A4B60, {"VisualElement", "AddToClassList", 1}}, {0x5610AC0, {"TextElement", "set_text", 1}}, {0x5610520, {"TextElement", "set_enableRichText", 1}},
     {0x559F7A0, {"ResolvedStyleAccess", "get_width", 0}}, {0x2097300, {"InputCustomEvent", "UnSubscribe", 1}},
     {0x55965B0, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_display", 0}}, {0x5598B30, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_display", 1}},
     {0x5596700, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_flexDirection", 0}}, {0x5598DC0, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_flexDirection", 1}},
@@ -402,7 +403,7 @@ Obj Api::New(Klass klass, std::initializer_list<void*> arguments) const {
         Get(window).fields["m_elementDraggers"] = draggers; Get(window).fields["m_resizerList"] = resizers;
         return window;
     }
-    Check(args.empty() && (name == "VisualElement" || name == "Label" || name == "DofusTab" || name == "Divider" || name == "DofusButtonCustom"),
+    Check(args.empty() && (name == "VisualElement" || name == "DofusLabel" || name == "DofusTab" || name == "Divider" || name == "DofusButtonCustom"),
         "Only the game's components: " + name);
     return name == "DofusButtonCustom" ? NativeButton() : Element(name);
 }

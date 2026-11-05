@@ -144,7 +144,7 @@ int main(){
         Check(Count(window,"DofusButtonCustom")==39&&Count(window,"SectionHeader")==1&&Count(window,"Divider")==1&&Count(window,"ListElementBasic")==9,"Native buttons (thirty of them the map pin, send, prepare, copy and travel buttons of the six lines), one titled section (the entries list has no header), the tab divider only, six list rows and three world items");
         Check(!FindText(window,"Fermer")&&FindText(window,"Nouvelle entrée")&&FindText(window,"Ma position")&&!FindText(window,"Actualiser")&&!FindType(window,"Divider","Utiliser"),"No custom close row, no Actualiser button, no Utiliser separator; native action buttons");
         Check(Get(FindText(window,"Enregistrer")).enums["set_mainStyle"]==0&&Get(FindText(window,"Supprimer")).enums["set_status"]==1&&Get(FindText(window,"Enregistrer")).enums["set_icon"]==148,"Primary save, negative delete, floppy icon");
-        Check(!FindText(window,"Mes entrées")&&FindText(window,"Détail")&&Notice(window)==FindText(window,EmptyFull)&&Shown(Notice(window))&&Get(Notice(window)).type->name=="Label",
+        Check(!FindText(window,"Mes entrées")&&FindText(window,"Détail")&&Notice(window)==FindText(window,EmptyFull)&&Shown(Notice(window))&&Get(Notice(window)).type->name=="DofusLabel",
             "No entries header, the detail section title; the empty tab says so inside its list, under the new-entry button");
         Check(NoCounter(window)&&NoHint(window)&&StatusText(window).empty()&&!Shown(Footer(window))&&!Shown(Paging(window)),
             "No entry counter, no hint, an empty status line taking no room and no paging row for a single page");

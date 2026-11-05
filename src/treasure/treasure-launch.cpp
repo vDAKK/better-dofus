@@ -1,4 +1,5 @@
 #include "treasure/treasure-launch.hpp"
+#include "ui/native-style.hpp"
 #include "treasure/treasure-data.hpp"
 #include "treasure/treasure-hunt.hpp"
 #include "notebook/notebook-native.hpp"
@@ -79,16 +80,13 @@ void Text(Obj element, const std::string& text, const char* setter = "set_text")
 }
 void Enabled(Obj element, bool enabled) { api.Call(element,"SetEnabled",{&enabled}); }
 void Add(Obj parent, Obj child) { api.Call(parent,"Add",{child}); }
-void Color(Obj element,const char* property,float r,float g,float b) {
-    float a=1;Ref color(api.New(api.Class("UnityEngine.CoreModule.dll","UnityEngine","Color"),{&r,&g,&b,&a}));
-    Ref box(Style(element,property));api.Call(box.get(),"set_value",{api.object_unbox(color.get())});WriteStyle(element,property,box.get());
-}
+// The game's label and text styles, which follow the chosen theme.
 Obj Label(Obj parent, const std::string& text, bool muted=false) {
-    Ref label(api.New(api.Class(Ui,UiSpace,"Label")));
+    Ref label(nativeStyle::NewLabel());
     bool rich=false;api.Call(label.get(),"set_enableRichText",{&rich});
-    Enum(label.get(),"whiteSpace",0); Pixels(label.get(),"fontSize",muted?12.f:13.f); Pixels(label.get(),"marginBottom",muted?0.f:4.f);
+    Enum(label.get(),"whiteSpace",0); Pixels(label.get(),"marginBottom",muted?0.f:4.f);
     for(auto p:{"paddingLeft","paddingRight"})Pixels(label.get(),p,0);
-    if(muted)Color(label.get(),"color",.72f,.72f,.68f); else Color(label.get(),"color",.9f,.9f,.9f);
+    if(muted)nativeStyle::Secondary(label.get());else nativeStyle::Body(label.get());
     Text(label.get(),text); Add(parent,label.get()); return label.get();
 }
 Obj Row(Obj parent) {

@@ -27,6 +27,7 @@ struct Object {
     std::vector<Obj> children;
     std::array<char,16> bytes{};
     std::string text,property;
+    std::set<std::string> classes;
     bool on=false,enabled=true,activeClass=false,allowSwitchOff=false,ownedTile=false;
     Rect layout{0,9,100,43};
     Vector3 translation{};
@@ -224,6 +225,7 @@ Obj Api::Call(Obj self,const char* name,std::initializer_list<void*> arguments)c
     if(method=="set_size"||method=="set_tooltip"||method=="set_maxLength"||method=="set_listElementStyle"||
         method=="set_isSingleLine"||method=="set_enableRichText"||method=="set_mainStyle"||method=="set_icon"||method=="set_title"||method=="set_horizontalScrollerVisibility"||method=="set_verticalScrollerVisibility")return nullptr;
     if(method=="SetEnabled"){o.enabled=*static_cast<bool*>(args[0]);return nullptr;}
+    if(method=="AddToClassList"){o.classes.insert(Get(args[0]).text);return nullptr;}
     if(method=="set_isActivated"){o.activeClass=*static_cast<bool*>(args[0]);return nullptr;}
     if(method=="set_canBeOpened"){o.allowSwitchOff=*static_cast<bool*>(args[0]);return nullptr;}
     if(method=="set_isOpen"){if(o.allowSwitchOff)o.on=*static_cast<bool*>(args[0]);return nullptr;}
@@ -257,7 +259,6 @@ void AddHook(managed::Method,uintptr_t rva,void*,void** original){
     else throw std::runtime_error("Unexpected hook");
 }
 namespace soul {void SetAuxiliaryPanelAction(bool(*fn)(managed::Obj)){fixture::action=fn;}}
-namespace nativeText {int follows=0;managed::Obj model=nullptr;void Follow(managed::Obj,managed::Obj reference){++follows;model=reference;}}
 namespace recipeNative {
 fixture_stock_t fixtureStock;
 int64_t AveragePrice(int item){return item==1?100:0;}
@@ -359,7 +360,7 @@ int main(){
         Check(!Get(recipeTab).on&&!Get(resourceTab).on&&!Get(recipeTab).activeClass&&!Get(resourceTab).activeClass&&Get(state.tab.get()).activeClass,"Only XP is green; native group has no stale selection");
         Check(forcedOff==1&&!Get(tabGroup).allowSwitchOff,"Native force-off restores original required-selection policy");
         Check(state.query.job==28&&state.xp==24500,"Native selected job and total XP");
-        Check(nativeText::follows>0&&nativeText::model==state.epic.get(),"The panel's text takes the color of a native label");
+        Check(Get(state.details.get()).classes.count("textColor_white_white80")&&Get(state.details.get()).classes.count("textShort_mediumRegular"),"The panel's text uses the game's text styles");
         CheckNativeItem(state.recipeItems[0].tile.get(),2800,1);
         Check(action(state.rows[0].get()),"Owned recipe action");
         Check(Get(state.rows[0].get()).activeClass&&!Get(state.rows[1].get()).activeClass,"The chosen recipe uses the row's own activated state");

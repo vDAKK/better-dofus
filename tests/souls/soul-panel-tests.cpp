@@ -106,11 +106,11 @@ void CreationAndClicks() {
     f.panel.Render(f.root,f.view);Check(Get(f.root).children.size()==2,"Render duplicated overlay");
     auto content=Get(f.Window()).fields.at("content");
     Check(Get(content).children.size()==5,"Expected four lines and equip action");
-    auto equipped=Get(Get(content).children[2]).children[1];Check(Get(equipped).dimensions["green"]<0.4f,"Missing stone must be red");
+    auto equipped=Get(Get(content).children[2]).children[1];Check(Get(equipped).classes.count("textColor_qualitative_negative"),"Missing stone takes the game's negative color");
     auto other=Element("ListElementBasic");int before=nativeActions;actionHook(other,nullptr);Check(nativeActions==before+1,"Other native action swallowed");
     actionHook(latestAction,nullptr);actionHook(latestAction,nullptr);Check(equips==1,"Repeated queued click should not equip twice");
     f.view.equippedCorrect=true;f.view.equipEnabled=false;f.panel.Render(f.root,f.view);actionHook(latestAction,nullptr);Check(equips==1,"Disabled equip invoked callback");
-    Check(Get(equipped).dimensions["green"]>0.8f,"Correct equipped stone warning persisted");
+    Check(Get(equipped).classes.count("textColor_qualitative_positive")&&!Get(equipped).classes.count("textColor_qualitative_negative"),"Correct equipped stone warning persisted");
     f.view.equipEnabled=true;f.panel.Render(f.root,f.view);Get(f.root).enums["display"]=1;actionHook(latestAction,nullptr);Check(equips==1,"Hidden ancestor action accepted");
     Get(f.root).enums["display"]=0;Get(f.root).enabled=false;actionHook(latestAction,nullptr);Check(equips==1,"Disabled ancestor action accepted");
     f.panel.Hide();Check(Get(f.root).children==std::vector<Obj>{f.nativeChild},"Hide changed native siblings");
@@ -123,7 +123,7 @@ void EquippedItemRow() {
     Check(itemBound==item&&Get(itemSlot).enums["display"]==0,"Equipped native instance must bind and show icon");
     Check(Get(row).enums["flexDirection"]==2&&Get(label).text=="Pierre moyenne","Item icon/text row layout");
     f.view.equipmentChecked=false;f.panel.Render(f.root,f.view);
-    Check(Get(label).dimensions["red"]==Get(label).dimensions["green"],"Combat must not reuse placement warning color");
+    Check(Get(label).classes.count("textColor_white_white80")&&!Get(label).classes.count("textColor_qualitative_negative"),"Combat must not reuse placement warning color");
     bindSuccess=false;f.view.equippedItem=Make("mc");f.panel.Render(f.root,f.view);
     Check(Get(itemSlot).enums["display"]==1,"Failed binding must hide stale previous icon");
     bindSuccess=true;f.panel.Render(f.root,f.view);Check(itemBound==f.view.equippedItem&&Get(itemSlot).enums["display"]==0,"Binding recovery must show new item");
@@ -180,7 +180,7 @@ void CaptureStatusAndActionVisibility() {
     f.panel.Render(f.root,f.view);
     Check(spellBound==f.view.captureSpell && !spellEnabled && Get(spellSlot).enums["display"]==0,
         "Missing capture must show the learned spell even while casting is disabled");
-    Check(Get(status).dimensions["green"]<0.4f && Get(status).dimensions["red"]>0.9f,"Missing capture must be red");
+    Check(Get(status).classes.count("textColor_qualitative_negative")&&!Get(status).classes.count("textColor_white_white80"),"Missing capture must take the game's negative color");
     Check(Get(latestAction).enums["display"]==1 && !Get(latestAction).enabled,"Active combat must hide and disable equip even with stale enabled view");
     actionHook(latestAction,nullptr); Check(equips==0,"Hidden equipment callback must be suppressed");
     Check(Get(Get(content).children[0]).enums["display"]==1 && Get(Get(content).children[1]).enums["display"]==1 &&
@@ -191,9 +191,9 @@ void CaptureStatusAndActionVisibility() {
     f.view.status="Capture active"; f.view.statusTone=soul::StatusTone::Good; f.view.castEnabled=false;f.panel.Render(f.root,f.view);
     Check(spellBound==f.view.captureSpell && !spellEnabled && Get(spellSlot).enums["display"]==0,
         "Casting the spell changes status/eligibility without removing its icon");
-    Check(Get(status).dimensions["green"]>0.8f && Get(status).dimensions["red"]<0.5f,"Actual active capture must be green");
+    Check(Get(status).classes.count("textColor_qualitative_positive"),"Actual active capture takes the game's positive color");
     f.view.status="Inconnu"; f.view.statusTone=soul::StatusTone::Neutral; f.panel.Render(f.root,f.view);
-    Check(Get(status).dimensions["green"]==Get(status).dimensions["red"],"Unknown must clear red/green indication");
+    Check(!Get(status).classes.count("textColor_qualitative_positive")&&!Get(status).classes.count("textColor_qualitative_negative"),"Unknown must clear red/green indication");
     f.view.showEquipment=true; f.view.stock="En sac : 2"; f.panel.Render(f.root,f.view);
     Check(!spellBound && !spellEnabled && Get(spellSlot).enums["display"]==1,"Placement clears the stale spell binding");
     Check(Get(latestAction).enums["display"]==0 && Get(latestAction).enabled && Get(Get(content).children[1]).enums["display"]==0 &&
@@ -290,8 +290,8 @@ void CompactNativeLockAndCaptureLayout() {
     auto panelContent=Get(f.Window()).fields.at("content");
     for(auto index:{0,1}) {
         const auto& label=Get(Get(panelContent).children[index]);
-        Check(label.dimensions.at("red")>=0.9f&&label.dimensions.at("green")>=0.9f&&label.dimensions.at("fontSize")==14,
-            "Requirement and stock must explicitly use readable light text on the native dark background");
+        Check(label.classes.count("textShort_mediumRegular")&&label.classes.count("textColor_white_white80")&&!label.dimensions.count("fontSize"),
+            "Requirement and stock use the game's text styles, with no size or color of the mod's");
     }
     const auto& name=Get(Get(Get(panelContent).children[2]).children[1]);
     Check(name.dimensions.at("minWidth")==0&&name.dimensions.at("flexGrow")==1&&name.enums.at("whiteSpace")==0,

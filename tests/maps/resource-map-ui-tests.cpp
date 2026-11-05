@@ -209,6 +209,7 @@ Obj Invoke(Method method,Obj self,std::initializer_list<void*> arguments){
     if(m.name=="set_enableRichText"){object.ints["enableRichText"]=*static_cast<bool*>(args[0]);return nullptr;}
     if(m.name=="get_closeButton")return object.fields.at("closeButton");
     if(m.name=="AddToClassList"){object.classes.push_back(Get(args[0]).text);return nullptr;}
+    if(m.name=="EnableInClassList"){auto& c=object.classes;const auto& name=Get(args[0]).text;c.erase(std::remove(c.begin(),c.end(),name),c.end());if(*static_cast<bool*>(args[1]))c.push_back(name);return nullptr;}
     if(m.name=="IndexOf"){
         const auto& c=object.children;const auto it=std::find(c.begin(),c.end(),static_cast<Obj>(args[0]));
         return Box(it==c.end()?-1:static_cast<int>(it-c.begin()));
@@ -387,8 +388,8 @@ void NativeTreeAndDuplicateOpen(){
     Check(Get(f.Master()).text=="Afficher sur la grande carte"&&Get(f.Master()).size==2,"The display checkbox in the footer, large as the game's footer checkboxes");
     Check(Get(categories[0]).text=="Base"&&Get(categories[1]).text=="Bûcheron"&&Get(categories[5]).text=="Pêcheur","Exact job labels");
     for(int i=0;i<6;++i)Check(!Get(categories[i]).open&&Get(categories[i]).enabled,"Native accordion initially collapsed");
-    Check(Get(Get(f.Row("Fer")).fields["m_farRightLabel"]).styles["color"]>.9f,"Levels need explicit readable light color");
-    Check(Get(Get(f.Row("Fer")).fields["m_rightLabel"]).styles["color"]>.9f,"Names need readable light color");
+    {const auto& level=Get(Get(f.Row("Fer")).fields["m_farRightLabel"]).classes;Check(std::find(level.begin(),level.end(),"textColor_highlight_secondary80")!=level.end(),"Levels use the game's highlight text color");}
+    {const auto& name=Get(Get(f.Row("Fer")).fields["m_rightLabel"]).classes;Check(std::find(name.begin(),name.end(),"textColor_white_white80")!=name.end(),"Names use the game's text color");}
     for(int i=0;i<6;++i){
         auto title=Get(categories[i]).fields.at("titleLabel"),row=Get(title).fields.at("parent");
         auto icon=Get(row).children.front();
@@ -671,7 +672,8 @@ void MiniMapSelectionAndLifetime(){
     checkSquares();
     Check(logs.size()==1&&logs.front().find("RESOURCE_MAP_UI_READY")!=std::string::npos,"Optional native labels must not abort mini-map construction");
     NativeToggle(tabs[2],true);checkSquares();resourceMap::TickUi();checkSquares();
-    Check(Get(tabs[2]).styles["backgroundColor"]>Get(tabs[0]).styles["backgroundColor"],"Open profession bubble is highlighted");
+    {const auto has=[](Obj tab,const char* name){const auto& c=Get(tab).classes;return std::find(c.begin(),c.end(),name)!=c.end();};
+     Check(has(tabs[2],"backgroundColor_highlight_secondary35")&&!has(tabs[2],"backgroundColor_black_black25")&&has(tabs[0],"backgroundColor_black_black25")&&!has(tabs[0],"backgroundColor_highlight_secondary35"),"Open profession bubble takes the game's highlight");}
     Check(changes==0&&Get(scroll).styles["display"]==0,"Opening Mineur only opens the list without altering preferences");
     Check(Get(FindUnder(drawer,"SectionHeader","Mineur")).styles["display"]==0&&Get(FindUnder(drawer,"SectionHeader","Paysan")).styles["display"]!=0,"Only selected profession resources appear");
     NativeToggle(tabs[4],true);resourceMap::TickUi();

@@ -1,4 +1,5 @@
 #include "stats/stats-window.hpp"
+#include "ui/native-style.hpp"
 #include "stats/stats-format.hpp"
 #include "stats/stats.hpp"
 #include "ui/native-click.hpp"
@@ -125,11 +126,6 @@ void Pixels(Obj element, const char* property, float value) {
     Ref length(api.New(api.Class(Ui, UiSpace, "Length"), {&value, &unit}));
     Ref box(Style(element, property)); api.Call(box.get(), "set_value", {api.object_unbox(length.get())}); WriteStyle(element, property, box.get());
 }
-void Color(Obj element, float r, float g, float b) {
-    float a = 1;
-    Ref color(api.New(api.Class("UnityEngine.CoreModule.dll", "UnityEngine", "Color"), {&r, &g, &b, &a}));
-    Ref box(Style(element, "color")); api.Call(box.get(), "set_value", {api.object_unbox(color.get())}); WriteStyle(element, "color", box.get());
-}
 void Text(Obj element, const std::string& text, const char* setter = "set_text") {
     Ref value(api.string_new(text.c_str())); api.Call(element, setter, {value.get()});
 }
@@ -146,14 +142,14 @@ Obj Box(Obj parent) {
     Enum(box.get(), "flexDirection", RowDirection); Enum(box.get(), "alignItems", AlignCenter);
     Add(parent, box.get()); return box.get();
 }
-// A text in the notebook's colours: light for a value or a sentence, grey for
-// a figure's label; never rich text (a character's name shows as it is).
+// The game's label: main text for a value or a sentence, secondary for a figure's
+// label; never rich text (a character's name shows as it is).
 Obj Label(Obj parent, bool light) {
-    Ref label(api.New(api.Class(Ui, UiSpace, "Label")));
+    Ref label(nativeStyle::NewLabel());
     bool rich = false; api.Call(label.get(), "set_enableRichText", {&rich});
-    Enum(label.get(), "whiteSpace", WrapText); Pixels(label.get(), "fontSize", 13);
+    Enum(label.get(), "whiteSpace", WrapText);
     for (const auto* property : {"paddingLeft", "paddingRight", "paddingTop", "paddingBottom"}) Pixels(label.get(), property, 0);
-    if (light) Color(label.get(), .9f, .9f, .9f); else Color(label.get(), .72f, .72f, .68f);
+    if (light) nativeStyle::Body(label.get()); else nativeStyle::Secondary(label.get());
     Add(parent, label.get()); return label.get();
 }
 // The game's button component, as the notebook's (native hover, pressed and
@@ -451,7 +447,9 @@ void InstallStatsWindow() {
     api.FindVerified(element, "BringToFront", 0, 0x55A5C20); api.FindVerified(element, "get_parent", 0, 0x55BC4C0); api.FindVerified(element, "get_panel", 0, 0x55BC4B0);
     api.FindVerified(element, "get_style", 0, 0x55BC7E0); api.FindVerified(element, "get_resolvedStyle", 0, 0x55BC620);
     api.FindVerified(element, "set_name", 1, 0x55BE9B0); api.FindVerified(element, "set_tooltip", 1, 0x55BEDF0);
-    api.FindVerified(api.Class(Ui, UiSpace, "Label"), ".ctor", 0, 0x56EEAA0);
+    const auto label = api.Class("Core.dll", "Core.UILogic.Components", "DofusLabel");
+    api.FindVerified(label, ".ctor", 0, 0x158D3E0); api.FindVerified(label, "set_isSingleLine", 1, 0x158DA50);
+    api.FindVerified(api.Class(Ui, UiSpace, "VisualElement"), "AddToClassList", 1, 0x55A4B60);
     auto text = api.Class(Ui, UiSpace, "TextElement");
     api.FindVerified(text, "set_text", 1, 0x5610AC0); api.FindVerified(text, "set_enableRichText", 1, 0x5610520);
     api.FindVerified(api.Class(Ui, UiSpace, "ResolvedStyleAccess"), "get_width", 0, 0x559F7A0);

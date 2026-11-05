@@ -182,8 +182,7 @@ Obj Checkbox(const char* text,bool selected){
     int size=2;api.Invoke(checkboxSize,result.get(),{&size});
     Text(result.get(),checkboxText,text);api.Invoke(checkboxSet,result.get(),{&selected});
     // Native UpdateContent omits the label for an empty caption (icon tabs).
-    if(auto label=api.Field(result.get(),"m_rightLabel"))
-        Style(label,"color",Color{.94f,.94f,.90f,1});
+    if(auto label=api.Field(result.get(),"m_rightLabel"))Classes(label,{"textColor_white_white80"});
     return result.get();
 }
 void AddSub(Obj parent,Obj child){api.Invoke(headerAdd,parent,{child});}
@@ -203,9 +202,10 @@ void ShowJob(State& state,int selected){
     for(size_t i=0;i<state.tabs.size();++i){
         bool active=int(i)==selected;
         api.Invoke(checkboxSet,state.tabs[i].get(),{&active});
-        Style(state.tabs[i].get(),"backgroundColor",active?Color{.38f,.32f,.12f,1}:Color{.10f,.12f,.13f,1});
-        for(auto side:{"borderTopColor","borderBottomColor","borderLeftColor","borderRightColor"})
-            Style(state.tabs[i].get(),side,active?Color{1,.82f,.32f,1}:Color{.49f,.51f,.48f,1});
+        Ref activeClass(api.string_new("backgroundColor_highlight_secondary35")),restClass(api.string_new("backgroundColor_black_black25"));
+        bool rest=!active;
+        api.Call(state.tabs[i].get(),"EnableInClassList",{activeClass.get(),&active});
+        api.Call(state.tabs[i].get(),"EnableInClassList",{restClass.get(),&rest});
         Style(state.groups[i].get(),"display",active?0:1);
     }
     Style(state.scroll.get(),"display",selected<0?1:0);
@@ -303,7 +303,7 @@ void Attach(std::unique_ptr<State>& target,Obj owner,const MiniMapSurface* mini=
         Style(next->toolbar.get(),"flexDirection",2);Style(next->toolbar.get(),"flexWrap",1);
         api.Call(next->resources.get(),"Add",{next->toolbar.get()});
         api.Call(next->resources.get(),"Add",{next->scroll.get()});
-        Style(next->scroll.get(),"backgroundColor",Color{.105f,.115f,.12f,1});
+        Classes(next->scroll.get(),{"backgroundColor_background_medium90"});
         Rounded(next->scroll.get(),8);
         next->center.reset(Element());
         Style(next->center.get(),"position",1);
@@ -366,8 +366,7 @@ void Attach(std::unique_ptr<State>& target,Obj owner,const MiniMapSurface* mini=
     bool multiline=false;api.Invoke(labelSingleLine,note.get(),{&multiline});
     Text(note.get(),tooltip,"Source : DofusDB. Quantités recensées par carte, intérieurs inclus. La présence actuelle après récolte n’est pas connue.");
     if(mini){
-        Pixels(note.get(),"fontSize",12.0f);Pixels(note.get(),"marginBottom",6.0f);
-        Style(note.get(),"color",Color{.75f,.79f,.81f,1});
+        Classes(note.get(),{"textShort_smallRegular","textColor_white_white65"});Pixels(note.get(),"marginBottom",6.0f);
     }else{
         // The game's footer text, as the Ocre panel's legend.
         Classes(note.get(),{"textColor_white_white80"});Pixels(note.get(),"marginTop",6.0f);
@@ -411,7 +410,7 @@ void Attach(std::unique_ptr<State>& target,Obj owner,const MiniMapSurface* mini=
             Ref address(ItemIconAddress(resource.iconId));api.Invoke(checkboxIcon,row.checkbox.get(),{api.object_unbox(address.get())});
             const auto level=std::string("Niv. ")+std::to_string(resource.level);
             Text(row.checkbox.get(),checkboxLevel,level.c_str());
-            Style(api.Field(row.checkbox.get(),"m_farRightLabel"),"color",Color{.94f,.82f,.43f,1});
+            Classes(api.Field(row.checkbox.get(),"m_farRightLabel"),{"textColor_highlight_secondary80"});
             Text(row.checkbox.get(),tooltip,(std::string(resource.name)+" · "+level).c_str());
             AddSub(header.get(),row.checkbox.get());next->rows.push_back(std::move(row));hasRows=true;
         }

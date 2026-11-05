@@ -3,7 +3,7 @@
 #include "jobs/recipe-native.hpp"
 #include "core/module.hpp"
 #include "souls/soul-panel.hpp"
-#include "ui/native-text.hpp"
+#include "ui/native-style.hpp"
 #include <algorithm>
 #include <array>
 #include <vector>
@@ -52,12 +52,11 @@ void Pixels(Obj element, const char* property, float value) {
 void Text(Obj element, const std::string& text, const char* setter = "set_text") {
     Ref value(api.string_new(text.c_str())); api.Call(element, setter, {value.get()});
 }
-Obj Label(Obj parent, const std::string& text, Obj model) {
-    Ref label(api.New(api.Class("Core.dll", "Core.UILogic.Components", "DofusLabel")));
-    bool multiline = false; api.Call(label.get(), "set_isSingleLine", {&multiline});
+Obj Label(Obj parent, const std::string& text, void (*style)(Obj) = nativeStyle::Body) {
+    Ref label(nativeStyle::NewLabel());
     Set<int>(label.get(), "whiteSpace", 0);
+    style(label.get());
     Text(label.get(), text); api.Call(parent, "Add", {label.get()});
-    nativeText::Follow(label.get(), model);
     return label.get();
 }
 Obj Element(Obj parent) {
@@ -92,8 +91,8 @@ Obj Row(Obj parent) {
     Set<int>(row.get(), "flexDirection", 2); Set<int>(row.get(), "alignItems", 2);
     return row.get();
 }
-Obj Column(Obj row, const std::string& text, float width, Obj model) {
-    Ref label(Label(row, text, model));
+Obj Column(Obj row, const std::string& text, float width, void (*style)(Obj) = nativeStyle::Body) {
+    Ref label(Label(row, text, style));
     Pixels(label.get(), "width", width); Set<float>(label.get(), "flexShrink", 0.f);
     Set<int>(label.get(), "unityTextAlign", AlignRight);
     return label.get();
@@ -109,7 +108,6 @@ void Hide(Obj element) { if (element) Set<int>(element, "display", 1); }
 void AddRecipeBlock(Obj builder, const recipeNative::Recipe& recipe) {
     Ref binding(api.Field(builder, "m_binding"));
     Ref blocks(api.Call(binding.get(), "get_ctr_tooltipBlocks"));
-    Ref model(api.Call(binding.get(), "get_lbl_generalCaptionWeight"));
     Ref hierarchy(api.Call(blocks.get(), "get_hierarchy"));
     const int count = api.Value<int>(api.Call(hierarchy.get(), "get_childCount"));
     for (int i = 0; i < count && i < 64; ++i) { Ref child(api.Call(hierarchy.get(), "get_Item", {&i})); Hide(child.get()); }
@@ -120,10 +118,10 @@ void AddRecipeBlock(Obj builder, const recipeNative::Recipe& recipe) {
     for (const char* side : {"paddingTop", "paddingBottom"}) Pixels(block.get(), side, 6);
     Ref head(Row(block.get()));
     Pixels(head.get(), "marginBottom", 4);
-    Ref title(Label(head.get(), "Recette", model.get()));
-    Set<float>(title.get(), "flexGrow", 1.f); Set<float>(title.get(), "opacity", .7f);
-    Ref stockTitle(Column(head.get(), "Stock", StockWidth, model.get())); Set<float>(stockTitle.get(), "opacity", .7f);
-    Ref priceTitle(Column(head.get(), "Prix", PriceWidth, model.get())); Set<float>(priceTitle.get(), "opacity", .7f);
+    Ref title(Label(head.get(), "Recette", nativeStyle::Heading));
+    Set<float>(title.get(), "flexGrow", 1.f);
+    Column(head.get(), "Stock", StockWidth, nativeStyle::Heading);
+    Column(head.get(), "Prix", PriceWidth, nativeStyle::Heading);
     std::vector<recipeCost::Line> lines;
     for (const auto& ingredient : recipe.ingredients) {
         const auto price = recipeNative::AveragePrice(ingredient.id);
@@ -131,21 +129,21 @@ void AddRecipeBlock(Obj builder, const recipeNative::Recipe& recipe) {
         Ref row(Row(block.get()));
         Pixels(row.get(), "marginBottom", 2);
         Icon(row.get(), ingredient.id, ingredient.quantity);
-        Ref name(Label(row.get(), ingredient.name, model.get()));
+        Ref name(Label(row.get(), ingredient.name));
         Set<float>(name.get(), "flexGrow", 1.f); Set<float>(name.get(), "flexShrink", 1.f);
         const auto stock = recipeNative::Owned(ingredient.id);
         const auto owned = stock.bag + stock.bank;
-        Ref have(Column(row.get(), stock.bagKnown ? std::to_string(owned) + "/" + std::to_string(ingredient.quantity) : "—", StockWidth, model.get()));
+        Ref have(Column(row.get(), stock.bagKnown ? std::to_string(owned) + "/" + std::to_string(ingredient.quantity) : "—", StockWidth));
+        if (stock.bagKnown) nativeStyle::Tone(have.get(), owned >= ingredient.quantity, owned < ingredient.quantity);
         if (stock.bagKnown) Text(have.get(), "Sac " + std::to_string(stock.bag) + (stock.bankKnown ? ", banque " + std::to_string(stock.bank) : ", banque non lue"), "set_tooltip");
-        Column(row.get(), price > 0 ? recipeCost::Kamas(price * ingredient.quantity) : "—", PriceWidth, model.get());
+        Column(row.get(), price > 0 ? recipeCost::Kamas(price * ingredient.quantity) : "—", PriceWidth);
     }
     const auto total = recipeCost::Sum(lines);
     Ref sum(Row(block.get()));
     Pixels(sum.get(), "marginTop", 4);
-    Ref sumName(Label(sum.get(), total.unpriced ? "Total (" + std::to_string(total.unpriced) + " sans prix)" : "Total", model.get()));
-    Set<float>(sumName.get(), "flexGrow", 1.f); Set<int>(sumName.get(), "unityFontStyleAndWeight", 1);
-    Ref sumValue(Column(sum.get(), recipeCost::Kamas(total.cost), PriceWidth + StockWidth, model.get()));
-    Set<int>(sumValue.get(), "unityFontStyleAndWeight", 1);
+    Ref sumName(Label(sum.get(), total.unpriced ? "Total (" + std::to_string(total.unpriced) + " sans prix)" : "Total", nativeStyle::Strong));
+    Set<float>(sumName.get(), "flexGrow", 1.f);
+    Column(sum.get(), recipeCost::Kamas(total.cost), PriceWidth + StockWidth, nativeStyle::Strong);
 }
 template <size_t Index> void MessageHook(Obj self, Obj message, Method method);
 bool OpenCard(Obj message) {
@@ -193,14 +191,14 @@ void SetupHook(Obj builder, Method method) {
     } catch (const std::exception& error) { Report("block", error); }
 }
 // The line stays with the tooltip's reused binding: found again by its name.
-Obj PriceLine(Obj parent, Obj model) {
+Obj PriceLine(Obj parent) {
     Ref hierarchy(api.Call(parent, "get_hierarchy"));
     const int count = api.Value<int>(api.Call(hierarchy.get(), "get_childCount"));
     for (int i = 0; i < count && i < 64; ++i) {
         Ref child(api.Call(hierarchy.get(), "get_Item", {&i}));
         if (api.String(api.Call(child.get(), "get_name")) == PriceLineName) return child.get();
     }
-    Ref line(Label(parent, "", model));
+    Ref line(Label(parent, ""));
     Text(line.get(), PriceLineName, "set_name");
     return line.get();
 }
@@ -218,8 +216,7 @@ void PricesHook(Obj builder, Method method) {
         std::vector<recipeCost::Line> lines;
         if (recipe) for (const auto& ingredient : recipe->ingredients) lines.push_back({ingredient.quantity, recipeNative::AveragePrice(ingredient.id)});
         const auto total = recipeCost::Sum(lines);
-        Ref model(api.Call(binding.get(), "get_lbl_generalCaptionWeight"));
-        Ref line(PriceLine(parent.get(), model.get()));
+        Ref line(PriceLine(parent.get()));
         const bool show = total.cost > 0 && !IsCard(builder); // A card has its total already.
         Set<int>(line.get(), "display", show ? 0 : 1);
         if (show) Text(line.get(), "Prix moyen du craft : " + recipeCost::Kamas(total.cost) + (total.unpriced ? " (incomplet)" : ""));
@@ -247,15 +244,13 @@ void InstallRecipeCard() {
         const auto binding = api.Class("Core.dll", "Core.UILogic.Bindings", "ItemTooltipBinding");
         api.FindVerified(binding, "get_ctr_tooltipBlocks", 0, 0x2F121C0);
         api.FindVerified(binding, "get_dataSection_weight", 0, 0x2F13000);
-        api.FindVerified(binding, "get_lbl_generalCaptionWeight", 0, 0x2F14AB0);
         api.FindVerified(binding, "get_ctr_tooltipDescription", 0, 0x2F12280);
-        const auto resolved = api.Class(Ui, UiSpace, "ResolvedStyleAccess");
-        api.FindVerified(resolved, "get_color", 0, 0x559EB90);
-        api.FindVerified(resolved, "get_fontSize", 0, 0x559ED40);
         api.FindVerified(binding, "get_dataSection_price", 0, 0x2F12DC0);
         const auto item = api.Class("Core.dll", "", "mc");
         createItem = api.FindVerified(item, "ohc", 5, 0x2A6BF80);
         api.FindVerified(item, "myx", 0, 0x2A69C20);
+        api.FindVerified(api.Class(Ui, UiSpace, "VisualElement"), "AddToClassList", 1, 0x55A4B60);
+        api.FindVerified(api.Class(Ui, UiSpace, "VisualElement"), "EnableInClassList", 2, 0x55A8130);
         tooltipServiceClass = api.Class("Core.dll", "", "gbr");
         api.FindVerified(tooltipServiceClass, "bfpo", 1, 0x1EC99B0);
         const auto message = api.Class("Core.dll", "", "bfz");

@@ -1,4 +1,5 @@
 #include "souls/soul-panel.hpp"
+#include "ui/native-style.hpp"
 #include "souls/soul-item-view.hpp"
 #include "core/module.hpp"
 #include <algorithm>
@@ -146,15 +147,7 @@ void FloatStyle(Obj element, const char* property, float value) {
     WriteStyle(element, property, box.get());
 }
 void TextColor(Obj element, StatusTone tone) {
-    const bool warning = tone == StatusTone::Warning, good = tone == StatusTone::Good;
-    float r = warning ? 1.0f : good ? 0.40f : 0.90f;
-    float g = warning ? 0.36f : 0.90f;
-    float b = warning ? 0.32f : good ? 0.48f : 0.90f;
-    float a = 1.0f;
-    Ref color(api.New(api.Class("UnityEngine.CoreModule.dll", "UnityEngine", "Color"), {&r,&g,&b,&a}));
-    Ref box(ReadStyle(element, "color"));
-    api.Call(box.get(), "set_value", {api.object_unbox(color.get())});
-    WriteStyle(element, "color", box.get());
+    nativeStyle::Tone(element, tone == StatusTone::Good, tone == StatusTone::Warning);
 }
 void Text(Obj element, const std::string& text) {
     Ref value(api.string_new(text.c_str()));
@@ -342,12 +335,10 @@ void NotifyHook(Obj owner, Method method) {
     } catch (const std::exception& e) { Log(std::string("SOUL_PANEL_NOTIFY_ERROR ") + e.what()); }
 }
 Obj Label(Obj content) {
-    Ref label(api.New(api.Class(UiImage, UiSpace, "Label")));
+    Ref label(nativeStyle::NewLabel());
     EnumStyle(label.get(), "whiteSpace", 0); // WhiteSpace.Normal.
-    Pixels(label.get(), "fontSize", 14);
     Pixels(label.get(), "marginBottom", 2);
-    // Bare Unity labels otherwise inherit the root's default (often black),
-    // which is unreadable against the native dark widget background.
+    nativeStyle::Add(label.get(), nativeStyle::SizeBody);
     TextColor(label.get(), StatusTone::Neutral);
     api.Call(content, "Add", {label.get()});
     return label.get();

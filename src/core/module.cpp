@@ -40,7 +40,6 @@
 #include "maps/map-info.hpp"
 #include "ui/perf-overlay.hpp"
 #include "ui/ui-timing.hpp"
-#include "ui/native-text.hpp"
 #include "core/world-exit.hpp"
 #include "core/relogin-guard.hpp"
 #include "ui/custom-cursor.hpp"
@@ -470,7 +469,6 @@ static void UpdateHook(Obj self, Method method) {
             if (JobsXpCleanupPending()) RestoreJobsXp();
             if (ArchiZonesCleanupPending()) RestoreArchiZones();
             if (CalendarKraloveCleanupPending()) RestoreCalendarKralove();
-            nativeText::Clear();
             if (MapInfoCleanupPending()) RestoreMapInfo();
             if (PerfOverlayCleanupPending()) RestorePerfOverlay();
             if (SoulHelperCleanupPending()) RestoreSoulHelper();
@@ -492,7 +490,6 @@ static void UpdateHook(Obj self, Method method) {
         nextDiscovery[self] = now + 1000;
     } else if (self != module->compositor.get()) return;
     if (module->servicesReady) UiTimingFrame();
-    if (module->servicesReady) nativeText::Tick();
     if (module->servicesReady) TickMapPreload();
     if (module->servicesReady) TickChatTravelFrame();
     if (module->servicesReady) { MapInfoFrame(now); PerfOverlayFrame(now); VerticalGaugesFrame(now); }

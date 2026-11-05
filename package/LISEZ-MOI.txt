@@ -10,9 +10,16 @@ all game rights belong to Ankama. I do not know whether using this mod is
 allowed by Ankama's terms: a ban cannot be completely ruled out. Use it at
 your own risk; the software is provided "as is", without any warranty.
 
-BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.2.1
+BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.3.0
 
 INSTALLATION : double-clique sur BetterDofusLoader.exe, puis lance Dofus.
+
+VERSION 2.3.0 : TOUTES LES FENÊTRES AUX STYLES DU JEU
+- Les textes de l’onglet XP, de la fiche de recette, des statistiques, du carnet,
+  de la chasse au trésor, de la pierre d’âme et du panneau des ressources utilisent
+  les styles du jeu : mêmes tailles, mêmes couleurs, et ils suivent le thème choisi.
+- Les états (stock suffisant ou non, pierre d’âme correcte ou non) prennent les
+  couleurs positive et négative du jeu, et le panneau des ressources ses fonds.
 
 VERSION 2.2.1 : TEXTES LISIBLES, FICHE DE RECETTE COMPACTE
 - Les textes de l’onglet XP et de la fiche de recette étaient presque noirs : ils
