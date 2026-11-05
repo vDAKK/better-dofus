@@ -3,14 +3,14 @@
 #include <string>
 #include <vector>
 
-// A boss's achievements: which ones, in which order, in which words. Pure: the data and
-// what is finished come from the game (boss-achievements.cpp).
+// A monster's achievements: which ones, in which order, in which words. Pure: the data
+// and what is finished come from the game (boss-achievements.cpp).
 namespace bossAchievements {
 inline constexpr size_t MaxItems = 64;
 struct Item { int id = 0, points = 0, level = 0; std::string name, description; bool done = false; };
 struct Sorted { std::vector<Item> todo, done; };
 
-// The boss's lists then its dungeon's: each achievement once, in that order.
+// The monsters' lists then the dungeon's: each achievement once, in that order.
 inline std::vector<int> Merge(const std::vector<std::vector<int>>& lists) {
     std::vector<int> result;
     for (const auto& list : lists)
@@ -38,9 +38,15 @@ inline std::string Plain(const std::string& text) {
     }
     return result;
 }
+// A group's monsters with achievements, bosses first: the first one, and how many more.
+inline std::string Title(const std::vector<std::string>& monsters) {
+    if (monsters.empty()) return "";
+    if (monsters.size() == 1) return monsters.front();
+    return monsters.front() + " et " + std::to_string(monsters.size() - 1) + (monsters.size() == 2 ? " autre" : " autres");
+}
 // known: the game has told which achievements are finished.
-inline std::string MenuLabel(const std::string& boss, const Sorted& sorted, bool known) {
-    std::string label = "Succès : " + boss;
+inline std::string MenuLabel(const std::string& monster, const Sorted& sorted, bool known) {
+    std::string label = "Succès : " + monster;
     if (!known) return label;
     if (sorted.todo.empty()) return label + " (tous faits)";
     return label + " (" + std::to_string(sorted.todo.size()) + " à faire)";

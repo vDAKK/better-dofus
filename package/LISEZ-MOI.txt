@@ -10,9 +10,14 @@ all game rights belong to Ankama. I do not know whether using this mod is
 allowed by Ankama's terms: a ban cannot be completely ruled out. Use it at
 your own risk; the software is provided "as is", without any warranty.
 
-BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.6.0
+BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.7.0
 
 INSTALLATION : double-clique sur BetterDofusLoader.exe, puis lance Dofus.
+
+VERSION 2.7.0 : LES SUCCÈS DE TOUS LES MONSTRES, CEUX DU PERSONNAGE
+- Le clic droit propose les succès de tout groupe dont les monstres en ont, plus
+  seulement ceux des boss.
+- Déjà faits ne compte plus que ce personnage, pas le reste du compte.
 
 VERSION 2.6.0 : LES SUCCÈS D’UN BOSS AU CLIC DROIT
 - Le clic droit sur le groupe d’un boss propose ses succès et ceux de son donjon.

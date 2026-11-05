@@ -33,6 +33,8 @@ int main() {
         Check(Plain("Bloc {sans nom} ici") == "Bloc {sans nom} ici", "Braces without a name stay");
         Check(Plain("{x} puis {a::B}") == "{x} puis B", "A plain brace before a link stays");
 
+        Check(Title({}).empty() && Title({"Bouftou"}) == "Bouftou", "One monster");
+        Check(Title({"Bouftou", "Tofu"}) == "Bouftou et 1 autre" && Title({"Bouftou", "Tofu", "Larve"}) == "Bouftou et 2 autres", "Several monsters");
         Check(MenuLabel("Kardorim", Sort({Make(1, 1, false), Make(2, 1, true)}), true) == "Succès : Kardorim (1 à faire)", "To do");
         Check(MenuLabel("Kardorim", Sort({Make(2, 1, true)}), true) == "Succès : Kardorim (tous faits)", "All done");
         Check(MenuLabel("Kardorim", Sort({Make(1, 1, false)}), false) == "Succès : Kardorim", "No count without the game's list");

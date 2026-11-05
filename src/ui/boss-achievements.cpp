@@ -37,8 +37,10 @@ Target shown; // What the window shows.
 struct MenuRow { Ref item, callback; Target target; bool armed = false; } row;
 
 Method achievementsRoot = nullptr, monstersRoot = nullptr, dungeonsRoot = nullptr, achievementById = nullptr, monsterById = nullptr, dungeonByMap = nullptr;
-Method isBoss = nullptr, monsterName = nullptr, achievementName = nullptr, achievementDescription = nullptr, finishedA = nullptr, finishedB = nullptr;
+Method isBoss = nullptr, monsterName = nullptr, achievementName = nullptr, achievementDescription = nullptr, finishedAccount = nullptr, finishedCharacter = nullptr;
 Method currentMap = nullptr, append = nullptr, unsubscribe = nullptr;
+// fcv's handler of a finished achievement always adds it to the account's set, and to
+// the character's set only when it was achieved by the character in play.
 Klass serviceClass = nullptr;
 bool installed = false, wanted = false, newTarget = false;
 
@@ -63,16 +65,17 @@ std::vector<int> Numbers(Obj list) {
     for (int i = 0; i < count; ++i) { Ref value(api.Call(list, "get_Item", {&i})); result.push_back(Number(value.get())); }
     return result;
 }
-// What the game knows to be finished: the two sets of its service.
-struct Finished { Ref a, b; bool known = false; };
+// What this character has finished. The account's set only tells that the game has
+// received the lists: a character without any achievement has an empty set of its own.
+struct Finished { Ref character; bool known = false; };
 Finished ReadFinished() {
     Finished finished;
     Obj service = module->FindService("fja");
     if (!service || api.object_get_class(service) != serviceClass) return finished;
-    finished.a.reset(api.Invoke(finishedA, service));
-    finished.b.reset(api.Invoke(finishedB, service));
+    Ref account(api.Invoke(finishedAccount, service));
+    finished.character.reset(api.Invoke(finishedCharacter, service));
     const auto count = [](Obj set) { return set ? api.Value<int>(api.Call(set, "get_Count")) : 0; };
-    finished.known = count(finished.a.get()) + count(finished.b.get()) > 0;
+    finished.known = count(account.get()) + count(finished.character.get()) > 0;
     return finished;
 }
 bool Contains(Obj set, int id) { return set && api.Value<bool>(api.Call(set, "Contains", {&id})); }
@@ -91,7 +94,7 @@ std::vector<Item> ReadItems(const std::vector<int>& ids, const Finished& finishe
         Ref name(api.Invoke(achievementName, data.get())), description(api.Invoke(achievementDescription, data.get()));
         item.name = name.get() ? api.String(name.get()) : "Succès " + std::to_string(id);
         item.description = description.get() ? Plain(api.String(description.get())) : "";
-        item.done = Contains(finished.a.get(), id) || Contains(finished.b.get(), id);
+        item.done = Contains(finished.character.get(), id);
         items.push_back(std::move(item));
     }
     return items;
@@ -106,7 +109,8 @@ int HereMap() {
     const int64_t map = *static_cast<int64_t*>(api.FieldAddress(location.get(), "m_mapId"));
     return map > 0 && map <= INT32_MAX ? static_cast<int>(map) : 0;
 }
-// The boss's achievements, then its dungeon's when this map is in the dungeon of that boss.
+// The monsters' achievements, then the dungeon's when this map is in the dungeon of a
+// boss of the group.
 std::optional<Target> FindTarget(Obj group) {
     Ref root(api.Invoke(monstersRoot, nullptr));
     if (!root.get()) return std::nullopt;
@@ -118,23 +122,28 @@ std::optional<Target> FindTarget(Obj group) {
     for (int i = 0; i < count; ++i) monsters.emplace_back(api.Call(others.get(), "get_Item", {&i}));
     Target target;
     std::vector<std::vector<int>> lists;
-    std::vector<int> bosses;
+    std::vector<int> seen, bosses;
+    std::vector<std::string> bossNames, otherNames;
     for (const auto& monster : monsters) {
         if (!monster.get()) continue;
         int id = *static_cast<int*>(api.FieldAddress(monster.get(), "dcgq"));
+        if (std::find(seen.begin(), seen.end(), id) != seen.end()) continue;
+        seen.push_back(id);
         Ref data(api.Invoke(monsterById, root.get(), {&id}));
-        if (!data.get() || !api.Value<bool>(api.Invoke(isBoss, data.get()))) continue;
-        if (std::find(bosses.begin(), bosses.end(), id) != bosses.end()) continue;
-        bosses.push_back(id);
-        if (target.boss.empty()) { Ref name(api.Invoke(monsterName, data.get())); if (name.get()) target.boss = api.String(name.get()); }
+        if (!data.get()) continue;
+        const bool boss = api.Value<bool>(api.Invoke(isBoss, data.get()));
+        if (boss) bosses.push_back(id);
         Ref list(api.Field(data.get(), "achievements"));
-        lists.push_back(Numbers(list.get()));
+        auto numbers = Numbers(list.get());
+        if (numbers.empty() && !boss) continue;
+        Ref name(api.Invoke(monsterName, data.get()));
+        (boss ? bossNames : otherNames).push_back(name.get() ? api.String(name.get()) : "Monstre " + std::to_string(id));
+        lists.push_back(std::move(numbers));
     }
-    if (bosses.empty()) return std::nullopt;
     size_t own = 0;
     for (const auto& list : lists) own += list.size();
     size_t fromDungeon = 0;
-    if (int map = HereMap()) {
+    if (int map = bosses.empty() ? 0 : HereMap()) {
         Ref dungeons(api.Invoke(dungeonsRoot, nullptr));
         Ref dungeon(dungeons.get() ? api.Invoke(dungeonByMap, dungeons.get(), {&map}) : nullptr);
         if (dungeon.get()) {
@@ -148,8 +157,10 @@ std::optional<Target> FindTarget(Obj group) {
         }
     }
     target.ids = Merge(lists);
-    Log("BOSS_ACHIEVEMENTS boss=" + std::to_string(bosses.front()) + " own=" + std::to_string(own) + " dungeon=" + std::to_string(fromDungeon) + " total=" + std::to_string(target.ids.size()));
+    bossNames.insert(bossNames.end(), otherNames.begin(), otherNames.end());
+    target.boss = Title(bossNames);
     if (target.ids.empty()) return std::nullopt;
+    Log("BOSS_ACHIEVEMENTS monster=" + std::to_string(seen.front()) + " bosses=" + std::to_string(bosses.size()) + " own=" + std::to_string(own) + " dungeon=" + std::to_string(fromDungeon) + " total=" + std::to_string(target.ids.size()));
     return target;
 }
 void Extend(Obj menu, Obj group) {
@@ -162,7 +173,7 @@ void Extend(Obj menu, Obj group) {
     const auto text = MenuLabel(target->boss, sorted, finished.known);
     Ref rows(api.Call(menu, "get_menuItems"));
     int index = api.Value<int>(api.Call(rows.get(), "get_Count"));
-    Ref label(api.string_new(text.c_str())), help(api.string_new("Les succès de ce boss et de son donjon : ceux à faire et ceux déjà faits.")), empty(api.string_new(""));
+    Ref label(api.string_new(text.c_str())), help(api.string_new("Les succès de ces monstres : ceux à faire, et ceux que ce personnage a déjà faits.")), empty(api.string_new(""));
     Ref asset(api.object_new(api.class_from_type(api.method_get_param(append, 7))));
     Ref color(api.object_new(api.class_from_type(api.method_get_param(append, 10))));
     bool disabled = false, close = true; unsigned delay = 1000; int style = 1, icon = IconFlag;
@@ -324,7 +335,7 @@ void Create(Obj root) {
     Ref content(toolsUi::ScrollBody(state.window.get(), root, true));
     Set<float>(content.get(), "flexGrow", 1.f);
     for (const auto* side : {"paddingLeft", "paddingRight", "paddingTop", "paddingBottom"}) Pixels(content.get(), side, 10);
-    state.status.reset(Label(content.get(), "Le jeu n’a pas encore donné tes succès terminés : ouvre une fois la fenêtre des succès.", nativeStyle::Secondary));
+    state.status.reset(Label(content.get(), "Le jeu n’a pas encore donné les succès terminés : ouvre une fois la fenêtre des succès.", nativeStyle::Secondary));
     Pixels(state.status.get(), "marginBottom", 8);
     state.todoHead.reset(Label(content.get(), "", nativeStyle::Heading));
     Pixels(state.todoHead.get(), "marginBottom", 6);
@@ -358,14 +369,14 @@ void InstallBossAchievements() {
         const auto dungeon = api.Class(DataImage, "Core.DataCenter.Metadata.World", "DungeonData");
         Field(dungeon, "achievements", 72); Field(dungeon, "bosses", 80);
         serviceClass = api.Class("Core.dll", "", "fcx");
-        finishedA = api.FindVerified(serviceClass, "bcwx", 0, 0x69A650);
-        finishedB = api.FindVerified(serviceClass, "bcxd", 0, 0x73FA90);
+        finishedAccount = api.FindVerified(serviceClass, "bcwx", 0, 0x69A650);
+        finishedCharacter = api.FindVerified(serviceClass, "bcxd", 0, 0x73FA90);
         currentMap = api.FindVerified(api.Class("Core.dll", "", "esg"), "zeo", 0, 0x1854C30);
         append = api.FindVerified(api.Class("Core.dll", "Core.UILogic.Components.ContextMenu", "DofusContextualMenu"), "AppendDefaultItem", 13, 0x16D06F0);
         unsubscribe = api.FindVerified(api.Class("Core.dll", "Core.Engine.Inputs.Events", "InputCustomEvent"), "UnSubscribe", 1, 0x2097300);
         soul::SetAuxiliaryPanelMenus(NoPopulate, Clicked);
         soul::SetAuxiliaryPanelAction(Action); nativeClick::AddHandler(Action);
-        toolsUi::Register(Key, "Succès du boss", IconFlag, [] { return wanted; }, [] { wanted = !wanted && !shown.ids.empty(); return true; }, {},
+        toolsUi::Register(Key, "Succès du monstre", IconFlag, [] { return wanted; }, [] { wanted = !wanted && !shown.ids.empty(); return true; }, {},
             [] { return false; });
         SetSoulGroupMenuExtension(Extend);
         installed = true;
