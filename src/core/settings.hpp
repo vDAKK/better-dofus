@@ -76,6 +76,7 @@ struct Settings {
     bool craftListButton = true;
     bool bossAchievements = true;
     bool combatAchievements = true;
+    bool monsterTooltip = true;
     bool bossAchievementsShowDone = true;
     // Jauges (1.18.1) : la longueur et la place de chaque jauge à la verticale
     // choisies à la souris, une par bit de fqd+GaugesType (à l'index du bit).
@@ -268,4 +269,4 @@ inline constexpr bool Settings::* ExtraToggles[] = {
     &Settings::notebookPingButton, &Settings::notebookCopyButton, &Settings::notebookTravelButton, &Settings::mapAddPosition, &Settings::perfOverlay,
     &Settings::perfOverlayGpu, &Settings::perfOverlayDisk, &Settings::perfOverlayDrag, &Settings::perfOverlayButton,
     &Settings::notebookSendButtons, &Settings::gaugeVerticalMenu, &Settings::partyTravelButton, &Settings::customCursorGame,
-    &Settings::presetModWindows, &Settings::reloginGuard, &Settings::recipeCard, &Settings::questTravel, &Settings::itemSearchButton, &Settings::craftListButton, &Settings::bossAchievements, &Settings::combatAchievements};
+    &Settings::presetModWindows, &Settings::reloginGuard, &Settings::recipeCard, &Settings::questTravel, &Settings::itemSearchButton, &Settings::craftListButton, &Settings::bossAchievements, &Settings::combatAchievements, &Settings::monsterTooltip};

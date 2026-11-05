@@ -69,6 +69,38 @@ inline bool Advances(const std::vector<Objective>& objectives, const std::set<in
     }
     return !named;
 }
+// How far an achievement's monsters are: its other objectives do not count.
+struct Progress { int done = 0, total = 0; };
+inline Progress Measure(const std::vector<Objective>& objectives, const std::set<int>& finished) {
+    Progress progress;
+    for (const auto& objective : objectives) {
+        if (!objective.monster) continue;
+        ++progress.total;
+        if (finished.count(objective.id)) ++progress.done;
+    }
+    return progress;
+}
+inline int Percent(const Progress& progress) { return progress.total ? progress.done * 100 / progress.total : 0; }
+inline std::string Summary(const Progress& progress) {
+    const int left = progress.total - progress.done;
+    return std::to_string(Percent(progress)) + " % validé, " + std::to_string(left) + (left == 1 ? " monstre restant" : " monstres restants");
+}
+// A monster of the group, in a tooltip's list.
+enum class Mark { None, Missing, Done };
+inline Mark MarkOf(int monster, const std::vector<Objective>& objectives, const std::set<int>& finished) {
+    Mark mark = Mark::None;
+    for (const auto& objective : objectives) {
+        if (objective.monster != monster) continue;
+        if (!finished.count(objective.id)) return Mark::Missing;
+        mark = Mark::Done;
+    }
+    return mark;
+}
+// A quest's objective speaks of this monster: one of its parameters is its id, and its
+// text names it. The id alone could be an item's.
+inline bool ObjectiveOnMonster(const std::vector<int>& parameters, int monster, const std::string& foldedText, const std::string& foldedName) {
+    return !foldedName.empty() && std::find(parameters.begin(), parameters.end(), monster) != parameters.end() && foldedText.find(foldedName) != std::string::npos;
+}
 // known: the game's answer on this achievement has come.
 inline std::string ObjectiveLine(const std::string& name, bool known, bool done) {
     return (known ? (done ? "[x] " : "[ ] ") : "- ") + name;

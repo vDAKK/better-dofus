@@ -10,9 +10,14 @@ all game rights belong to Ankama. I do not know whether using this mod is
 allowed by Ankama's terms: a ban cannot be completely ruled out. Use it at
 your own risk; the software is provided "as is", without any warranty.
 
-BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.10.1
+BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.11.0
 
 INSTALLATION : double-clique sur BetterDofusLoader.exe, puis lance Dofus.
+
+VERSION 2.11.0 : QUÊTES ET SUCCÈS AU SURVOL DES MONSTRES
+- L’infobulle d’un groupe montre les quêtes actives qui le concernent et le succès
+  qu’il fait avancer, et marque les monstres encore à vaincre. Réglage : Succès, dans
+  les options du mod.
 
 VERSION 2.10.1 : CORRECTIF IMPORTANT DE LA 2.10.0
 - La 2.10.0 demandait l’avancement des succès avec le mauvais message : elle envoyait

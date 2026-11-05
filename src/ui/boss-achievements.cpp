@@ -1,5 +1,6 @@
 #include "ui/boss-achievements.hpp"
 #include "ui/boss-achievements-policy.hpp"
+#include "ui/item-search-policy.hpp"
 #include "ui/native-click.hpp"
 #include "ui/native-style.hpp"
 #include "ui/tools-ui.hpp"
@@ -63,7 +64,8 @@ Method updateIcon = nullptr, addManipulator = nullptr, clickableCtor = nullptr, 
 Klass iconClass = nullptr, clickableClass = nullptr, tooltipClass = nullptr;
 // What is known of each achievement's objectives: its data, and the game's answer. The
 // game only learns these from the server, as when its own window opens an achievement.
-constexpr uint64_t RequestSpacingMs = 400, AnswerLifeMs = 120000, RetryMs = 10000;
+// Hovering asks at most once in ten minutes per achievement; a fight's end forgets them.
+constexpr uint64_t RequestSpacingMs = 400, AnswerLifeMs = 600000, RetryMs = 10000;
 struct Answer { std::set<int> finished; uint64_t at = 0; };
 std::map<int, std::vector<Objective>> objectiveData;
 std::map<int, Answer> answers;
@@ -77,6 +79,16 @@ Klass senderClass = nullptr, requestClass = nullptr, linkClass = nullptr;
 Ref stringType;
 struct NullableColor { bool hasValue = false; float r = 0, g = 0, b = 0, a = 0; };
 struct Vec2 { float x = 0, y = 0; };
+struct TooltipView { Ref builder; bool dirty = false; } tooltipView;
+using SetupFn = void (*)(Obj, Method);
+SetupFn originalTooltipSetup = nullptr;
+Method questObjectivesRoot = nullptr, questObjectiveById = nullptr, questsRoot = nullptr, questById = nullptr, questName = nullptr, objectiveText = nullptr, objectiveStep = nullptr, iconCtor = nullptr, iconSet = nullptr, iconColor = nullptr;
+Klass questServiceClass = nullptr, statusIconClass = nullptr;
+struct ActiveObjective { std::vector<int> parameters; std::string text, folded, quest; };
+std::map<int, ActiveObjective> activeObjectives;
+bool tooltipReported = false, wasInFight = false;
+constexpr const char* TooltipBlockName = "better_dofus_monster_block";
+constexpr int IconTick = 307, IconTrophy = 320, IconExclamation = 130;
 using AnswerFn = void (*)(Obj, Obj, Method);
 std::array<AnswerFn, 2> originalAnswer{};
 // fcv's handler of a finished achievement always adds it to the account's set, and to
@@ -90,6 +102,7 @@ void Field(Klass type, const char* name, size_t offset) {
 }
 bool Session() { return module && module->ready && module->servicesReady && !module->stopped && !module->stopRequested; }
 bool Enabled() { return Session() && module->settings.bossAchievements; }
+bool TooltipEnabled() { return Session() && module->settings.monsterTooltip; }
 // The element type of these lists is not in the dump: read it from the value.
 int Number(Obj box) {
     const std::string type = api.class_get_name(api.object_get_class(box));
@@ -227,7 +240,7 @@ template <size_t Index> void AnswerHook(Obj self, Obj message, Method method) {
         }
         Log("BOSS_ACHIEVEMENTS_DETAILS id=" + std::to_string(id) + " finished=" + std::to_string(answer.finished.size()));
         answers[id] = std::move(answer);
-        panel.dirty = true; state.nextRefresh = 0;
+        panel.dirty = true; state.nextRefresh = 0; tooltipView.dirty = true;
     } catch (const std::exception& error) { Log(std::string("BOSS_ACHIEVEMENTS_DETAILS_ERROR ") + error.what()); }
 }
 // The menu.
@@ -254,7 +267,7 @@ std::vector<int> GroupMonsters(Obj group) {
 }
 // The monsters' achievements, then the dungeon's when this map is in the dungeon of a
 // boss among them.
-std::optional<Target> FromMonsters(const std::vector<int>& monsterIds) {
+std::optional<Target> FromMonsters(const std::vector<int>& monsterIds, bool quiet = false) {
     Ref root(api.Invoke(monstersRoot, nullptr));
     if (!root.get()) return std::nullopt;
     Target target;
@@ -295,7 +308,7 @@ std::optional<Target> FromMonsters(const std::vector<int>& monsterIds) {
     bossNames.insert(bossNames.end(), otherNames.begin(), otherNames.end());
     target.boss = Title(bossNames);
     if (target.ids.empty() || seen.empty()) return std::nullopt;
-    Log("BOSS_ACHIEVEMENTS monster=" + std::to_string(seen.front()) + " bosses=" + std::to_string(bosses.size()) + " own=" + std::to_string(own) + " dungeon=" + std::to_string(fromDungeon) + " total=" + std::to_string(target.ids.size()));
+    if (!quiet) Log("BOSS_ACHIEVEMENTS monster=" + std::to_string(seen.front()) + " bosses=" + std::to_string(bosses.size()) + " own=" + std::to_string(own) + " dungeon=" + std::to_string(fromDungeon) + " total=" + std::to_string(target.ids.size()));
     return target;
 }
 void Extend(Obj menu, Obj group) {
@@ -661,11 +674,15 @@ void DisplayHook(Obj self, Method method) {
 // empties it whenever it redraws the panel: the next look draws them again.
 void WatchFight() {
     if (!module->InCombat()) {
+        // What this fight advanced is known again from the server when next needed.
+        if (wasInFight) { answers.clear(); asked.clear(); }
+        wasInFight = false;
         ClearPanelIcons();
         if (fightWindow && wanted) wanted = false;
         fightWindow = false; panel.display.reset(); panel.enemies.clear(); panel.dirty = false;
         return;
     }
+    wasInFight = true;
     if (!module->settings.combatAchievements) { ClearPanelIcons(); panel.enemies.clear(); return; }
     const auto now = GetTickCount64();
     if (now < nextFightRead || !panel.display.get()) return;
@@ -704,6 +721,200 @@ void WatchFight() {
     panel.target = std::move(*target);
     if (!panel.icons.empty()) Show(list.get(), true);
     Log("BOSS_ACHIEVEMENTS_PANEL icons=" + std::to_string(panel.icons.size()) + " todo=" + std::to_string(sorted.todo.size()));
+}
+// The game's tooltip of a group, on the map. Its own lines are found again by the
+// monsters' names, as nothing else ties them to a monster.
+const ActiveObjective* ReadActiveObjective(int id) {
+    const auto found = activeObjectives.find(id);
+    if (found != activeObjectives.end()) return &found->second;
+    ActiveObjective objective;
+    Ref root(api.Invoke(questObjectivesRoot, nullptr));
+    Ref data(root.get() ? api.Invoke(questObjectiveById, root.get(), {&id}) : nullptr);
+    if (!data.get()) return nullptr;
+    Ref parameters(api.Field(data.get(), "parameters"));
+    if (parameters.get())
+        for (const char* name : {"parameter0", "parameter1", "parameter2", "parameter3", "parameter4"})
+            objective.parameters.push_back(api.Value<int>(api.Field(parameters.get(), name)));
+    Ref words(api.Invoke(objectiveText, data.get()));
+    objective.text = words.get() ? Plain(api.String(words.get())) : "";
+    objective.folded = itemSearch::Fold(objective.text);
+    Ref step(api.Invoke(objectiveStep, data.get()));
+    if (step.get()) {
+        int quest = api.Value<int>(api.Field(step.get(), "questId"));
+        Ref quests(api.Invoke(questsRoot, nullptr));
+        Ref questData(quests.get() ? api.Invoke(questById, quests.get(), {&quest}) : nullptr);
+        Ref name(questData.get() ? api.Invoke(questName, questData.get()) : nullptr);
+        objective.quest = name.get() ? api.String(name.get()) : "";
+    }
+    return &activeObjectives.emplace(id, std::move(objective)).first->second;
+}
+Obj StatusIcon(int figma, float r, float g, float b) {
+    Ref icon(api.New(statusIconClass));
+    api.Invoke(iconSet, icon.get(), {&figma});
+    float color[4] = {r, g, b, 1.f};
+    api.Invoke(iconColor, icon.get(), {color});
+    Pixels(icon.get(), "width", 14); Pixels(icon.get(), "height", 14); Pixels(icon.get(), "marginRight", 4);
+    Set<float>(icon.get(), "flexShrink", 0.f);
+    return icon.get();
+}
+void DecorateTooltip(Obj builder) {
+    Ref binding(api.Field(builder, "m_binding"));
+    Ref group(api.Field(builder, "m_monstersInfo"));
+    if (!binding.get() || !group.get()) return;
+    Ref content(api.Call(binding.get(), "get_ctr_content")), list(api.Call(binding.get(), "get_ctr_monsterList"));
+    if (!content.get() || !list.get()) return;
+    if (Ref old(Named(content.get(), TooltipBlockName)); old.get()) api.Call(old.get(), "RemoveFromHierarchy");
+    const auto monsters = GroupMonsters(group.get());
+    Ref monstersData(api.Invoke(monstersRoot, nullptr));
+    if (!monstersData.get()) return;
+    std::map<int, std::string> monsterNames;
+    for (int id : monsters) {
+        Ref data(api.Invoke(monsterById, monstersData.get(), {&id}));
+        Ref name(data.get() ? api.Invoke(monsterName, data.get()) : nullptr);
+        if (name.get()) monsterNames[id] = api.String(name.get());
+    }
+    std::set<int> questMonsters, missing, done;
+    Ref block(api.New(api.Class(Ui, UiSpace, "VisualElement")));
+    Text(block.get(), TooltipBlockName, "set_name");
+    bool any = false;
+    // The active quests: known to the game without asking.
+    Ref service(module->FindService("fnp"));
+    if (service.get() && api.object_get_class(service.get()) == questServiceClass) {
+        Ref active(api.Field(service.get(), "<dtdg>k__BackingField"));
+        size_t shown = 0;
+        for (const int id : Numbers(active.get())) {
+            const auto* objective = ReadActiveObjective(id);
+            if (!objective) continue;
+            bool concerned = false;
+            for (const auto& [monster, name] : monsterNames)
+                if (ObjectiveOnMonster(objective->parameters, monster, objective->folded, itemSearch::Fold(name))) { questMonsters.insert(monster); concerned = true; }
+            if (!concerned || shown >= 3) continue;
+            ++shown; any = true;
+            Ref line(Element(block.get()));
+            Set<int>(line.get(), "flexDirection", 2); Pixels(line.get(), "marginBottom", 4);
+            Add(line.get(), Ref(StatusIcon(IconExclamation, 0.85f, 0.95f, 0.2f)).get());
+            Ref words(Element(line.get()));
+            Set<float>(words.get(), "flexShrink", 1.f); Set<float>(words.get(), "flexGrow", 1.f);
+            Ref title(Label(words.get(), objective->quest, nativeStyle::Strong));
+            Ref detail(Label(words.get(), objective->text, nativeStyle::Secondary));
+            (void)title; (void)detail;
+        }
+    }
+    // The achievements still missing one of these monsters.
+    if (auto target = FromMonsters(monsters, true)) {
+        const auto finished = ReadFinished();
+        if (finished.known) {
+            const auto sorted = Sort(ReadItems(target->ids, finished));
+            const Item* best = nullptr;
+            Progress bestProgress;
+            int others = 0;
+            for (const auto& item : sorted.todo) {
+                const auto& objectives = ObjectivesOf(item.id);
+                if (answersUnavailable) continue;
+                Ask(item.id);
+                const auto answer = answers.find(item.id);
+                if (answer == answers.end()) continue;
+                for (int monster : monsters) {
+                    const auto mark = MarkOf(monster, objectives, answer->second.finished);
+                    if (mark == Mark::Missing) missing.insert(monster);
+                    else if (mark == Mark::Done) done.insert(monster);
+                }
+                if (!Advances(objectives, answer->second.finished, monsters)) continue;
+                const auto progress = Measure(objectives, answer->second.finished);
+                if (!best || Percent(progress) > Percent(bestProgress)) { if (best) ++others; best = &item; bestProgress = progress; }
+                else ++others;
+            }
+            if (best) {
+                any = true;
+                RowView view;
+                view.line.reset(Element(block.get()));
+                if (NativeCard(view)) {
+                    Text(view.name.get(), best->name);
+                    Text(view.points.get(), std::to_string(best->points));
+                    std::string line = bestProgress.total ? Summary(bestProgress) : best->description;
+                    if (others) line += "\n+ " + std::to_string(others) + (others == 1 ? " autre succès" : " autres succès");
+                    Text(view.description.get(), line);
+                    if (view.icon.get() && iconTypeField && best->icon > 0) {
+                        Ref address(resourceMap::IconAddress(iconTypeField, best->icon));
+                        bool yes = true;
+                        api.Invoke(loadIcon, nullptr, {view.icon.get(), api.object_unbox(address.get()), nullptr, nullptr, nullptr, &yes, &yes});
+                    }
+                }
+            }
+        }
+    }
+    if (any) {
+        Pixels(block.get(), "marginTop", 4); Pixels(block.get(), "marginBottom", 4);
+        for (const char* side : {"paddingLeft", "paddingRight"}) Pixels(block.get(), side, 8);
+        int index = api.Value<int>(api.Call(content.get(), "IndexOf", {list.get()}));
+        if (index < 0) index = 0;
+        api.Call(content.get(), "Insert", {&index, block.get()});
+    }
+    // The group's lines.
+    Ref hierarchy(api.Call(list.get(), "get_hierarchy"));
+    const int lines = api.Value<int>(api.Call(hierarchy.get(), "get_childCount"));
+    for (int i = 0; i < lines && i < 32; ++i) {
+        Ref line(api.Call(hierarchy.get(), "get_Item", {&i}));
+        Ref label(Named(line.get(), "lbl_monsterName"));
+        if (!label.get()) continue;
+        const auto shownText = api.String(api.Call(label.get(), "get_text"));
+        int monster = 0; size_t longest = 0;
+        for (const auto& [id, name] : monsterNames)
+            if (name.size() > longest && shownText.rfind(name, 0) == 0) { monster = id; longest = name.size(); }
+        if (!monster) continue;
+        Ref parent(api.Call(label.get(), "get_parent"));
+        if (!parent.get()) continue;
+        Set<int>(parent.get(), "flexDirection", 2);
+        const bool quest = questMonsters.count(monster) != 0, lacking = missing.count(monster) != 0, finished = !lacking && done.count(monster) != 0;
+        int at = api.Value<int>(api.Call(parent.get(), "IndexOf", {label.get()}));
+        if (at < 0) at = 0;
+        const auto put = [&](int figma, float r, float g, float b) {
+            Ref icon(StatusIcon(figma, r, g, b));
+            api.Call(parent.get(), "Insert", {&at, icon.get()});
+            ++at;
+        };
+        if (quest) put(IconExclamation, 0.85f, 0.95f, 0.2f);
+        if (lacking) put(IconTrophy, 0.7f, 0.7f, 0.7f);
+        if (finished) put(IconTick, 0.45f, 0.9f, 0.35f);
+        if (quest) nativeStyle::Add(label.get(), "textColor_highlight_primary100");
+        else if (finished) nativeStyle::Add(label.get(), nativeStyle::ColorPositive);
+    }
+}
+void TooltipSetupHook(Obj builder, Method method) {
+    originalTooltipSetup(builder, method);
+    if (!TooltipEnabled() || module->InCombat()) return;
+    try { tooltipView.builder.reset(builder); tooltipView.dirty = false; DecorateTooltip(builder); }
+    catch (const std::exception& error) {
+        if (!tooltipReported) Log(std::string("MONSTER_TOOLTIP_ERROR ") + error.what());
+        tooltipReported = true;
+    }
+}
+// The server's answer has come while the tooltip is shown.
+void RefreshTooltip() {
+    if (!tooltipView.dirty || !tooltipView.builder.get()) return;
+    tooltipView.dirty = false;
+    Ref binding(api.Field(tooltipView.builder.get(), "m_binding"));
+    Ref content(binding.get() ? api.Call(binding.get(), "get_ctr_content") : nullptr);
+    if (!content.get() || !api.Call(content.get(), "get_panel")) { tooltipView.builder.reset(); return; }
+    Ref list(api.Call(binding.get(), "get_ctr_monsterList"));
+    // The marks of the lines are drawn again with them.
+    Ref hierarchy(api.Call(list.get(), "get_hierarchy"));
+    const int lines = api.Value<int>(api.Call(hierarchy.get(), "get_childCount"));
+    for (int i = 0; i < lines && i < 32; ++i) {
+        Ref line(api.Call(hierarchy.get(), "get_Item", {&i}));
+        Ref label(Named(line.get(), "lbl_monsterName"));
+        Ref parent(label.get() ? api.Call(label.get(), "get_parent") : nullptr);
+        if (!parent.get()) continue;
+        Ref children(api.Call(parent.get(), "get_hierarchy"));
+        for (int k = api.Value<int>(api.Call(children.get(), "get_childCount")); k-- > 0;) {
+            Ref child(api.Call(children.get(), "get_Item", {&k}));
+            if (child.get() && api.object_get_class(child.get()) == statusIconClass && api.String(api.Call(child.get(), "get_name")).empty() && child.get() != label.get()) {
+                const int figma = api.Value<int>(api.Call(child.get(), "get_icon"));
+                if (figma == IconExclamation || figma == IconTrophy || figma == IconTick) api.Call(child.get(), "RemoveFromHierarchy");
+            }
+        }
+    }
+    DecorateTooltip(tooltipView.builder.get());
 }
 }
 
@@ -769,6 +980,34 @@ void InstallBossAchievements() {
         Field(details, "dcmb", 16); Field(details, "dcmc", 24);
         Field(api.Class("Core.dll", "", "gv"), "dcly", 16);
         Field(api.Class("Ankama.Dofus.Protocol.Game.dll", "", "mdv"), "fgtm", 24);
+        const auto questSpace = "Core.DataCenter.Metadata.Quest";
+        questObjectivesRoot = api.FindVerified(data, "get_questObjectivesDataRoot", 0, 0X7B7030);
+        questObjectiveById = api.FindVerified(api.Class(DataImage, "Core.DataCenter.Metadata.Quest", "QuestObjectivesDataRoot"), "GetQuestObjectiveById", 1, 0X7C2220);
+        questsRoot = api.FindVerified(data, "get_questsDataRoot", 0, 0X7B7210);
+        questById = api.FindVerified(api.Class(DataImage, "Core.DataCenter.Metadata.Quest", "QuestsDataRoot"), "GetQuestById", 1, 0X7C27D0);
+        const auto questData = api.Class(DataImage, questSpace, "QuestData");
+        questName = api.FindVerified(questData, "get_name", 0, 0x7BFB90);
+        const auto questObjective = api.Class(DataImage, questSpace, "QuestObjectiveData");
+        Field(questObjective, "parameters", 32);
+        objectiveText = api.FindVerified(questObjective, "get_text", 0, 0x7C0E10);
+        objectiveStep = api.FindVerified(questObjective, "get_questStep", 0, 0x7C0D80);
+        Field(api.Class(DataImage, questSpace, "QuestStepData"), "questId", 20);
+        const auto questParameters = api.Class(DataImage, "Core.DataCenter.Metadata.Quest.Objective", "QuestObjectiveParametersData");
+        Field(questParameters, "parameter0", 20); Field(questParameters, "parameter4", 36);
+        questServiceClass = api.Class("Core.dll", "", "fdi");
+        Field(questServiceClass, "<dtdg>k__BackingField", 120); // Its active objectives (fdi.bdah).
+        statusIconClass = api.Class("Core.dll", "Core.UILogic.Components.Figma", "DofusIcon");
+        iconCtor = api.FindVerified(statusIconClass, ".ctor", 0, 0x1708660);
+        iconSet = api.FindVerified(statusIconClass, "set_icon", 1, 0x1708F10);
+        iconColor = api.FindVerified(statusIconClass, "set_color", 1, 0x1708CC0);
+        api.FindVerified(statusIconClass, "get_icon", 0, 0x1591900);
+        const auto visual = api.Class(Ui, UiSpace, "VisualElement");
+        api.FindVerified(visual, "Insert", 2, 0x55AAA50); api.FindVerified(visual, "IndexOf", 1, 0x55AA8F0);
+        const auto tooltipBinding = api.Class("Core.dll", "Core.UI.Bindings", "WorldRpMonstersGroupTooltipBinding");
+        api.FindVerified(tooltipBinding, "get_ctr_content", 0, 0x18A2010); api.FindVerified(tooltipBinding, "get_ctr_monsterList", 0, 0x18A2390);
+        const auto groupTooltip = api.Class("Core.dll", "Core.UILogic.Components.Tooltips.Builder", "WorldRpMonstersGroupTooltipBuilder");
+        Field(groupTooltip, "m_monstersInfo", 320);
+        AddHook(api.FindVerified(groupTooltip, "SetupViewWithContent", 0, 0x1666600), 0x1666600, reinterpret_cast<void*>(&TooltipSetupHook), reinterpret_cast<void**>(&originalTooltipSetup));
         const auto handler = api.Class("Core.dll", "", "fcv");
         AddHook(api.FindVerified(handler, "bcvi", 1, 0x1AA7320), 0x1AA7320, reinterpret_cast<void*>(&AnswerHook<0>), reinterpret_cast<void**>(&originalAnswer[0]));
         AddHook(api.FindVerified(handler, "jnm", 1, 0x1AAEB40), 0x1AAEB40, reinterpret_cast<void*>(&AnswerHook<1>), reinterpret_cast<void**>(&originalAnswer[1]));
@@ -801,6 +1040,7 @@ void InstallBossAchievements() {
         SetSoulGroupMenuExtension(Extend);
         installed = true;
         Log("BOSS_ACHIEVEMENTS_READY");
+        Log("MONSTER_TOOLTIP_READY");
     } catch (const std::exception& error) {
         Log(std::string("BOSS_ACHIEVEMENTS_UNAVAILABLE ") + error.what());
     }
@@ -850,9 +1090,15 @@ void TickBossAchievements() {
         try {
             if (doneClass.empty() && doneClassOf) { Ref name(api.Invoke(doneClassOf, nullptr)); doneClassOf = nullptr; if (name.get()) doneClass = api.String(name.get()); }
             WatchFight();
-            PumpQuestions();
         }
         catch (const std::exception& error) { Log(std::string("BOSS_ACHIEVEMENTS_FIGHT_ERROR ") + error.what()); }
+    }
+    if (Session()) {
+        try { PumpQuestions(); RefreshTooltip(); }
+        catch (const std::exception& error) {
+            if (!tooltipReported) Log(std::string("MONSTER_TOOLTIP_ERROR ") + error.what());
+            tooltipReported = true;
+        }
     }
     if (!wanted || !Session() || state.cleanup || (state.window.get() && !Current())) {
         if (wanted || state.window.get() || state.cleanup) RestoreBossAchievements();

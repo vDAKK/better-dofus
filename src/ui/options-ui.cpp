@@ -51,7 +51,7 @@ constexpr const char* AnimationDescriptions[] = {
 // The checkboxes added in 1.13.0, 1.14.0, 1.16.0, 1.17.1, 1.18.0, 1.19.0, 1.20.0 and 1.20.2, in the order of Settings' ExtraToggles.
 enum ExtraRow : size_t { MiniMapBarRow, MiniMapZoneNameRow, NotebookPingRow, NotebookCopyRow, NotebookTravelRow, MapAddPositionRow,
     PerfOverlayRow, PerfGpuRow, PerfDiskRow, PerfDragRow, PerfButtonRow, NotebookSendRow, GaugeVerticalRow, PartyTravelRow, CursorGameRow,
-    PresetWindowsRow, ReloginGuardRow, RecipeCardRow, QuestTravelRow, ItemSearchRow, CraftListRow, BossAchievementsRow, CombatAchievementsRow };
+    PresetWindowsRow, ReloginGuardRow, RecipeCardRow, QuestTravelRow, ItemSearchRow, CraftListRow, BossAchievementsRow, CombatAchievementsRow, MonsterTooltipRow };
 constexpr CheckRow ExtraRows[] = {
     {"Barre des ressources sur la mini-carte", "Affiche sur la mini-carte la barre des six métiers qui ouvre le choix des ressources. Décochée, la barre et sa liste disparaissent, mais les repères des ressources choisies restent affichés si « Ressources sur la mini-carte » est cochée ; le choix se fait alors depuis la grande carte. Activé par défaut."},
     {"Nom de la zone au survol de la mini-carte", "Sur la mini-carte, l’infobulle de la case survolée affiche le nom de sa zone au-dessus de ses coordonnées. Activé par défaut."},
@@ -90,7 +90,9 @@ constexpr CheckRow ExtraRows[] = {
     // 2.6.0: boss-achievements.cpp.
     {"Succès au clic droit sur un monstre", "Le clic droit sur un groupe dont les monstres ont des succès les propose dans une petite fenêtre, avec ceux du donjon pour un boss : ceux à faire, avec leur description, et ceux que ce personnage a déjà faits."},
     // 2.8.0, in the fight's panel since 2.9.0.
-    {"Succès dans le panneau de combat", "En combat, ajoute au panneau des challenges une icône pour chaque succès auquel il manque un des monstres adverses. Le survol détaille ses objectifs, le clic ouvre la fenêtre des succès. Pour le savoir, le mod demande au serveur l’avancement de ces succès, comme la fenêtre des succès du jeu."}};
+    {"Succès dans le panneau de combat", "En combat, ajoute au panneau des challenges une icône pour chaque succès auquel il manque un des monstres adverses. Le survol détaille ses objectifs, le clic ouvre la fenêtre des succès. Pour le savoir, le mod demande au serveur l’avancement de ces succès, comme la fenêtre des succès du jeu."},
+    // 2.11.0: boss-achievements.cpp, the game's tooltip of a group.
+    {"Quêtes et succès au survol des monstres", "Au survol d’un groupe de monstres, son infobulle montre les quêtes actives qui le concernent et le succès qu’il fait avancer, et marque les monstres encore à vaincre. Pour les succès, le mod demande au serveur leur avancement, au plus une fois en dix minutes par succès."}};
 // « Dimension avec les coordonnées » on the big map, the mini-map and in the
 // chat: the same three choices, each id the saved mode (Settings'
 // coordsWorld*Mode), « Oui, sauf dans le Monde des Douze » by default.
@@ -1210,7 +1212,7 @@ bool OptionsUi::Attach(Obj page) {
         {"Chat", {chatTravelOption.get(), chatSoulOption.get(), chatOcreOption.get(), chatMetamobOption.get(), chatCoordsOption.get()}},
         {"Calendrier", {calendarKraloveOption.get()}},
         {"Métiers", {extra(RecipeCardRow), extra(ItemSearchRow), extra(CraftListRow)}},
-        {"Succès", {extra(BossAchievementsRow), extra(CombatAchievementsRow)}},
+        {"Succès", {extra(BossAchievementsRow), extra(CombatAchievementsRow), extra(MonsterTooltipRow)}},
         {"Performances", {extra(PerfOverlayRow), extra(PerfGpuRow), extra(PerfDiskRow), extra(PerfDragRow), extra(PerfButtonRow)}},
         {"Statistiques", {statsOption.get(), statsOpenOption.get(), statsButtonOption.get()}},
         // 1.20.2: the relogin after an inactivity disconnection.
