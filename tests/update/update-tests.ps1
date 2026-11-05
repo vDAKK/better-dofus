@@ -214,5 +214,9 @@ try {
     if ([IO.Path]::GetDirectoryName([IO.Path]::GetFullPath($fixture)) -ne [IO.Path]::GetFullPath($build) -or
         [IO.Path]::GetFileName($fixture) -notmatch '^update-fixtures-[a-f0-9]{32}$') { throw 'Invalid fixture cleanup target' }
     Assert-PlainPath $fixture $true
-    Remove-Item -LiteralPath $fixture -Recurse -Force
+    # A file just written can stay briefly held by another process (an antivirus).
+    for ($attempt = 1; ; $attempt++) {
+        try { Remove-Item -LiteralPath $fixture -Recurse -Force -ErrorAction Stop; break }
+        catch { if ($attempt -ge 20) { throw }; Start-Sleep -Milliseconds 250 }
+    }
 }

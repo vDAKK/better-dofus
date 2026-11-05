@@ -27,6 +27,7 @@
 #include "notebook/notebook-panel.hpp"
 #include "ui/tools-ui.hpp"
 #include "jobs/jobs-xp-panel.hpp"
+#include "jobs/recipe-card.hpp"
 #include "maps/archi-zones.hpp"
 #include "stats/stats.hpp"
 #include "stats/stats-window.hpp"
@@ -546,6 +547,7 @@ static DWORD WINAPI Worker(void*) {
         InstallStatsWindow();
         InstallPresetWindows(); // never throws: PRESET_WINDOWS_UNAVAILABLE leaves the game's layouts as they are
         InstallJobsXp();
+        InstallRecipeCard(); // never throws: RECIPE_CARD_UNAVAILABLE leaves the game's recipes as they are
         InstallArchiZones();
         InstallCalendarKralove();
         InstallSoulWidget();

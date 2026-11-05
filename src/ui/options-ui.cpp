@@ -17,7 +17,7 @@ namespace {
 constexpr int ModCategory = 0x4D4F44;
 // Native sections of the mod's category (see Attach), in display order: ids
 // ModCategory + 1 to ModCategory + ModSections.
-constexpr int ModSections = 17;
+constexpr int ModSections = 18;
 constexpr int GameCategory = 0;
 constexpr const char* Config = "Core.UILogic.Config";
 constexpr const char* Elements = "Core.UILogic.Config.OptionElement";
@@ -51,7 +51,7 @@ constexpr const char* AnimationDescriptions[] = {
 // The checkboxes added in 1.13.0, 1.14.0, 1.16.0, 1.17.1, 1.18.0, 1.19.0, 1.20.0 and 1.20.2, in the order of Settings' ExtraToggles.
 enum ExtraRow : size_t { MiniMapBarRow, MiniMapZoneNameRow, NotebookPingRow, NotebookCopyRow, NotebookTravelRow, MapAddPositionRow,
     PerfOverlayRow, PerfGpuRow, PerfDiskRow, PerfDragRow, PerfButtonRow, NotebookSendRow, GaugeVerticalRow, PartyTravelRow, CursorGameRow,
-    PresetWindowsRow, ReloginGuardRow };
+    PresetWindowsRow, ReloginGuardRow, RecipeCardRow };
 constexpr CheckRow ExtraRows[] = {
     {"Barre des ressources sur la mini-carte", "Affiche sur la mini-carte la barre des six métiers qui ouvre le choix des ressources. Décochée, la barre et sa liste disparaissent, mais les repères des ressources choisies restent affichés si « Ressources sur la mini-carte » est cochée ; le choix se fait alors depuis la grande carte. Activé par défaut."},
     {"Nom de la zone au survol de la mini-carte", "Sur la mini-carte, l’infobulle de la case survolée affiche le nom de sa zone au-dessus de ses coordonnées. Activé par défaut."},
@@ -79,7 +79,9 @@ constexpr CheckRow ExtraRows[] = {
     {"Garder les fenêtres du mod dans les affichages enregistrés", "Quand tu enregistres un affichage du jeu, le mod garde avec lui ses propres fenêtres telles qu’elles sont : la fenêtre des statistiques, le carnet (et sa version compacte) et la chasse au trésor, ouvertes ou fermées, à leur place et à leur taille ; la taille de leur titre et de celui de la pierre d’âme ; Capture d’âme ; l’affichage des performances (affiché ou masqué, ses mesures, sa place et sa taille) ; les jauges à la verticale, avec leur longueur et leur place. Quand tu appliques cet affichage, le mod les remet ainsi. L’affichage de combat aussi : au début d’un combat, les fenêtres du mod prennent celles gardées avec lui, et reviennent à la fin comme avant le combat. Un affichage enregistré avant cette version, ou avec cette case décochée, laisse les fenêtres du mod comme elles sont ; enregistre-le à nouveau pour qu’il les garde. Un carnet en cours de modification reste ouvert. Le mod ne modifie jamais les affichages du jeu : il garde ses fenêtres dans son propre fichier, et les oublie quand tu supprimes l’affichage. Décochée, enregistrer ou appliquer un affichage ne touche plus aux fenêtres du mod. Activé par défaut."},
     // « Chargement et mises à jour » (1.20.2): the login going on after an
     // inactivity disconnection (relogin-guard.cpp).
-    {"Reconnexion après une déconnexion", "Après une déconnexion pour inactivité, le bouton « Jouer » peut charger sans fin quand le lanceur Ankama ne renvoie pas les informations du compte : le jeu s’arrête alors sur une erreur. Cochée, le mod laisse le jeu continuer sa connexion comme il le fait quand ces informations sont incomplètes : il demande au lanceur son jeton de connexion. Aucune donnée du compte n’est inventée ni lue. Si le chargement reste bloqué, relance le jeu depuis le lanceur. Activé par défaut."}};
+    {"Reconnexion après une déconnexion", "Après une déconnexion pour inactivité, le bouton « Jouer » peut charger sans fin quand le lanceur Ankama ne renvoie pas les informations du compte : le jeu s’arrête alors sur une erreur. Cochée, le mod laisse le jeu continuer sa connexion comme il le fait quand ces informations sont incomplètes : il demande au lanceur son jeton de connexion. Aucune donnée du compte n’est inventée ni lue. Si le chargement reste bloqué, relance le jeu depuis le lanceur. Activé par défaut."},
+    // 2.2.0: an item's recipe in the game's pinned tooltip (recipe-card.cpp).
+    {"Fiche de recette", "Ouvrir la recette d’un objet affiche l’infobulle du jeu, épinglée et déplaçable, avec ses ingrédients, ce que tu as au sac et en banque, et le prix moyen du craft. Les infobulles d’objets donnent aussi ce prix. Décochée, le jeu ouvre sa grande fenêtre de toutes les recettes liées. Un objet sans recette l’ouvre aussi."}};
 // « Dimension avec les coordonnées » on the big map, the mini-map and in the
 // chat: the same three choices, each id the saved mode (Settings'
 // coordsWorld*Mode), « Oui, sauf dans le Monde des Douze » by default.
@@ -1198,6 +1200,7 @@ bool OptionsUi::Attach(Obj page) {
         {"Pierre d’âme", {soulOption.get(), soulAutoOption.get(), soulButtonOption.get(), metamobSyncOption.get(), metamobKeyOption.get()}},
         {"Chat", {chatTravelOption.get(), chatSoulOption.get(), chatOcreOption.get(), chatMetamobOption.get(), chatCoordsOption.get()}},
         {"Calendrier", {calendarKraloveOption.get()}},
+        {"Métiers", {extra(RecipeCardRow)}},
         {"Performances", {extra(PerfOverlayRow), extra(PerfGpuRow), extra(PerfDiskRow), extra(PerfDragRow), extra(PerfButtonRow)}},
         {"Statistiques", {statsOption.get(), statsOpenOption.get(), statsButtonOption.get()}},
         // 1.20.2: the relogin after an inactivity disconnection.

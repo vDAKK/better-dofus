@@ -1,5 +1,7 @@
 #include "jobs/jobs-xp-panel.hpp"
 #include "jobs/jobs-xp-data.hpp"
+#include "jobs/recipe-cost.hpp"
+#include "jobs/recipe-native.hpp"
 #include "core/module.hpp"
 #include "souls/soul-panel.hpp"
 #include "ui/native-click.hpp"
@@ -228,7 +230,17 @@ void RenderIngredients(const jobsxp::Recipe& recipe,int count) {
         // Keep native item first and the total/name alongside it.
         const int64_t total=static_cast<int64_t>(ingredient.quantity)*count;
         const bool available=BindItem(view,view.visual.get(),ingredient.id,total);
-        Text(view.label.get(),std::to_string(total)+" × "+ingredient.name+(available?"":" · objet indisponible dans cette version"));
+        const auto stock=recipeNative::Owned(ingredient.id);
+        const auto owned=stock.bag+stock.bank;
+        const auto missing=recipeCost::Missing(total,owned);
+        std::string text=std::to_string(total)+" × "+ingredient.name+(available?"":" · objet indisponible dans cette version");
+        if(stock.bagKnown){
+            text+="\nSac "+std::to_string(stock.bag)+(stock.bankKnown?" · Banque "+std::to_string(stock.bank):" · Banque non lue");
+            text+=missing?" · il en manque "+std::to_string(missing):" · tu as tout";
+        }
+        const auto price=recipeNative::AveragePrice(ingredient.id);
+        if(price>0)text+=(stock.bagKnown?" · ":"\n")+recipeCost::Kamas(price*total);
+        Text(view.label.get(),text);
     }
 }
 bool Current() {
@@ -309,6 +321,10 @@ void Render() {
         if(plan.count==0&&plan.reached)text="Niveau déjà atteint.";
         else {
             text=std::to_string(plan.count)+" × "+r.name+" : +"+std::to_string(plan.xp-state.xp)+" XP, niveau "+std::to_string(jobsxp::Level(plan.xp));
+            std::vector<recipeCost::Line> lines;
+            for(const auto& ingredient:r.ingredients)lines.push_back({ingredient.quantity,recipeNative::AveragePrice(ingredient.id)});
+            const auto cost=recipeCost::Sum(lines,plan.count);
+            if(cost.cost>0)text+="\nCoût moyen : "+recipeCost::Kamas(cost.cost)+(cost.unpriced?" (sans "+std::to_string(cost.unpriced)+" ingrédient(s) sans prix)":"");
             if(!plan.reached)text+="\nCette recette ne suffit pas : choisis-en une autre.";
         }
         Text(state.details.get(),text);
@@ -555,7 +571,7 @@ void TickJobsXp(){
         if(!state.active)return;
         TabValue(state.tab.get(),true);
         const auto now=GetTickCount64();
-        if(now>=state.nextPoll){state.nextPoll=now+500;UpdateCharacter();}
+        if(now>=state.nextPoll){state.nextPoll=now+500;UpdateCharacter();if(state.selected>=0)Render();} // The bag changes while the tab is open.
         if(state.request&&state.request->done.load()){
             auto request=std::move(state.request);
             if(jobsxp::AcceptResult(state.generation,request->generation,state.query,request->query,request->cancelled.load())){

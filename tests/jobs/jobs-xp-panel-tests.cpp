@@ -2,6 +2,8 @@
 #include "appearance/features.hpp"
 #include "ui/options-ui.hpp"
 #include "jobs/jobs-xp-data.hpp"
+#include "jobs/recipe-native.hpp"
+using fixture_stock_t=recipeNative::Stock;
 #include <algorithm>
 #include <array>
 #include <climits>
@@ -255,6 +257,11 @@ void AddHook(managed::Method,uintptr_t rva,void*,void** original){
     else throw std::runtime_error("Unexpected hook");
 }
 namespace soul {void SetAuxiliaryPanelAction(bool(*fn)(managed::Obj)){fixture::action=fn;}}
+namespace recipeNative {
+fixture_stock_t fixtureStock;
+int64_t AveragePrice(int item){return item==1?100:0;}
+Stock Owned(int item){return item==1?Stock{3,4,true,true}:fixtureStock;}
+}
 namespace nativeClick {bool(*handler)(managed::Obj)=nullptr;void AddHandler(bool(*fn)(managed::Obj)){handler=fn;}}
 namespace jobsxp {
 Page Fetch(const Query& query,const std::atomic_bool& cancel){
@@ -360,6 +367,17 @@ int main(){
             const auto& ingredient=state.page.recipes[0].ingredients[i];
             CheckNativeItem(state.ingredients[i].tile.get(),ingredient.id,int64_t(ingredient.quantity)*plan.count);
         }
+        // The shopping list: what is owned, what is missing, what it costs.
+        const auto first=int64_t(state.page.recipes[0].ingredients[0].quantity)*plan.count;
+        const auto firstLabel=Get(state.ingredients[0].label.get()).text;
+        Check(firstLabel.find("Sac 3 · Banque 4")!=std::string::npos,"The ingredient says what the bag and the bank hold");
+        Check(firstLabel.find(first>7?"il en manque "+std::to_string(first-7):"tu as tout")!=std::string::npos,"The ingredient says what is left to gather");
+        Check(firstLabel.find(recipeCost::Kamas(100*first))!=std::string::npos,"The ingredient says what it costs");
+        Check(Get(state.ingredients[1].label.get()).text.find("Banque")==std::string::npos,"An unknown stock says nothing");
+        recipeNative::fixtureStock={2,0,true,false};Render();
+        Check(Get(state.ingredients[1].label.get()).text.find("Sac 2 · Banque non lue")!=std::string::npos,"An unread bank is not an empty bank");
+        recipeNative::fixtureStock={};Render();
+        Check(Get(state.details.get()).text.find("Coût moyen : "+recipeCost::Kamas(100*first)+" (sans 1 ingrédient(s) sans prix)")!=std::string::npos,"The plan's cost, unknown prices said");
         const auto regularIngredient=state.ingredients[0].tile.get();
         state.page.recipes[0].ingredients[0].quantity=INT_MAX;Render();
         const auto largeTotal=int64_t(INT_MAX)*plan.count;

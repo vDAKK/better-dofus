@@ -66,7 +66,7 @@ constexpr Flag ExtraFlags[] = {
     {"perfOverlayDrag", &Settings::perfOverlayDrag}, {"perfOverlayButton", &Settings::perfOverlayButton},
     {"notebookSendButtons", &Settings::notebookSendButtons}, {"gaugeVerticalMenu", &Settings::gaugeVerticalMenu},
     {"partyTravelButton", &Settings::partyTravelButton}, {"customCursorGame", &Settings::customCursorGame},
-    {"presetModWindows", &Settings::presetModWindows}, {"reloginGuard", &Settings::reloginGuard}};
+    {"presetModWindows", &Settings::presetModWindows}, {"reloginGuard", &Settings::reloginGuard}, {"recipeCard", &Settings::recipeCard}};
 static_assert(std::size(ExtraFlags) == std::size(ExtraToggles));
 }
 
