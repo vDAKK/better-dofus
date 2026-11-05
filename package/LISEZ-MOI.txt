@@ -10,9 +10,13 @@ all game rights belong to Ankama. I do not know whether using this mod is
 allowed by Ankama's terms: a ban cannot be completely ruled out. Use it at
 your own risk; the software is provided "as is", without any warranty.
 
-BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.11.0
+BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.11.1
 
 INSTALLATION : double-clique sur BetterDofusLoader.exe, puis lance Dofus.
+
+VERSION 2.11.1 : L’INFOBULLE DES MONSTRES CORRIGÉE
+- Rien ne s’affichait dans l’infobulle : le mod lisait la mauvaise liste d’objectifs de
+  quête, et cette erreur bloquait aussi les succès. Quêtes et succès sont indépendants.
 
 VERSION 2.11.0 : QUÊTES ET SUCCÈS AU SURVOL DES MONSTRES
 - L’infobulle d’un groupe montre les quêtes actives qui le concernent et le succès

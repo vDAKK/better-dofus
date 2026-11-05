@@ -86,7 +86,9 @@ Method questObjectivesRoot = nullptr, questObjectiveById = nullptr, questsRoot =
 Klass questServiceClass = nullptr, statusIconClass = nullptr;
 struct ActiveObjective { std::vector<int> parameters; std::string text, folded, quest; };
 std::map<int, ActiveObjective> activeObjectives;
-bool tooltipReported = false, wasInFight = false;
+bool tooltipReported = false, questsReported = false, questsSummarized = false, wasInFight = false;
+Method arrayGetValue = nullptr;
+Ref shortType;
 constexpr const char* TooltipBlockName = "better_dofus_monster_block";
 constexpr int IconTick = 307, IconTrophy = 320, IconExclamation = 130;
 using AnswerFn = void (*)(Obj, Obj, Method);
@@ -722,6 +724,23 @@ void WatchFight() {
     if (!panel.icons.empty()) Show(list.get(), true);
     Log("BOSS_ACHIEVEMENTS_PANEL icons=" + std::to_string(panel.icons.size()) + " todo=" + std::to_string(sorted.todo.size()));
 }
+// The keys of a Dictionary<short, ...> of the game: copied to an array, as they cannot be
+// walked from here without its generic enumerator.
+std::vector<int> ShortKeys(Obj dictionary) {
+    std::vector<int> result;
+    if (!dictionary) return result;
+    Ref keys(api.Call(dictionary, "get_Keys"));
+    int count = api.Value<int>(api.Call(keys.get(), "get_Count"));
+    if (count <= 0 || count > 1024) return result;
+    Ref items(api.Invoke(createArray, nullptr, {shortType.get(), &count}));
+    int start = 0;
+    api.Call(keys.get(), "CopyTo", {items.get(), &start});
+    for (int i = 0; i < count; ++i) {
+        Ref value(api.Invoke(arrayGetValue, items.get(), {&i}));
+        result.push_back(api.Value<short>(value.get()));
+    }
+    return result;
+}
 // The game's tooltip of a group, on the map. Its own lines are found again by the
 // monsters' names, as nothing else ties them to a monster.
 const ActiveObjective* ReadActiveObjective(int id) {
@@ -777,28 +796,47 @@ void DecorateTooltip(Obj builder) {
     Ref block(api.New(api.Class(Ui, UiSpace, "VisualElement")));
     Text(block.get(), TooltipBlockName, "set_name");
     bool any = false;
-    // The active quests: known to the game without asking.
-    Ref service(module->FindService("fnp"));
-    if (service.get() && api.object_get_class(service.get()) == questServiceClass) {
-        Ref active(api.Field(service.get(), "<dtdg>k__BackingField"));
-        size_t shown = 0;
-        for (const int id : Numbers(active.get())) {
-            const auto* objective = ReadActiveObjective(id);
-            if (!objective) continue;
-            bool concerned = false;
-            for (const auto& [monster, name] : monsterNames)
-                if (ObjectiveOnMonster(objective->parameters, monster, objective->folded, itemSearch::Fold(name))) { questMonsters.insert(monster); concerned = true; }
-            if (!concerned || shown >= 3) continue;
-            ++shown; any = true;
-            Ref line(Element(block.get()));
-            Set<int>(line.get(), "flexDirection", 2); Pixels(line.get(), "marginBottom", 4);
-            Add(line.get(), Ref(StatusIcon(IconExclamation, 0.85f, 0.95f, 0.2f)).get());
-            Ref words(Element(line.get()));
-            Set<float>(words.get(), "flexShrink", 1.f); Set<float>(words.get(), "flexGrow", 1.f);
-            Ref title(Label(words.get(), objective->quest, nativeStyle::Strong));
-            Ref detail(Label(words.get(), objective->text, nativeStyle::Secondary));
-            (void)title; (void)detail;
+    // The active quests: what the game holds of them, per objective, without asking. Each
+    // part has its own failure: the achievements stay if the quests cannot be read.
+    try {
+        Ref service(module->FindService("fnp"));
+        if (service.get() && api.object_get_class(service.get()) == questServiceClass) {
+            Ref details(api.Field(service.get(), "<dtdc>k__BackingField"));
+            const auto quests = ShortKeys(details.get());
+            size_t shown = 0, objectives = 0;
+            for (int questKey : quests) {
+                short key = static_cast<short>(questKey);
+                Ref quest(api.Call(details.get(), "get_Item", {&key}));
+                Ref statuses(quest.get() ? api.Field(quest.get(), "dtbt") : nullptr);
+                for (const int id : ShortKeys(statuses.get())) {
+                    short objectiveKey = static_cast<short>(id);
+                    Ref status(api.Call(statuses.get(), "get_Item", {&objectiveKey}));
+                    if (!status.get() || !api.Value<bool>(status.get())) continue; // Done already.
+                    ++objectives;
+                    const auto* objective = ReadActiveObjective(id);
+                    if (!objective) continue;
+                    bool concerned = false;
+                    for (const auto& [monster, name] : monsterNames)
+                        if (ObjectiveOnMonster(objective->parameters, monster, objective->folded, itemSearch::Fold(name))) { questMonsters.insert(monster); concerned = true; }
+                    if (!concerned || shown >= 3) continue;
+                    ++shown; any = true;
+                    Ref line(Element(block.get()));
+                    Set<int>(line.get(), "flexDirection", 2); Pixels(line.get(), "marginBottom", 4);
+                    Add(line.get(), Ref(StatusIcon(IconExclamation, 0.85f, 0.95f, 0.2f)).get());
+                    Ref words(Element(line.get()));
+                    Set<float>(words.get(), "flexShrink", 1.f); Set<float>(words.get(), "flexGrow", 1.f);
+                    Ref title(Label(words.get(), objective->quest, nativeStyle::Strong));
+                    Ref detail(Label(words.get(), objective->text, nativeStyle::Secondary));
+                }
+            }
+            if (!questsSummarized) {
+                questsSummarized = true;
+                Log("MONSTER_TOOLTIP_QUESTS quests=" + std::to_string(quests.size()) + " activeObjectives=" + std::to_string(objectives) + " shown=" + std::to_string(shown));
+            }
         }
+    } catch (const std::exception& error) {
+        if (!questsReported) Log(std::string("MONSTER_TOOLTIP_QUESTS_ERROR ") + error.what());
+        questsReported = true;
     }
     // The achievements still missing one of these monsters.
     if (auto target = FromMonsters(monsters, true)) {
@@ -995,7 +1033,10 @@ void InstallBossAchievements() {
         const auto questParameters = api.Class(DataImage, "Core.DataCenter.Metadata.Quest.Objective", "QuestObjectiveParametersData");
         Field(questParameters, "parameter0", 20); Field(questParameters, "parameter4", 36);
         questServiceClass = api.Class("Core.dll", "", "fdi");
-        Field(questServiceClass, "<dtdg>k__BackingField", 120); // Its active objectives (fdi.bdah).
+        Field(questServiceClass, "<dtdc>k__BackingField", 88); // Its quests' details, by quest (fdi.bdal).
+        Field(api.Class("Core.dll", "", "fcz"), "dtbt", 24); // By objective, its status (fde.bcyw).
+        arrayGetValue = api.FindVerified(array, "GetValue", 1, 0X42C6670);
+        shortType.reset(api.type_get_object(api.class_get_type(api.Class("mscorlib.dll", "System", "Int16"))));
         statusIconClass = api.Class("Core.dll", "Core.UILogic.Components.Figma", "DofusIcon");
         iconCtor = api.FindVerified(statusIconClass, ".ctor", 0, 0x1708660);
         iconSet = api.FindVerified(statusIconClass, "set_icon", 1, 0x1708F10);
