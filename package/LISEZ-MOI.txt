@@ -10,9 +10,14 @@ all game rights belong to Ankama. I do not know whether using this mod is
 allowed by Ankama's terms: a ban cannot be completely ruled out. Use it at
 your own risk; the software is provided "as is", without any warranty.
 
-BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.5.1
+BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.6.0
 
 INSTALLATION : double-clique sur BetterDofusLoader.exe, puis lance Dofus.
+
+VERSION 2.6.0 : LES SUCCÈS D’UN BOSS AU CLIC DROIT
+- Le clic droit sur le groupe d’un boss propose ses succès et ceux de son donjon.
+  Une petite fenêtre liste ceux à faire, avec leur description, et ceux déjà faits.
+  Réglage : Succès, dans les options du mod.
 
 VERSION 2.5.1 : UN CLIC SUR UNE RESSOURCE POUR L’HÔTEL DE VENTE
 - À l’hôtel de vente, un clic sur le nom ou l’icône d’une ressource l’affiche dans

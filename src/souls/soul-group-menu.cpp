@@ -17,6 +17,7 @@ soul::MonsterCaptureData captureData;
 bool installed = false;
 using CreateFn = Obj(*)(Obj, Method);
 CreateFn originalCreate = nullptr;
+void (*groupMenuExtension)(Obj, Obj) = nullptr;
 bool Available() { return installed && module && module->ready && module->servicesReady && !module->stopped && !module->stopRequested && !module->InCombat(); }
 int Count(Obj list) {
     if (!list) return 0;
@@ -84,6 +85,15 @@ int Highest(const Menu& menu) {
 Obj CreateHook(Obj maker, Method method) {
     Obj result=originalCreate(maker,method);
     if (!Available() || !result) return result;
+    if (groupMenuExtension) try {
+        Ref entity(api.Field(maker,"m_data")), statics(api.Field(maker,"m_staticInfoService"));
+        if (entity.get() && statics.get()) {
+            int64_t id=api.Value<int64_t>(api.Invoke(entityId,entity.get()));
+            Ref groups(api.Invoke(store,statics.get()));
+            Obj group=nullptr;
+            if (groups.get() && api.Value<bool>(api.Invoke(api.FindVerified(api.object_get_class(groups.get()),"baqa",2,0x3BBE660),groups.get(),{&id,&group})) && group) groupMenuExtension(result,group);
+        }
+    } catch (const std::exception& e) { Log(std::string("GROUP_MENU_EXTENSION_ERROR ")+e.what()); }
     try {
         RestoreSoulGroupMenu();
         auto next=std::make_unique<Menu>();
@@ -149,6 +159,7 @@ bool HandleSoulGroupMenuCallback(managed::Obj callback, managed::Obj view) {
     } catch (const std::exception& e) { Log(std::string("SOUL_GROUP_EQUIP_ERROR ")+e.what()); }
     return true;
 }
+void SetSoulGroupMenuExtension(void (*extension)(managed::Obj, managed::Obj)) { groupMenuExtension = extension; }
 void RestoreSoulGroupMenu() {
     auto old=std::move(owned); if (!old) return; old->armed=false;
     try {

@@ -66,7 +66,7 @@ constexpr Flag ExtraFlags[] = {
     {"perfOverlayDrag", &Settings::perfOverlayDrag}, {"perfOverlayButton", &Settings::perfOverlayButton},
     {"notebookSendButtons", &Settings::notebookSendButtons}, {"gaugeVerticalMenu", &Settings::gaugeVerticalMenu},
     {"partyTravelButton", &Settings::partyTravelButton}, {"customCursorGame", &Settings::customCursorGame},
-    {"presetModWindows", &Settings::presetModWindows}, {"reloginGuard", &Settings::reloginGuard}, {"recipeCard", &Settings::recipeCard}, {"questTravel", &Settings::questTravel}, {"itemSearchButton", &Settings::itemSearchButton}, {"craftListButton", &Settings::craftListButton}};
+    {"presetModWindows", &Settings::presetModWindows}, {"reloginGuard", &Settings::reloginGuard}, {"recipeCard", &Settings::recipeCard}, {"questTravel", &Settings::questTravel}, {"itemSearchButton", &Settings::itemSearchButton}, {"craftListButton", &Settings::craftListButton}, {"bossAchievements", &Settings::bossAchievements}};
 static_assert(std::size(ExtraFlags) == std::size(ExtraToggles));
 }
 

@@ -22,12 +22,13 @@ void RestorePresetWindows() { calls.push_back("presets"); }
 void CloseNotebookPanelOffWorld() { calls.push_back("notebook"); }
 void CloseItemSearchOffWorld() { calls.push_back("item-search"); }
 void CloseCraftListOffWorld() { calls.push_back("craft-list"); }
+void CloseBossAchievementsOffWorld() { calls.push_back("boss-achievements"); }
 void HideSoulHelper() { calls.push_back("soul"); }
 
 int main() {
     try {
         CloseWindowsOffWorld();
-        const std::vector<std::string> expected{"perf-overlay", "treasure", "stats", "presets", "notebook", "item-search", "craft-list", "soul"};
+        const std::vector<std::string> expected{"perf-overlay", "treasure", "stats", "presets", "notebook", "item-search", "craft-list", "boss-achievements", "soul"};
         if (calls != expected) throw std::runtime_error("Every window of the mod must close off the world");
         CloseWindowsOffWorld();
         if (calls.size() != 2 * expected.size()) throw std::runtime_error("Each pump off the world closes them again (a failed cleanup retries)");

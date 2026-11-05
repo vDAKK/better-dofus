@@ -2,6 +2,7 @@
 #include "notebook/notebook-panel.hpp"
 #include "ui/item-search.hpp"
 #include "jobs/craft-list-panel.hpp"
+#include "ui/boss-achievements.hpp"
 #include "souls/soul-helper.hpp"
 #include "stats/stats-window.hpp"
 #include "treasure/treasure-launch.hpp"
@@ -18,5 +19,6 @@ void CloseWindowsOffWorld() {
     CloseNotebookPanelOffWorld();
     CloseItemSearchOffWorld();
     CloseCraftListOffWorld();
+    CloseBossAchievementsOffWorld();
     HideSoulHelper();
 }

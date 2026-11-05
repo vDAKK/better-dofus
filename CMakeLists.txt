@@ -29,7 +29,7 @@ add_library(BetterDofus SHARED
   src/treasure/treasure-hunt.cpp
   src/ui/tools-ui.cpp src/notebook/notebook-data.cpp src/notebook/notebook-panel.cpp
   src/notebook/notebook-native.cpp src/ui/native-click.cpp
-  src/jobs/jobs-xp-data.cpp src/jobs/jobs-xp-http.cpp src/jobs/jobs-xp-panel.cpp src/jobs/recipe-native.cpp src/jobs/recipe-card.cpp src/ui/item-search.cpp src/jobs/craft-list.cpp src/jobs/craft-list-panel.cpp src/travel/quest-travel.cpp
+  src/jobs/jobs-xp-data.cpp src/jobs/jobs-xp-http.cpp src/jobs/jobs-xp-panel.cpp src/jobs/recipe-native.cpp src/jobs/recipe-card.cpp src/ui/item-search.cpp src/jobs/craft-list.cpp src/jobs/craft-list-panel.cpp src/ui/boss-achievements.cpp src/travel/quest-travel.cpp
   src/appearance/startup-options.cpp
   src/souls/soul-helper.cpp src/souls/soul-combat.cpp src/souls/soul-inventory.cpp src/souls/soul-panel.cpp
   src/souls/soul-widget.cpp src/maps/map-transitions.cpp src/maps/map-preload.cpp
@@ -244,6 +244,7 @@ dofus_test(JobsXpDataTests tests/jobs/jobs-xp-data-tests.cpp src/jobs/jobs-xp-da
 dofus_test(JobsXpPanelTests tests/jobs/jobs-xp-panel-tests.cpp src/jobs/jobs-xp-data.cpp)
 dofus_test(RecipeCostTests tests/jobs/recipe-cost-tests.cpp)
 dofus_test(ItemSearchTests tests/ui/item-search-tests.cpp)
+dofus_test(BossAchievementsTests tests/ui/boss-achievements-tests.cpp)
 dofus_test(CraftListTests tests/jobs/craft-list-tests.cpp src/jobs/craft-list.cpp)
 
 # Spouse in the party menu.
