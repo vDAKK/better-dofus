@@ -10,9 +10,13 @@ all game rights belong to Ankama. I do not know whether using this mod is
 allowed by Ankama's terms: a ban cannot be completely ruled out. Use it at
 your own risk; the software is provided "as is", without any warranty.
 
-BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.11.3
+BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.12.0
 
 INSTALLATION : double-clique sur BetterDofusLoader.exe, puis lance Dofus.
+
+VERSION 2.12.0 : UNE INFOBULLE DES MONSTRES PLUS LISIBLE
+- Quêtes et succès y ont un bandeau vert, et les monstres sont alignés à gauche, avec
+  leur trophée, leur coche ou leur point d’exclamation.
 
 VERSION 2.11.3 : LES TEXTES DES OBJECTIFS DE QUÊTE CORRIGÉS
 - Depuis la 2.11.0, survoler un groupe de monstres pouvait afficher les objectifs de

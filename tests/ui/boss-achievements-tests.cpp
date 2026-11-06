@@ -52,7 +52,7 @@ int main() {
         Check(ObjectiveLine("A", true, true) == "[x] A" && ObjectiveLine("A", true, false) == "[ ] A" && ObjectiveLine("A", false, false) == "- A", "An objective's line");
         Check(Measure(objectives, {1}).done == 1 && Measure(objectives, {1}).total == 2 && Percent(Measure(objectives, {1})) == 50, "The level does not count");
         Check(Measure(objectives, {3}).done == 0 && Percent(Progress{}) == 0, "Only the monsters count");
-        Check(Summary({9, 10}) == "90 % validé, 1 monstre restant" && Summary({0, 2}) == "0 % validé, 2 monstres restants", "The summary");
+        Check(Validated({9, 10}) == "90 % validé" && Remaining({9, 10}) == "1 monstre restant" && Remaining({0, 2}) == "2 monstres restants", "The summary");
         Check(MarkOf(10, objectives, {}) == Mark::Missing && MarkOf(10, objectives, {1}) == Mark::Done && MarkOf(30, objectives, {}) == Mark::None, "A monster's mark");
         Check(MarkOf(10, {{1, 10, "A"}, {5, 10, "A bis"}}, {1}) == Mark::Missing, "Still missing in another objective");
         Check(ObjectiveOnMonster({5, 10}, 10, "vaincre 5 bouftou", "bouftou"), "An objective on this monster");

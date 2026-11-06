@@ -81,9 +81,10 @@ inline Progress Measure(const std::vector<Objective>& objectives, const std::set
     return progress;
 }
 inline int Percent(const Progress& progress) { return progress.total ? progress.done * 100 / progress.total : 0; }
-inline std::string Summary(const Progress& progress) {
+inline std::string Validated(const Progress& progress) { return std::to_string(Percent(progress)) + " % validé"; }
+inline std::string Remaining(const Progress& progress) {
     const int left = progress.total - progress.done;
-    return std::to_string(Percent(progress)) + " % validé, " + std::to_string(left) + (left == 1 ? " monstre restant" : " monstres restants");
+    return std::to_string(left) + (left == 1 ? " monstre restant" : " monstres restants");
 }
 // A monster of the group, in a tooltip's list.
 enum class Mark { None, Missing, Done };

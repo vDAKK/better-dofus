@@ -90,6 +90,8 @@ bool tooltipReported = false, questsReported = false, questsSummarized = false, 
 Method arrayGetValue = nullptr;
 Ref shortType;
 constexpr const char* TooltipBlockName = "better_dofus_monster_block";
+constexpr const char* TooltipMarkName = "better_dofus_monster_mark";
+constexpr int AlignLeft = 3, AlignStart = 1; // TextAnchor.MiddleLeft, Align.FlexStart.
 constexpr int IconTick = 307, IconTrophy = 320, IconExclamation = 130;
 using AnswerFn = void (*)(Obj, Obj, Method);
 std::array<AnswerFn, 2> originalAnswer{};
@@ -779,6 +781,36 @@ Obj StatusIcon(int figma, float r, float g, float b) {
     Set<float>(icon.get(), "flexShrink", 0.f);
     return icon.get();
 }
+using Tint = std::array<float, 4>;
+constexpr Tint BandGreen{0.20f, 0.34f, 0.13f, 1.f}, BandEdge{0.42f, 0.62f, 0.22f, 1.f}, BadgeDark{0.10f, 0.15f, 0.07f, 0.85f}, FrameGold{0.95f, 0.75f, 0.25f, 1.f};
+// A colour the game's style sheets do not have. A style it refuses leaves the band plain.
+void Paint(Obj element, const char* property, Tint color) {
+    try { Set<Tint>(element, property, color); }
+    catch (const std::exception& error) {
+        if (!tooltipReported) Log(std::string("MONSTER_TOOLTIP_STYLE ") + property + " " + error.what());
+        tooltipReported = true;
+    }
+}
+void Framed(Obj element, float width, Tint color, float radius) {
+    for (const char* side : {"Top", "Right", "Bottom", "Left"}) {
+        Set<float>(element, (std::string("border") + side + "Width").c_str(), width);
+        Paint(element, (std::string("border") + side + "Color").c_str(), color);
+    }
+    for (const char* corner : {"TopLeft", "TopRight", "BottomLeft", "BottomRight"}) Pixels(element, (std::string("border") + corner + "Radius").c_str(), radius);
+}
+// A band as wide as the tooltip, lit along its edges.
+Obj Band(Obj parent) {
+    Ref band(Element(parent));
+    Set<int>(band.get(), "flexDirection", 2);
+    Paint(band.get(), "backgroundColor", BandGreen);
+    for (const char* side : {"Top", "Bottom"}) {
+        Set<float>(band.get(), (std::string("border") + side + "Width").c_str(), 1.f);
+        Paint(band.get(), (std::string("border") + side + "Color").c_str(), BandEdge);
+    }
+    for (const char* side : {"paddingLeft", "paddingRight"}) Pixels(band.get(), side, 10);
+    for (const char* side : {"paddingTop", "paddingBottom"}) Pixels(band.get(), side, 6);
+    return band.get();
+}
 void DecorateTooltip(Obj builder) {
     Ref binding(api.Field(builder, "m_binding"));
     Ref group(api.Field(builder, "m_monstersInfo"));
@@ -823,9 +855,11 @@ void DecorateTooltip(Obj builder) {
                         if (ObjectiveOnMonster(objective->parameters, monster, objective->folded, itemSearch::Fold(name))) { questMonsters.insert(monster); concerned = true; }
                     if (!concerned || shown >= 3) continue;
                     ++shown; any = true;
-                    Ref line(Element(block.get()));
-                    Set<int>(line.get(), "flexDirection", 2); Pixels(line.get(), "marginBottom", 4);
-                    Add(line.get(), Ref(StatusIcon(IconExclamation, 0.85f, 0.95f, 0.2f)).get());
+                    Ref line(Band(block.get()));
+                    Set<int>(line.get(), "alignItems", 2);
+                    Ref mark(StatusIcon(IconExclamation, 0.85f, 0.95f, 0.2f));
+                    Pixels(mark.get(), "width", 24); Pixels(mark.get(), "height", 24); Pixels(mark.get(), "marginRight", 8);
+                    Add(line.get(), mark.get());
                     Ref words(Element(line.get()));
                     Set<float>(words.get(), "flexShrink", 1.f); Set<float>(words.get(), "flexGrow", 1.f);
                     Ref title(Label(words.get(), objective->quest, nativeStyle::Strong));
@@ -868,13 +902,12 @@ void DecorateTooltip(Obj builder) {
             if (best) {
                 any = true;
                 // Not the window's card: its width would become the tooltip's.
-                Ref card(Element(block.get()));
-                Set<int>(card.get(), "flexDirection", 2); Set<int>(card.get(), "alignItems", 2);
-                nativeStyle::Add(card.get(), "backgroundColor_black_black25");
-                for (const char* side : {"paddingLeft", "paddingRight", "paddingTop", "paddingBottom"}) Pixels(card.get(), side, 4);
+                Ref card(Band(block.get()));
+                Set<int>(card.get(), "alignItems", 2);
                 Ref picture(Element(card.get()));
-                Pixels(picture.get(), "width", 32); Pixels(picture.get(), "height", 32); Pixels(picture.get(), "marginRight", 6);
+                Pixels(picture.get(), "width", 44); Pixels(picture.get(), "height", 44); Pixels(picture.get(), "marginRight", 10);
                 Set<float>(picture.get(), "flexShrink", 0.f);
+                Framed(picture.get(), 2.f, FrameGold, 4.f);
                 if (iconTypeField && best->icon > 0) {
                     Ref address(resourceMap::IconAddress(iconTypeField, best->icon));
                     bool yes = true;
@@ -883,52 +916,72 @@ void DecorateTooltip(Obj builder) {
                 Ref words(Element(card.get()));
                 Set<float>(words.get(), "flexGrow", 1.f); Set<float>(words.get(), "flexShrink", 1.f);
                 Ref name(Label(words.get(), best->name, nativeStyle::Strong));
-                std::string detail = bestProgress.total ? Summary(bestProgress) : best->description;
-                if (others) detail += others == 1 ? " (+ 1 autre succès)" : " (+ " + std::to_string(others) + " autres succès)";
-                Ref line(Label(words.get(), detail, nativeStyle::Secondary));
-                Ref points(Label(card.get(), std::to_string(best->points), nativeStyle::Secondary));
-                Pixels(points.get(), "marginLeft", 8); Set<float>(points.get(), "flexShrink", 0.f);
-                Ref trophy(StatusIcon(IconTrophy, 0.85f, 0.75f, 0.3f));
-                Pixels(trophy.get(), "marginLeft", 2); Pixels(trophy.get(), "marginRight", 0);
-                Add(card.get(), trophy.get());
+                if (bestProgress.total) {
+                    Ref validated(Label(words.get(), Validated(bestProgress), nativeStyle::Secondary));
+                    nativeStyle::Tone(validated.get(), true, false);
+                    Ref left(Label(words.get(), Remaining(bestProgress), nativeStyle::Secondary));
+                } else Label(words.get(), best->description, nativeStyle::Secondary);
+                Ref level(Label(words.get(), "Niveau " + std::to_string(best->level) + (others ? (others == 1 ? " (+ 1 autre succès)" : " (+ " + std::to_string(others) + " autres succès)") : ""), nativeStyle::Secondary));
+                Ref badge(Element(card.get()));
+                Set<int>(badge.get(), "flexDirection", 2); Set<int>(badge.get(), "alignItems", 2); Set<int>(badge.get(), "alignSelf", AlignStart);
+                Set<float>(badge.get(), "flexShrink", 0.f); Pixels(badge.get(), "marginLeft", 10);
+                for (const char* side : {"paddingLeft", "paddingRight"}) Pixels(badge.get(), side, 5);
+                Paint(badge.get(), "backgroundColor", BadgeDark);
+                Framed(badge.get(), 0.f, BadgeDark, 4.f);
+                Ref points(Label(badge.get(), std::to_string(best->points), nativeStyle::Strong));
+                Ref trophy(StatusIcon(IconTrophy, 0.95f, 0.85f, 0.3f));
+                Pixels(trophy.get(), "marginLeft", 3); Pixels(trophy.get(), "marginRight", 0);
+                Add(badge.get(), trophy.get());
             }
         }
     }
     if (any) {
-        Pixels(block.get(), "marginTop", 4); Pixels(block.get(), "marginBottom", 4);
-        for (const char* side : {"paddingLeft", "paddingRight"}) Pixels(block.get(), side, 6);
+        Pixels(block.get(), "marginBottom", 6);
         int index = api.Value<int>(api.Call(content.get(), "IndexOf", {list.get()}));
         if (index < 0) index = 0;
         api.Call(content.get(), "Insert", {&index, block.get()});
     }
-    // The group's lines.
+    // The group's lines: left-aligned in a column of marks once one of them has any.
+    const bool marked = !questMonsters.empty() || !missing.empty() || !done.empty();
+    if (!marked) return;
+    Set<int>(list.get(), "alignItems", AlignStart);
+    Pixels(list.get(), "paddingLeft", 10); Pixels(list.get(), "paddingRight", 10);
     Ref hierarchy(api.Call(list.get(), "get_hierarchy"));
     const int lines = api.Value<int>(api.Call(hierarchy.get(), "get_childCount"));
     for (int i = 0; i < lines && i < 32; ++i) {
         Ref line(api.Call(hierarchy.get(), "get_Item", {&i}));
         Ref label(Named(line.get(), "lbl_monsterName"));
         if (!label.get()) continue;
+        Ref parent(api.Call(label.get(), "get_parent"));
+        if (!parent.get()) continue;
         const auto shownText = api.String(api.Call(label.get(), "get_text"));
         int monster = 0; size_t longest = 0;
         for (const auto& [id, name] : monsterNames)
             if (name.size() > longest && shownText.rfind(name, 0) == 0) { monster = id; longest = name.size(); }
-        if (!monster) continue;
-        Ref parent(api.Call(label.get(), "get_parent"));
-        if (!parent.get()) continue;
-        Set<int>(parent.get(), "flexDirection", 2);
-        const bool quest = questMonsters.count(monster) != 0, lacking = missing.count(monster) != 0, finished = !lacking && done.count(monster) != 0;
+        Set<int>(parent.get(), "flexDirection", 2); Set<int>(parent.get(), "alignItems", 2);
+        Set<int>(label.get(), "unityTextAlign", AlignLeft);
+        const bool quest = monster && questMonsters.count(monster), lacking = monster && missing.count(monster), finished = monster && !lacking && done.count(monster);
         int at = api.Value<int>(api.Call(parent.get(), "IndexOf", {label.get()}));
         if (at < 0) at = 0;
         const auto put = [&](int figma, float r, float g, float b) {
             Ref icon(StatusIcon(figma, r, g, b));
+            Text(icon.get(), TooltipMarkName, "set_name");
             api.Call(parent.get(), "Insert", {&at, icon.get()});
             ++at;
         };
         if (quest) put(IconExclamation, 0.85f, 0.95f, 0.2f);
-        if (lacking) put(IconTrophy, 0.7f, 0.7f, 0.7f);
-        if (finished) put(IconTick, 0.45f, 0.9f, 0.35f);
-        if (quest) nativeStyle::Add(label.get(), "textColor_highlight_primary100");
-        else if (finished) nativeStyle::Add(label.get(), nativeStyle::ColorPositive);
+        if (lacking) put(IconTrophy, 0.62f, 0.62f, 0.62f);
+        if (finished) { put(IconTrophy, 0.85f, 0.95f, 0.2f); put(IconTick, 0.85f, 0.95f, 0.2f); }
+        if (!quest && !lacking && !finished) {
+            // Nothing to say on this one: it stays in line with the others.
+            Ref spacer(Element(parent.get()));
+            Text(spacer.get(), TooltipMarkName, "set_name");
+            Pixels(spacer.get(), "width", 18);
+            Ref moved(spacer.get());
+            api.Call(moved.get(), "RemoveFromHierarchy");
+            api.Call(parent.get(), "Insert", {&at, moved.get()});
+        }
+        nativeStyle::Toggle(label.get(), "textColor_highlight_primary100", quest || finished);
     }
 }
 void TooltipSetupHook(Obj builder, Method method) {
@@ -959,10 +1012,7 @@ void RefreshTooltip() {
         Ref children(api.Call(parent.get(), "get_hierarchy"));
         for (int k = api.Value<int>(api.Call(children.get(), "get_childCount")); k-- > 0;) {
             Ref child(api.Call(children.get(), "get_Item", {&k}));
-            if (child.get() && api.object_get_class(child.get()) == statusIconClass && api.String(api.Call(child.get(), "get_name")).empty() && child.get() != label.get()) {
-                const int figma = api.Value<int>(api.Call(child.get(), "get_icon"));
-                if (figma == IconExclamation || figma == IconTrophy || figma == IconTick) api.Call(child.get(), "RemoveFromHierarchy");
-            }
+            if (child.get() && api.String(api.Call(child.get(), "get_name")) == TooltipMarkName) api.Call(child.get(), "RemoveFromHierarchy");
         }
     }
     DecorateTooltip(tooltipView.builder.get());
