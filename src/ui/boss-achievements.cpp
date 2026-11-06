@@ -811,7 +811,9 @@ Obj StatusIcon(int figma, float r, float g, float b) {
     return icon.get();
 }
 using Tint = std::array<float, 4>;
-constexpr Tint BandGreen{0.20f, 0.34f, 0.13f, 1.f}, BandEdge{0.42f, 0.62f, 0.22f, 1.f}, BadgeDark{0.10f, 0.15f, 0.07f, 0.85f}, FrameGold{0.95f, 0.75f, 0.25f, 1.f};
+constexpr Tint BandGreen{0.25f, 0.40f, 0.14f, 1.f}, BandEdge{0.50f, 0.72f, 0.24f, 1.f}, BadgeDark{0.13f, 0.20f, 0.08f, 0.9f}, FrameGold{0.98f, 0.78f, 0.22f, 1.f};
+constexpr Tint HeaderOlive{0.42f, 0.44f, 0.16f, 1.f}, HeaderSlate{0.27f, 0.28f, 0.33f, 1.f}, RewardGreen{0.14f, 0.22f, 0.12f, 1.f}, RewardDark{0.15f, 0.17f, 0.21f, 1.f}, FooterDark{0.10f, 0.11f, 0.15f, 1.f}, Lime{0.80f, 0.92f, 0.20f, 1.f};
+constexpr const char* TitleSize = "textShort_largeBold";
 // A colour the game's style sheets do not have. A style it refuses leaves the band plain.
 void Paint(Obj element, const char* property, Tint color) {
     try { Set<Tint>(element, property, color); }
@@ -819,6 +821,22 @@ void Paint(Obj element, const char* property, Tint color) {
         if (!tooltipReported) Log(std::string("MONSTER_TOOLTIP_STYLE ") + property + " " + error.what());
         tooltipReported = true;
     }
+}
+// Back to what the game's style sheets say: the tooltip may be used again undecorated.
+void Unpaint(Obj element, const char* property) {
+    try {
+        Ref box(Style(element, property));
+        int styleNull = 1; // StyleKeyword.Null
+        api.Call(box.get(), "set_keyword", {&styleNull});
+        WriteStyle(element, property, box.get());
+    } catch (const std::exception& error) {
+        if (!tooltipReported) Log(std::string("MONSTER_TOOLTIP_STYLE ") + property + " " + error.what());
+        tooltipReported = true;
+    }
+}
+void Larger(Obj label) {
+    nativeStyle::Toggle(label, nativeStyle::SizeStrong, false);
+    nativeStyle::Add(label, TitleSize);
 }
 void Framed(Obj element, float width, Tint color, float radius) {
     for (const char* side : {"Top", "Right", "Bottom", "Left"}) {
@@ -836,8 +854,8 @@ Obj Band(Obj parent) {
         Set<float>(band.get(), (std::string("border") + side + "Width").c_str(), 1.f);
         Paint(band.get(), (std::string("border") + side + "Color").c_str(), BandEdge);
     }
-    for (const char* side : {"paddingLeft", "paddingRight"}) Pixels(band.get(), side, 10);
-    for (const char* side : {"paddingTop", "paddingBottom"}) Pixels(band.get(), side, 6);
+    for (const char* side : {"paddingLeft", "paddingRight"}) Pixels(band.get(), side, 12);
+    for (const char* side : {"paddingTop", "paddingBottom"}) Pixels(band.get(), side, 8);
     return band.get();
 }
 // "26 sur 50"; once reached, a tick before it: there is nothing left to gather here.
@@ -848,23 +866,23 @@ void AddCounter(Obj parent, int64_t gathered, int64_t needed) {
         Ref tick(StatusIcon(IconTick, 0.85f, 0.95f, 0.2f));
         Add(row.get(), tick.get());
     }
-    Ref count(Label(row.get(), Gathered(gathered, needed), nativeStyle::Secondary));
-    nativeStyle::Tone(count.get(), true, false);
+    Ref count(Label(row.get(), std::to_string(GatheredCount(gathered, needed)), nativeStyle::Strong));
+    Paint(count.get(), "color", Lime);
+    Ref rest(Label(row.get(), GatheredRest(needed), nativeStyle::Body));
 }
 // One half of the tooltip's footer: the key, lit while what it shows is shown.
 void AddShortcut(Obj footer, const char* key, const char* caption, bool on) {
     Ref chip(nativeStyle::NewLabel());
-    nativeStyle::Add(chip.get(), nativeStyle::SizeHeading);
+    nativeStyle::Add(chip.get(), nativeStyle::SizeStrong);
     Text(chip.get(), key);
-    Paint(chip.get(), "backgroundColor", on ? Tint{0.76f, 0.87f, 0.18f, 1.f} : Tint{0.28f, 0.29f, 0.36f, 1.f});
+    Paint(chip.get(), "backgroundColor", on ? Lime : Tint{0.28f, 0.29f, 0.36f, 1.f});
     Paint(chip.get(), "color", on ? Tint{0.09f, 0.11f, 0.05f, 1.f} : Tint{0.82f, 0.84f, 0.90f, 1.f});
-    for (const char* side : {"paddingLeft", "paddingRight"}) Pixels(chip.get(), side, 5);
-    Framed(chip.get(), 0.f, BadgeDark, 3.f);
+    for (const char* side : {"paddingLeft", "paddingRight"}) Pixels(chip.get(), side, 6);
+    Framed(chip.get(), 0.f, BadgeDark, 4.f);
     Add(footer, chip.get());
     Ref words(Label(footer, caption, nativeStyle::Secondary));
     Pixels(words.get(), "marginLeft", 5); Pixels(words.get(), "marginRight", 14);
-    nativeStyle::Toggle(words.get(), "textColor_highlight_primary100", on);
-    nativeStyle::Toggle(words.get(), nativeStyle::ColorSecondary, !on);
+    if (on) Paint(words.get(), "color", Lime);
 }
 void DecorateTooltip(Obj builder) {
     Ref binding(api.Field(builder, "m_binding"));
@@ -874,6 +892,9 @@ void DecorateTooltip(Obj builder) {
     if (!content.get() || !list.get()) return;
     if (Ref old(Named(content.get(), TooltipBlockName)); old.get()) api.Call(old.get(), "RemoveFromHierarchy");
     if (Ref old(Named(content.get(), TooltipFooterName)); old.get()) api.Call(old.get(), "RemoveFromHierarchy");
+    Ref header(api.Call(binding.get(), "get_tooltipHeader")), rewards(api.Call(binding.get(), "get_ctr_rewards"));
+    if (header.get()) Unpaint(header.get(), "backgroundColor");
+    if (rewards.get()) Unpaint(rewards.get(), "backgroundColor");
     const auto monsters = GroupMonsters(group.get());
     Ref monstersData(api.Invoke(monstersRoot, nullptr));
     if (!monstersData.get()) return;
@@ -938,17 +959,20 @@ void DecorateTooltip(Obj builder) {
                     Ref line(Band(questBlock.get()));
                     Set<int>(line.get(), "alignItems", 2);
                     Ref mark(StatusIcon(IconExclamation, 0.85f, 0.95f, 0.2f));
-                    Pixels(mark.get(), "width", 24); Pixels(mark.get(), "height", 24); Pixels(mark.get(), "marginRight", 8);
+                    Pixels(mark.get(), "width", 34); Pixels(mark.get(), "height", 34); Pixels(mark.get(), "marginRight", 10);
                     Add(line.get(), mark.get());
                     Ref words(Element(line.get()));
                     Set<float>(words.get(), "flexShrink", 1.f); Set<float>(words.get(), "flexGrow", 1.f);
                     Ref title(Label(words.get(), objective->quest, nativeStyle::Strong));
+                    Larger(title.get());
                     if (objective->item) {
                         Ref row(Element(words.get()));
                         Set<int>(row.get(), "flexDirection", 2); Set<int>(row.get(), "alignItems", 2); Pixels(row.get(), "marginTop", 2);
                         Ref picture(Element(row.get()));
-                        Pixels(picture.get(), "width", 26); Pixels(picture.get(), "height", 26); Pixels(picture.get(), "marginRight", 6);
+                        Pixels(picture.get(), "width", 30); Pixels(picture.get(), "height", 30); Pixels(picture.get(), "marginRight", 8);
                         Set<float>(picture.get(), "flexShrink", 0.f);
+                        Paint(picture.get(), "backgroundColor", BadgeDark);
+                        Framed(picture.get(), 1.f, BandEdge, 4.f);
                         if (objective->itemIcon > 0) {
                             Ref address(resourceMap::ItemIconAddress(objective->itemIcon));
                             bool yes = true;
@@ -1004,7 +1028,7 @@ void DecorateTooltip(Obj builder) {
                 Ref card(Band(achievementBlock.get()));
                 Set<int>(card.get(), "alignItems", 2);
                 Ref picture(Element(card.get()));
-                Pixels(picture.get(), "width", 44); Pixels(picture.get(), "height", 44); Pixels(picture.get(), "marginRight", 10);
+                Pixels(picture.get(), "width", 54); Pixels(picture.get(), "height", 54); Pixels(picture.get(), "marginRight", 12);
                 Set<float>(picture.get(), "flexShrink", 0.f);
                 Framed(picture.get(), 2.f, FrameGold, 4.f);
                 if (iconTypeField && best->icon > 0) {
@@ -1015,21 +1039,24 @@ void DecorateTooltip(Obj builder) {
                 Ref words(Element(card.get()));
                 Set<float>(words.get(), "flexGrow", 1.f); Set<float>(words.get(), "flexShrink", 1.f);
                 Ref name(Label(words.get(), best->name, nativeStyle::Strong));
+                Larger(name.get());
                 if (bestProgress.total) {
-                    Ref validated(Label(words.get(), Validated(bestProgress), nativeStyle::Secondary));
-                    nativeStyle::Tone(validated.get(), true, false);
+                    Ref validated(Label(words.get(), Validated(bestProgress), nativeStyle::Body));
+                    Paint(validated.get(), "color", Lime);
                     Ref left(Label(words.get(), Remaining(bestProgress), nativeStyle::Secondary));
                 } else Label(words.get(), best->description, nativeStyle::Secondary);
                 Ref level(Label(words.get(), "Niveau " + std::to_string(best->level) + (others ? (others == 1 ? " (+ 1 autre succès)" : " (+ " + std::to_string(others) + " autres succès)") : ""), nativeStyle::Secondary));
                 Ref badge(Element(card.get()));
                 Set<int>(badge.get(), "flexDirection", 2); Set<int>(badge.get(), "alignItems", 2); Set<int>(badge.get(), "alignSelf", AlignStart);
                 Set<float>(badge.get(), "flexShrink", 0.f); Pixels(badge.get(), "marginLeft", 10);
-                for (const char* side : {"paddingLeft", "paddingRight"}) Pixels(badge.get(), side, 5);
+                for (const char* side : {"paddingLeft", "paddingRight"}) Pixels(badge.get(), side, 6);
+                for (const char* side : {"paddingTop", "paddingBottom"}) Pixels(badge.get(), side, 2);
                 Paint(badge.get(), "backgroundColor", BadgeDark);
                 Framed(badge.get(), 0.f, BadgeDark, 4.f);
                 Ref points(Label(badge.get(), std::to_string(best->points), nativeStyle::Strong));
-                Ref trophy(StatusIcon(IconTrophy, 0.95f, 0.85f, 0.3f));
-                Pixels(trophy.get(), "marginLeft", 3); Pixels(trophy.get(), "marginRight", 0);
+                Paint(points.get(), "color", Lime);
+                Ref trophy(StatusIcon(IconTrophy, Lime[0], Lime[1], Lime[2]));
+                Pixels(trophy.get(), "width", 16); Pixels(trophy.get(), "height", 16); Pixels(trophy.get(), "marginLeft", 3); Pixels(trophy.get(), "marginRight", 0);
                 Add(badge.get(), trophy.get());
             }
         }
@@ -1039,7 +1066,8 @@ void DecorateTooltip(Obj builder) {
         Ref footer(api.New(api.Class(Ui, UiSpace, "VisualElement")));
         Text(footer.get(), TooltipFooterName, "set_name");
         Set<int>(footer.get(), "flexDirection", 2); Set<int>(footer.get(), "alignItems", 2);
-        Pixels(footer.get(), "marginTop", 6); Pixels(footer.get(), "paddingTop", 6); Pixels(footer.get(), "paddingBottom", 2); Pixels(footer.get(), "paddingLeft", 10);
+        Pixels(footer.get(), "marginTop", 8); Pixels(footer.get(), "paddingTop", 7); Pixels(footer.get(), "paddingBottom", 7); Pixels(footer.get(), "paddingLeft", 12);
+        Paint(footer.get(), "backgroundColor", FooterDark);
         Set<float>(footer.get(), "borderTopWidth", 1.f);
         Paint(footer.get(), "borderTopColor", Tint{0.32f, 0.33f, 0.40f, 1.f});
         AddShortcut(footer.get(), "Ctrl", "Succès liés", showAchievements);
@@ -1050,8 +1078,14 @@ void DecorateTooltip(Obj builder) {
     if (!showAchievements) { missing.clear(); done.clear(); }
     Show(questBlock.get(), showQuests); Show(achievementBlock.get(), showAchievements);
     any = (showQuests && anyQuest) || (showAchievements && anyAchievement);
+    // The achievement's olive, the quest's slate, as in the two modes of the mockups.
     if (any) {
-        Pixels(block.get(), "marginBottom", 6);
+        const bool olive = showAchievements && anyAchievement;
+        if (header.get()) Paint(header.get(), "backgroundColor", olive ? HeaderOlive : HeaderSlate);
+        if (rewards.get()) Paint(rewards.get(), "backgroundColor", olive ? RewardDark : RewardGreen);
+    }
+    if (any) {
+        Pixels(block.get(), "marginBottom", 8);
         int index = api.Value<int>(api.Call(content.get(), "IndexOf", {list.get()}));
         if (index < 0) index = 0;
         api.Call(content.get(), "Insert", {&index, block.get()});
@@ -1060,7 +1094,7 @@ void DecorateTooltip(Obj builder) {
     const bool marked = !questMonsters.empty() || !missing.empty() || !done.empty();
     if (!marked && !hasQuests && !hasAchievements) return;
     Set<int>(list.get(), "alignItems", AlignStart);
-    Pixels(list.get(), "paddingLeft", 10); Pixels(list.get(), "paddingRight", 10);
+    Pixels(list.get(), "paddingLeft", 12); Pixels(list.get(), "paddingRight", 12);
     Ref hierarchy(api.Call(list.get(), "get_hierarchy"));
     const int lines = api.Value<int>(api.Call(hierarchy.get(), "get_childCount"));
     for (int i = 0; i < lines && i < 32; ++i) {
@@ -1074,19 +1108,21 @@ void DecorateTooltip(Obj builder) {
         for (const auto& [id, name] : monsterNames)
             if (name.size() > longest && shownText.rfind(name, 0) == 0) { monster = id; longest = name.size(); }
         Set<int>(parent.get(), "flexDirection", 2); Set<int>(parent.get(), "alignItems", 2);
+        Pixels(parent.get(), "marginBottom", 3);
         Set<int>(label.get(), "unityTextAlign", AlignLeft);
         const bool quest = monster && questMonsters.count(monster), lacking = monster && missing.count(monster), finished = monster && !lacking && done.count(monster);
         int at = api.Value<int>(api.Call(parent.get(), "IndexOf", {label.get()}));
         if (at < 0) at = 0;
         const auto put = [&](int figma, float r, float g, float b) {
             Ref icon(StatusIcon(figma, r, g, b));
+            Pixels(icon.get(), "width", 16); Pixels(icon.get(), "height", 16);
             Text(icon.get(), TooltipMarkName, "set_name");
             api.Call(parent.get(), "Insert", {&at, icon.get()});
             ++at;
         };
-        if (quest) put(IconExclamation, 0.85f, 0.95f, 0.2f);
+        if (quest) put(IconExclamation, Lime[0], Lime[1], Lime[2]);
         if (lacking) put(IconTrophy, 0.62f, 0.62f, 0.62f);
-        if (finished) { put(IconTrophy, 0.85f, 0.95f, 0.2f); put(IconTick, 0.85f, 0.95f, 0.2f); }
+        if (finished) { put(IconTrophy, Lime[0], Lime[1], Lime[2]); put(IconTick, Lime[0], Lime[1], Lime[2]); }
         if (marked && !quest && !lacking && !finished) {
             // Nothing to say on this one: it stays in line with the others.
             Ref spacer(Element(parent.get()));
@@ -1096,7 +1132,7 @@ void DecorateTooltip(Obj builder) {
             api.Call(moved.get(), "RemoveFromHierarchy");
             api.Call(parent.get(), "Insert", {&at, moved.get()});
         }
-        nativeStyle::Toggle(label.get(), "textColor_highlight_primary100", quest || finished);
+        if (quest || finished) Paint(label.get(), "color", Lime); else Unpaint(label.get(), "color");
     }
 }
 void TooltipSetupHook(Obj builder, Method method) {
@@ -1256,6 +1292,7 @@ void InstallBossAchievements() {
         api.FindVerified(visual, "Insert", 2, 0x55AAA50); api.FindVerified(visual, "IndexOf", 1, 0x55AA8F0);
         const auto tooltipBinding = api.Class("Core.dll", "Core.UI.Bindings", "WorldRpMonstersGroupTooltipBinding");
         api.FindVerified(tooltipBinding, "get_ctr_content", 0, 0x18A2010); api.FindVerified(tooltipBinding, "get_ctr_monsterList", 0, 0x18A2390);
+        api.FindVerified(tooltipBinding, "get_tooltipHeader", 0, 0x18A2C10); api.FindVerified(tooltipBinding, "get_ctr_rewards", 0, 0x18A2450);
         const auto groupTooltip = api.Class("Core.dll", "Core.UILogic.Components.Tooltips.Builder", "WorldRpMonstersGroupTooltipBuilder");
         Field(groupTooltip, "m_monstersInfo", 320);
         AddHook(api.FindVerified(groupTooltip, "SetupViewWithContent", 0, 0x1666600), 0x1666600, reinterpret_cast<void*>(&TooltipSetupHook), reinterpret_cast<void**>(&originalTooltipSetup));

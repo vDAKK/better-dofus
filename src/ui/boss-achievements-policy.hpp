@@ -106,6 +106,9 @@ inline bool ObjectiveOnMonster(const std::vector<int>& parameters, int monster, 
 inline std::string Gathered(long long owned, long long needed) {
     return std::to_string(std::min(std::max(owned, 0LL), needed)) + " sur " + std::to_string(needed);
 }
+// The counter's two parts, drawn in two colours: "26" and " sur 50".
+inline long long GatheredCount(long long gathered, long long needed) { return std::min(std::max(gathered, 0LL), needed); }
+inline std::string GatheredRest(long long needed) { return " sur " + std::to_string(needed); }
 // known: the game's answer on this achievement has come.
 inline std::string ObjectiveLine(const std::string& name, bool known, bool done) {
     return (known ? (done ? "[x] " : "[ ] ") : "- ") + name;

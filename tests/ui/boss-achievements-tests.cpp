@@ -61,6 +61,7 @@ int main() {
         Check(!ObjectiveOnMonster({10}, 10, "texte", ""), "A monster without a name");
         Check(Gathered(26, 50) == "26 sur 50" && Gathered(0, 50) == "0 sur 50", "What is gathered");
         Check(Gathered(80, 50) == "50 sur 50" && Gathered(-3, 50) == "0 sur 50", "Within what is asked");
+        Check(GatheredCount(26, 50) == 26 && GatheredCount(80, 50) == 50 && GatheredCount(-1, 50) == 0 && GatheredRest(50) == " sur 50", "The counter's two parts");
         Check(Title({}).empty() && Title({"Bouftou"}) == "Bouftou", "One monster");
         Check(Title({"Bouftou", "Tofu"}) == "Bouftou et 1 autre" && Title({"Bouftou", "Tofu", "Larve"}) == "Bouftou et 2 autres", "Several monsters");
         Check(MenuLabel("Kardorim", Sort({Make(1, 1, false), Make(2, 1, true)}), true) == "Succès : Kardorim (1 à faire)", "To do");
