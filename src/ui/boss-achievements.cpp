@@ -754,7 +754,10 @@ const ActiveObjective* ReadActiveObjective(int id) {
     if (parameters.get())
         for (const char* name : {"parameter0", "parameter1", "parameter2", "parameter3", "parameter4"})
             objective.parameters.push_back(api.Value<int>(api.Field(parameters.get(), name)));
-    Ref words(api.Invoke(objectiveText, data.get()));
+    // Through the object's own class, never the base's method: each kind of objective
+    // overrides it to fill its #1 #2, and they all return m_text once it is set. The base
+    // writes its raw template there, and the game would then show that everywhere.
+    Ref words(api.Call(data.get(), "get_text"));
     objective.text = words.get() ? Plain(api.String(words.get())) : "";
     objective.folded = itemSearch::Fold(objective.text);
     Ref step(api.Invoke(objectiveStep, data.get()));

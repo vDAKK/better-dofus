@@ -10,9 +10,14 @@ all game rights belong to Ankama. I do not know whether using this mod is
 allowed by Ankama's terms: a ban cannot be completely ruled out. Use it at
 your own risk; the software is provided "as is", without any warranty.
 
-BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.11.2
+BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.11.3
 
 INSTALLATION : double-clique sur BetterDofusLoader.exe, puis lance Dofus.
+
+VERSION 2.11.3 : LES TEXTES DES OBJECTIFS DE QUÊTE CORRIGÉS
+- Depuis la 2.11.0, survoler un groupe de monstres pouvait afficher les objectifs de
+  quête en texte brut dans le jeu (« Ramener à #1 : x#3 #2 »). Corrigé. Cela ne
+  touchait que l’affichage, jusqu’au redémarrage du jeu.
 
 VERSION 2.11.2 : UNE INFOBULLE DES MONSTRES PLUS COMPACTE
 - Le succès y tient sur une ligne compacte, au lieu de la grande carte qui élargissait
