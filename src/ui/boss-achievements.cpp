@@ -836,6 +836,17 @@ Obj Band(Obj parent) {
     for (const char* side : {"paddingTop", "paddingBottom"}) Pixels(band.get(), side, 6);
     return band.get();
 }
+// "26 sur 50"; once reached, a tick before it: there is nothing left to gather here.
+void AddCounter(Obj parent, int64_t gathered, int64_t needed) {
+    Ref row(Element(parent));
+    Set<int>(row.get(), "flexDirection", 2); Set<int>(row.get(), "alignItems", 2);
+    if (gathered >= needed) {
+        Ref tick(StatusIcon(IconTick, 0.85f, 0.95f, 0.2f));
+        Add(row.get(), tick.get());
+    }
+    Ref count(Label(row.get(), Gathered(gathered, needed), nativeStyle::Secondary));
+    nativeStyle::Tone(count.get(), true, false);
+}
 void DecorateTooltip(Obj builder) {
     Ref binding(api.Field(builder, "m_binding"));
     Ref group(api.Field(builder, "m_monstersInfo"));
@@ -923,14 +934,10 @@ void DecorateTooltip(Obj builder) {
                         }
                         Ref texts(Element(row.get()));
                         Ref itemLabel(Label(texts.get(), objective->itemName, nativeStyle::Secondary));
-                        Ref count(Label(texts.get(), Gathered(gathered, needed), nativeStyle::Secondary));
-                        nativeStyle::Tone(count.get(), true, false);
+                        AddCounter(texts.get(), gathered, needed);
                     } else {
                         Label(words.get(), objective->text, nativeStyle::Secondary);
-                        if (needed > 0) {
-                            Ref count(Label(words.get(), Gathered(gathered, needed), nativeStyle::Secondary));
-                            nativeStyle::Tone(count.get(), true, false);
-                        }
+                        if (needed > 0) AddCounter(words.get(), gathered, needed);
                     }
                 }
             }
