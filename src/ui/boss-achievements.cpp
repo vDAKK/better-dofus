@@ -864,26 +864,36 @@ void DecorateTooltip(Obj builder) {
             }
             if (best) {
                 any = true;
-                RowView view;
-                view.line.reset(Element(block.get()));
-                if (NativeCard(view)) {
-                    Text(view.name.get(), best->name);
-                    Text(view.points.get(), std::to_string(best->points));
-                    std::string line = bestProgress.total ? Summary(bestProgress) : best->description;
-                    if (others) line += "\n+ " + std::to_string(others) + (others == 1 ? " autre succès" : " autres succès");
-                    Text(view.description.get(), line);
-                    if (view.icon.get() && iconTypeField && best->icon > 0) {
-                        Ref address(resourceMap::IconAddress(iconTypeField, best->icon));
-                        bool yes = true;
-                        api.Invoke(loadIcon, nullptr, {view.icon.get(), api.object_unbox(address.get()), nullptr, nullptr, nullptr, &yes, &yes});
-                    }
+                // Not the window's card: its width would become the tooltip's.
+                Ref card(Element(block.get()));
+                Set<int>(card.get(), "flexDirection", 2); Set<int>(card.get(), "alignItems", 2);
+                nativeStyle::Add(card.get(), "backgroundColor_black_black25");
+                for (const char* side : {"paddingLeft", "paddingRight", "paddingTop", "paddingBottom"}) Pixels(card.get(), side, 4);
+                Ref picture(Element(card.get()));
+                Pixels(picture.get(), "width", 32); Pixels(picture.get(), "height", 32); Pixels(picture.get(), "marginRight", 6);
+                Set<float>(picture.get(), "flexShrink", 0.f);
+                if (iconTypeField && best->icon > 0) {
+                    Ref address(resourceMap::IconAddress(iconTypeField, best->icon));
+                    bool yes = true;
+                    api.Invoke(loadIcon, nullptr, {picture.get(), api.object_unbox(address.get()), nullptr, nullptr, nullptr, &yes, &yes});
                 }
+                Ref words(Element(card.get()));
+                Set<float>(words.get(), "flexGrow", 1.f); Set<float>(words.get(), "flexShrink", 1.f);
+                Ref name(Label(words.get(), best->name, nativeStyle::Strong));
+                std::string detail = bestProgress.total ? Summary(bestProgress) : best->description;
+                if (others) detail += others == 1 ? " (+ 1 autre succès)" : " (+ " + std::to_string(others) + " autres succès)";
+                Ref line(Label(words.get(), detail, nativeStyle::Secondary));
+                Ref points(Label(card.get(), std::to_string(best->points), nativeStyle::Secondary));
+                Pixels(points.get(), "marginLeft", 8); Set<float>(points.get(), "flexShrink", 0.f);
+                Ref trophy(StatusIcon(IconTrophy, 0.85f, 0.75f, 0.3f));
+                Pixels(trophy.get(), "marginLeft", 2); Pixels(trophy.get(), "marginRight", 0);
+                Add(card.get(), trophy.get());
             }
         }
     }
     if (any) {
         Pixels(block.get(), "marginTop", 4); Pixels(block.get(), "marginBottom", 4);
-        for (const char* side : {"paddingLeft", "paddingRight"}) Pixels(block.get(), side, 8);
+        for (const char* side : {"paddingLeft", "paddingRight"}) Pixels(block.get(), side, 6);
         int index = api.Value<int>(api.Call(content.get(), "IndexOf", {list.get()}));
         if (index < 0) index = 0;
         api.Call(content.get(), "Insert", {&index, block.get()});

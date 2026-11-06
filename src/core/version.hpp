@@ -3,8 +3,8 @@
 // (BetterDofus-X.Y.Z), archive (BetterDofus-X.Y.Z.zip), GitHub tag (vX.Y.Z) and the
 // text in game. ModRevision is the same version as one number (X*1000000 + Y*1000
 // + Z), written in release.ini to compare releases.
-inline constexpr unsigned ModRevision = 2011001;
-inline constexpr char ModVersion[] = "2.11.1";
-inline constexpr char ModSemanticVersion[] = "2.11.1";
+inline constexpr unsigned ModRevision = 2011002;
+inline constexpr char ModVersion[] = "2.11.2";
+inline constexpr char ModSemanticVersion[] = "2.11.2";
 inline constexpr char ModDisplayName[] = "Better Dofus";
 inline constexpr char ModCategoryTitle[] = "Better Dofus";

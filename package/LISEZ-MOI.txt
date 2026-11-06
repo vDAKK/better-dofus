@@ -10,9 +10,13 @@ all game rights belong to Ankama. I do not know whether using this mod is
 allowed by Ankama's terms: a ban cannot be completely ruled out. Use it at
 your own risk; the software is provided "as is", without any warranty.
 
-BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.11.1
+BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.11.2
 
 INSTALLATION : double-clique sur BetterDofusLoader.exe, puis lance Dofus.
+
+VERSION 2.11.2 : UNE INFOBULLE DES MONSTRES PLUS COMPACTE
+- Le succès y tient sur une ligne compacte, au lieu de la grande carte qui élargissait
+  toute l’infobulle.
 
 VERSION 2.11.1 : L’INFOBULLE DES MONSTRES CORRIGÉE
 - Rien ne s’affichait dans l’infobulle : le mod lisait la mauvaise liste d’objectifs de
