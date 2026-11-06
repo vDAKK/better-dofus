@@ -880,14 +880,24 @@ void DecorateTooltip(Obj builder) {
                     bool concerned = false;
                     for (const auto& [monster, name] : monsterNames)
                         if (ObjectiveOnMonster(objective->parameters, monster, objective->folded, itemSearch::Fold(name))) { questMonsters.insert(monster); concerned = true; }
-                    // An item to bring: the monsters that drop it, while some is still missing.
-                    int64_t owned = 0;
+                    // The quest's own counter, as the game's quest list reads it (fcz.dtbu); an
+                    // item to bring without one counts what the bag holds, what it gives back.
+                    int64_t gathered = 0, needed = 0;
+                    Ref completions(api.Field(quest.get(), "dtbu"));
+                    if (completions.get() && api.Value<bool>(api.Call(completions.get(), "ContainsKey", {&objectiveKey}))) {
+                        Ref completion(api.Call(completions.get(), "get_Item", {&objectiveKey}));
+                        if (completion.get()) {
+                            gathered = api.Value<short>(api.Field(completion.get(), "current"));
+                            needed = api.Value<short>(api.Field(completion.get(), "dtbw"));
+                        }
+                    }
                     if (objective->item) {
-                        owned = recipeNative::Owned(objective->item).Total();
+                        if (needed <= 0) { gathered = recipeNative::Owned(objective->item).bag; needed = objective->quantity; }
+                        // The monsters that drop it, while some is still missing.
                         for (const auto& [monster, drops] : dropsByMonster)
                             if (drops->count(objective->item)) {
                                 concerned = true;
-                                if (owned < objective->quantity) questMonsters.insert(monster);
+                                if (gathered < needed) questMonsters.insert(monster);
                             }
                     }
                     if (!concerned || shown >= 3) continue;
@@ -913,9 +923,15 @@ void DecorateTooltip(Obj builder) {
                         }
                         Ref texts(Element(row.get()));
                         Ref itemLabel(Label(texts.get(), objective->itemName, nativeStyle::Secondary));
-                        Ref count(Label(texts.get(), Gathered(owned, objective->quantity), nativeStyle::Secondary));
+                        Ref count(Label(texts.get(), Gathered(gathered, needed), nativeStyle::Secondary));
                         nativeStyle::Tone(count.get(), true, false);
-                    } else Label(words.get(), objective->text, nativeStyle::Secondary);
+                    } else {
+                        Label(words.get(), objective->text, nativeStyle::Secondary);
+                        if (needed > 0) {
+                            Ref count(Label(words.get(), Gathered(gathered, needed), nativeStyle::Secondary));
+                            nativeStyle::Tone(count.get(), true, false);
+                        }
+                    }
                 }
             }
             if (!questsSummarized || (shown && !questsShownLogged)) {
@@ -1158,6 +1174,8 @@ void InstallBossAchievements() {
         questServiceClass = api.Class("Core.dll", "", "fdi");
         Field(questServiceClass, "<dtdc>k__BackingField", 88); // Its quests' details, by quest (fdi.bdal).
         Field(api.Class("Core.dll", "", "fcz"), "dtbt", 24); // By objective, its status (fde.bcyw).
+        Field(api.Class("Core.dll", "", "fcz"), "dtbu", 32); // By objective, its counter (QuestList.BindQuest).
+        Field(api.Class("Core.dll", "", "fda"), "current", 16); Field(api.Class("Core.dll", "", "fda"), "dtbw", 18);
         arrayGetValue = api.FindVerified(array, "GetValue", 1, 0X42C6670);
         shortType.reset(api.type_get_object(api.class_get_type(api.Class("mscorlib.dll", "System", "Int16"))));
         statusIconClass = api.Class("Core.dll", "Core.UILogic.Components.Figma", "DofusIcon");

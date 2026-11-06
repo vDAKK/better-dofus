@@ -10,9 +10,13 @@ all game rights belong to Ankama. I do not know whether using this mod is
 allowed by Ankama's terms: a ban cannot be completely ruled out. Use it at
 your own risk; the software is provided "as is", without any warranty.
 
-BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.12.1
+BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.12.2
 
 INSTALLATION : double-clique sur BetterDofusLoader.exe, puis lance Dofus.
+
+VERSION 2.12.2 : LE COMPTEUR DE LA QUÊTE DANS L’INFOBULLE
+- Le compteur de l’infobulle suit celui de la quête quand elle en a un. Pour un objet à
+  ramener sans compteur, il compte ce que le sac contient, ni la banque ni le havre-sac.
 
 VERSION 2.12.1 : LES QUÊTES À RESSOURCE DANS L’INFOBULLE DES MONSTRES
 - Une quête qui demande de ramener un objet apparaît sur les monstres qui le lâchent,
