@@ -10,9 +10,13 @@ all game rights belong to Ankama. I do not know whether using this mod is
 allowed by Ankama's terms: a ban cannot be completely ruled out. Use it at
 your own risk; the software is provided "as is", without any warranty.
 
-BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.12.3
+BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.13.0
 
 INSTALLATION : double-clique sur BetterDofusLoader.exe, puis lance Dofus.
+
+VERSION 2.13.0 : RACCOURCIS DANS L’INFOBULLE DES MONSTRES
+- Pendant le survol d’un groupe, Ctrl affiche ou masque les succès, Alt les quêtes. Le
+  pied de l’infobulle indique ce qui est actif, et le choix est gardé.
 
 VERSION 2.12.3 : UNE COCHE QUAND L’OBJECTIF EST ATTEINT
 - Dans l’infobulle des monstres, une coche précède le compteur d’une quête atteint.

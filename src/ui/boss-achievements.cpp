@@ -96,6 +96,10 @@ Method arrayGetValue = nullptr;
 Ref shortType;
 constexpr const char* TooltipBlockName = "better_dofus_monster_block";
 constexpr const char* TooltipMarkName = "better_dofus_monster_mark";
+constexpr const char* TooltipFooterName = "better_dofus_monster_footer";
+constexpr int KeyRightControl = 305, KeyLeftControl = 306, KeyRightAlt = 307, KeyLeftAlt = 308; // UnityEngine.KeyCode.
+Method keyHeld = nullptr;
+bool ctrlHeld = false, altHeld = false;
 constexpr int AlignLeft = 3, AlignStart = 1; // TextAnchor.MiddleLeft, Align.FlexStart.
 constexpr int IconTick = 307, IconTrophy = 300, IconExclamation = 130; // FigmaIcons: tick, success, exclamationMark.
 using AnswerFn = void (*)(Obj, Obj, Method);
@@ -847,6 +851,21 @@ void AddCounter(Obj parent, int64_t gathered, int64_t needed) {
     Ref count(Label(row.get(), Gathered(gathered, needed), nativeStyle::Secondary));
     nativeStyle::Tone(count.get(), true, false);
 }
+// One half of the tooltip's footer: the key, lit while what it shows is shown.
+void AddShortcut(Obj footer, const char* key, const char* caption, bool on) {
+    Ref chip(nativeStyle::NewLabel());
+    nativeStyle::Add(chip.get(), nativeStyle::SizeHeading);
+    Text(chip.get(), key);
+    Paint(chip.get(), "backgroundColor", on ? Tint{0.76f, 0.87f, 0.18f, 1.f} : Tint{0.28f, 0.29f, 0.36f, 1.f});
+    Paint(chip.get(), "color", on ? Tint{0.09f, 0.11f, 0.05f, 1.f} : Tint{0.82f, 0.84f, 0.90f, 1.f});
+    for (const char* side : {"paddingLeft", "paddingRight"}) Pixels(chip.get(), side, 5);
+    Framed(chip.get(), 0.f, BadgeDark, 3.f);
+    Add(footer, chip.get());
+    Ref words(Label(footer, caption, nativeStyle::Secondary));
+    Pixels(words.get(), "marginLeft", 5); Pixels(words.get(), "marginRight", 14);
+    nativeStyle::Toggle(words.get(), "textColor_highlight_primary100", on);
+    nativeStyle::Toggle(words.get(), nativeStyle::ColorSecondary, !on);
+}
 void DecorateTooltip(Obj builder) {
     Ref binding(api.Field(builder, "m_binding"));
     Ref group(api.Field(builder, "m_monstersInfo"));
@@ -854,6 +873,7 @@ void DecorateTooltip(Obj builder) {
     Ref content(api.Call(binding.get(), "get_ctr_content")), list(api.Call(binding.get(), "get_ctr_monsterList"));
     if (!content.get() || !list.get()) return;
     if (Ref old(Named(content.get(), TooltipBlockName)); old.get()) api.Call(old.get(), "RemoveFromHierarchy");
+    if (Ref old(Named(content.get(), TooltipFooterName)); old.get()) api.Call(old.get(), "RemoveFromHierarchy");
     const auto monsters = GroupMonsters(group.get());
     Ref monstersData(api.Invoke(monstersRoot, nullptr));
     if (!monstersData.get()) return;
@@ -868,7 +888,9 @@ void DecorateTooltip(Obj builder) {
     std::set<int> questMonsters, missing, done;
     Ref block(api.New(api.Class(Ui, UiSpace, "VisualElement")));
     Text(block.get(), TooltipBlockName, "set_name");
-    bool any = false;
+    Ref questBlock(Element(block.get())), achievementBlock(Element(block.get()));
+    bool any = false, anyQuest = false, anyAchievement = false, hasAchievements = false;
+    const bool showQuests = module->settings.monsterTooltipQuests, showAchievements = module->settings.monsterTooltipAchievements;
     // The active quests: what the game holds of them, per objective, without asking. Each
     // part has its own failure: the achievements stay if the quests cannot be read.
     try {
@@ -912,8 +934,8 @@ void DecorateTooltip(Obj builder) {
                             }
                     }
                     if (!concerned || shown >= 3) continue;
-                    ++shown; any = true;
-                    Ref line(Band(block.get()));
+                    ++shown; anyQuest = true;
+                    Ref line(Band(questBlock.get()));
                     Set<int>(line.get(), "alignItems", 2);
                     Ref mark(StatusIcon(IconExclamation, 0.85f, 0.95f, 0.2f));
                     Pixels(mark.get(), "width", 24); Pixels(mark.get(), "height", 24); Pixels(mark.get(), "marginRight", 8);
@@ -956,13 +978,14 @@ void DecorateTooltip(Obj builder) {
         const auto finished = ReadFinished();
         if (finished.known) {
             const auto sorted = Sort(ReadItems(target->ids, finished));
+            hasAchievements = !sorted.todo.empty();
             const Item* best = nullptr;
             Progress bestProgress;
             int others = 0;
             for (const auto& item : sorted.todo) {
                 const auto& objectives = ObjectivesOf(item.id);
                 if (answersUnavailable) continue;
-                Ask(item.id);
+                if (showAchievements) Ask(item.id); // Hidden, nothing is asked of the server.
                 const auto answer = answers.find(item.id);
                 if (answer == answers.end()) continue;
                 for (int monster : monsters) {
@@ -976,9 +999,9 @@ void DecorateTooltip(Obj builder) {
                 else ++others;
             }
             if (best) {
-                any = true;
+                anyAchievement = true;
                 // Not the window's card: its width would become the tooltip's.
-                Ref card(Band(block.get()));
+                Ref card(Band(achievementBlock.get()));
                 Set<int>(card.get(), "alignItems", 2);
                 Ref picture(Element(card.get()));
                 Pixels(picture.get(), "width", 44); Pixels(picture.get(), "height", 44); Pixels(picture.get(), "marginRight", 10);
@@ -1011,6 +1034,22 @@ void DecorateTooltip(Obj builder) {
             }
         }
     }
+    const bool hasQuests = anyQuest || !questMonsters.empty();
+    if (hasQuests || hasAchievements) {
+        Ref footer(api.New(api.Class(Ui, UiSpace, "VisualElement")));
+        Text(footer.get(), TooltipFooterName, "set_name");
+        Set<int>(footer.get(), "flexDirection", 2); Set<int>(footer.get(), "alignItems", 2);
+        Pixels(footer.get(), "marginTop", 6); Pixels(footer.get(), "paddingTop", 6); Pixels(footer.get(), "paddingBottom", 2); Pixels(footer.get(), "paddingLeft", 10);
+        Set<float>(footer.get(), "borderTopWidth", 1.f);
+        Paint(footer.get(), "borderTopColor", Tint{0.32f, 0.33f, 0.40f, 1.f});
+        AddShortcut(footer.get(), "Ctrl", "Succès liés", showAchievements);
+        AddShortcut(footer.get(), "Alt", "Quêtes liées", showQuests);
+        api.Call(content.get(), "Add", {footer.get()});
+    }
+    if (!showQuests) questMonsters.clear();
+    if (!showAchievements) { missing.clear(); done.clear(); }
+    Show(questBlock.get(), showQuests); Show(achievementBlock.get(), showAchievements);
+    any = (showQuests && anyQuest) || (showAchievements && anyAchievement);
     if (any) {
         Pixels(block.get(), "marginBottom", 6);
         int index = api.Value<int>(api.Call(content.get(), "IndexOf", {list.get()}));
@@ -1019,7 +1058,7 @@ void DecorateTooltip(Obj builder) {
     }
     // The group's lines: left-aligned in a column of marks once one of them has any.
     const bool marked = !questMonsters.empty() || !missing.empty() || !done.empty();
-    if (!marked) return;
+    if (!marked && !hasQuests && !hasAchievements) return;
     Set<int>(list.get(), "alignItems", AlignStart);
     Pixels(list.get(), "paddingLeft", 10); Pixels(list.get(), "paddingRight", 10);
     Ref hierarchy(api.Call(list.get(), "get_hierarchy"));
@@ -1048,7 +1087,7 @@ void DecorateTooltip(Obj builder) {
         if (quest) put(IconExclamation, 0.85f, 0.95f, 0.2f);
         if (lacking) put(IconTrophy, 0.62f, 0.62f, 0.62f);
         if (finished) { put(IconTrophy, 0.85f, 0.95f, 0.2f); put(IconTick, 0.85f, 0.95f, 0.2f); }
-        if (!quest && !lacking && !finished) {
+        if (marked && !quest && !lacking && !finished) {
             // Nothing to say on this one: it stays in line with the others.
             Ref spacer(Element(parent.get()));
             Text(spacer.get(), TooltipMarkName, "set_name");
@@ -1068,6 +1107,28 @@ void TooltipSetupHook(Obj builder, Method method) {
         if (!tooltipReported) Log(std::string("MONSTER_TOOLTIP_ERROR ") + error.what());
         tooltipReported = true;
     }
+}
+// While the tooltip is there: Ctrl shows or hides the achievements, Alt the quests. A key
+// counts once per press, and the choice stays.
+void PollTooltipKeys() {
+    if (!tooltipView.builder.get() || !keyHeld) { ctrlHeld = altHeld = false; return; }
+    Ref binding(api.Field(tooltipView.builder.get(), "m_binding"));
+    Ref content(binding.get() ? api.Call(binding.get(), "get_ctr_content") : nullptr);
+    if (!content.get() || !api.Call(content.get(), "get_panel")) { tooltipView.builder.reset(); ctrlHeld = altHeld = false; return; }
+    const auto held = [](int a, int b) {
+        return api.Value<bool>(api.Invoke(keyHeld, nullptr, {&a})) || api.Value<bool>(api.Invoke(keyHeld, nullptr, {&b}));
+    };
+    const bool ctrl = held(KeyLeftControl, KeyRightControl), alt = held(KeyLeftAlt, KeyRightAlt);
+    const bool toggleAchievements = ctrl && !ctrlHeld, toggleQuests = alt && !altHeld;
+    ctrlHeld = ctrl; altHeld = alt;
+    if (!toggleAchievements && !toggleQuests) return;
+    Settings next = module->settings;
+    if (toggleAchievements) next.monsterTooltipAchievements = !next.monsterTooltipAchievements;
+    if (toggleQuests) next.monsterTooltipQuests = !next.monsterTooltipQuests;
+    const bool withMetamobSync = module->KeepSharedMetamobSync(next);
+    module->settings = next;
+    module->SaveSettings(withMetamobSync);
+    tooltipView.dirty = true;
 }
 // The server's answer has come while the tooltip is shown.
 void RefreshTooltip() {
@@ -1169,6 +1230,7 @@ void InstallBossAchievements() {
         objectiveText = api.FindVerified(questObjective, "get_text", 0, 0x7C0E10);
         objectiveStep = api.FindVerified(questObjective, "get_questStep", 0, 0x7C0D80);
         Field(api.Class(DataImage, questSpace, "QuestStepData"), "questId", 20);
+        keyHeld = api.FindVerified(api.Class("UnityEngine.InputLegacyModule.dll", "UnityEngine", "Input"), "GetKey", 1, 0x54963B0);
         bringItemClass = api.Class(DataImage, "Core.DataCenter.Metadata.Quest.Objective", "QuestObjectiveBringItemToNpcData");
         bringItemId = api.FindVerified(bringItemClass, "get_itemId", 0, 0x7BFF30);
         bringQuantity = api.FindVerified(bringItemClass, "get_quantity", 0, 0x7C0070);
@@ -1283,7 +1345,7 @@ void TickBossAchievements() {
         catch (const std::exception& error) { Log(std::string("BOSS_ACHIEVEMENTS_FIGHT_ERROR ") + error.what()); }
     }
     if (Session()) {
-        try { PumpQuestions(); RefreshTooltip(); }
+        try { PumpQuestions(); PollTooltipKeys(); RefreshTooltip(); }
         catch (const std::exception& error) {
             if (!tooltipReported) Log(std::string("MONSTER_TOOLTIP_ERROR ") + error.what());
             tooltipReported = true;

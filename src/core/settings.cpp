@@ -176,6 +176,8 @@ Settings Settings::Read(const std::filesystem::path& path, bool* autoLoadSpecifi
             else if (key == "statsEnabled" && (value == 0 || value == 1)) settings.statsEnabled = value != 0;
             else if (key == "statsButton" && (value == 0 || value == 1)) settings.statsButton = value != 0;
             else if (key == "bossAchievementsShowDone" && (value == 0 || value == 1)) settings.bossAchievementsShowDone = value != 0;
+            else if (key == "monsterTooltipAchievements" && (value == 0 || value == 1)) settings.monsterTooltipAchievements = value != 0;
+            else if (key == "monsterTooltipQuests" && (value == 0 || value == 1)) settings.monsterTooltipQuests = value != 0;
             else if (key == "perfOverlayX" && ValidPerfOverlayPlace(value)) settings.perfOverlayX = value;
             else if (key == "perfOverlayY" && ValidPerfOverlayPlace(value)) settings.perfOverlayY = value;
             else if (key == "perfOverlayScaleX" && ValidPerfOverlayScale(value)) { settings.perfOverlayScaleX = value; perfOverlayScaleXRead = true; }
@@ -340,6 +342,8 @@ void Settings::Save(const std::filesystem::path& path, bool withMetamobSync) con
              << "\ncoordsWorldMiniMapMode=" << coordsWorldMiniMapMode << "\ncoordsWorldMiniMap=" << (coordsWorldMiniMapMode != 0 ? 1 : 0)
              << "\ndimensionChoices=1";
         file << "\nbossAchievementsShowDone=" << (bossAchievementsShowDone ? 1 : 0);
+        file << "\nmonsterTooltipAchievements=" << (monsterTooltipAchievements ? 1 : 0);
+        file << "\nmonsterTooltipQuests=" << (monsterTooltipQuests ? 1 : 0);
         file << "\nstatsEnabled=" << (statsEnabled ? 1 : 0) << "\nstatsButton=" << (statsButton ? 1 : 0);
         // 1.16.1: the top-bar buttons of Capture d’âme, the treasure hunt and the
         // notebook. A file without them (before 1.16.1) shows all three.
