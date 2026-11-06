@@ -102,6 +102,10 @@ inline Mark MarkOf(int monster, const std::vector<Objective>& objectives, const 
 inline bool ObjectiveOnMonster(const std::vector<int>& parameters, int monster, const std::string& foldedText, const std::string& foldedName) {
     return !foldedName.empty() && std::find(parameters.begin(), parameters.end(), monster) != parameters.end() && foldedText.find(foldedName) != std::string::npos;
 }
+// What a quest still asks of an item: "26 sur 50", never beyond what it asks.
+inline std::string Gathered(long long owned, long long needed) {
+    return std::to_string(std::min(std::max(owned, 0LL), needed)) + " sur " + std::to_string(needed);
+}
 // known: the game's answer on this achievement has come.
 inline std::string ObjectiveLine(const std::string& name, bool known, bool done) {
     return (known ? (done ? "[x] " : "[ ] ") : "- ") + name;

@@ -5,6 +5,7 @@
 #include "ui/native-style.hpp"
 #include "ui/tools-ui.hpp"
 #include "core/module.hpp"
+#include "jobs/recipe-native.hpp"
 #include "maps/resource-map-icons.hpp"
 #include "souls/soul-combat.hpp"
 #include "souls/soul-group-menu.hpp"
@@ -84,15 +85,19 @@ using SetupFn = void (*)(Obj, Method);
 SetupFn originalTooltipSetup = nullptr;
 Method questObjectivesRoot = nullptr, questObjectiveById = nullptr, questsRoot = nullptr, questById = nullptr, questName = nullptr, objectiveText = nullptr, objectiveStep = nullptr, iconCtor = nullptr, iconSet = nullptr, iconColor = nullptr;
 Klass questServiceClass = nullptr, statusIconClass = nullptr;
-struct ActiveObjective { std::vector<int> parameters; std::string text, folded, quest; };
+// item: what the objective asks to bring, 0 for any other kind.
+struct ActiveObjective { std::vector<int> parameters; std::string text, folded, quest, itemName; int item = 0, quantity = 0, itemIcon = 0; };
 std::map<int, ActiveObjective> activeObjectives;
-bool tooltipReported = false, questsReported = false, questsSummarized = false, wasInFight = false;
+std::map<int, std::set<int>> monsterDrops;
+Klass bringItemClass = nullptr;
+Method bringItemId = nullptr, bringQuantity = nullptr, bringItem = nullptr;
+bool tooltipReported = false, questsReported = false, questsSummarized = false, questsShownLogged = false, wasInFight = false;
 Method arrayGetValue = nullptr;
 Ref shortType;
 constexpr const char* TooltipBlockName = "better_dofus_monster_block";
 constexpr const char* TooltipMarkName = "better_dofus_monster_mark";
 constexpr int AlignLeft = 3, AlignStart = 1; // TextAnchor.MiddleLeft, Align.FlexStart.
-constexpr int IconTick = 307, IconTrophy = 320, IconExclamation = 130;
+constexpr int IconTick = 307, IconTrophy = 300, IconExclamation = 130; // FigmaIcons: tick, success, exclamationMark.
 using AnswerFn = void (*)(Obj, Obj, Method);
 std::array<AnswerFn, 2> originalAnswer{};
 // fcv's handler of a finished achievement always adds it to the account's set, and to
@@ -762,6 +767,13 @@ const ActiveObjective* ReadActiveObjective(int id) {
     Ref words(api.Call(data.get(), "get_text"));
     objective.text = words.get() ? Plain(api.String(words.get())) : "";
     objective.folded = itemSearch::Fold(objective.text);
+    if (api.object_get_class(data.get()) == bringItemClass) {
+        objective.item = api.Value<int>(api.Invoke(bringItemId, data.get()));
+        objective.quantity = api.Value<int>(api.Invoke(bringQuantity, data.get()));
+        Ref item(api.Invoke(bringItem, data.get()));
+        if (item.get()) objective.itemIcon = api.Value<int>(api.Field(item.get(), "iconId"));
+        objective.itemName = recipeNative::ItemName(objective.item);
+    }
     Ref step(api.Invoke(objectiveStep, data.get()));
     if (step.get()) {
         int quest = api.Value<int>(api.Field(step.get(), "questId"));
@@ -771,6 +783,19 @@ const ActiveObjective* ReadActiveObjective(int id) {
         objective.quest = name.get() ? api.String(name.get()) : "";
     }
     return &activeObjectives.emplace(id, std::move(objective)).first->second;
+}
+// What this monster can drop, from the game's data.
+const std::set<int>& DropsOf(int monster, Obj data) {
+    const auto found = monsterDrops.find(monster);
+    if (found != monsterDrops.end()) return found->second;
+    std::set<int> items;
+    Ref drops(api.Field(data, "drops"));
+    const int count = drops.get() ? api.Value<int>(api.Call(drops.get(), "get_Count")) : 0;
+    for (int i = 0; i < count && i < 256; ++i) {
+        Ref drop(api.Call(drops.get(), "get_Item", {&i}));
+        if (drop.get()) items.insert(api.Value<int>(api.Field(drop.get(), "objectId")));
+    }
+    return monsterDrops.emplace(monster, std::move(items)).first->second;
 }
 Obj StatusIcon(int figma, float r, float g, float b) {
     Ref icon(api.New(statusIconClass));
@@ -822,10 +847,12 @@ void DecorateTooltip(Obj builder) {
     Ref monstersData(api.Invoke(monstersRoot, nullptr));
     if (!monstersData.get()) return;
     std::map<int, std::string> monsterNames;
+    std::map<int, const std::set<int>*> dropsByMonster;
     for (int id : monsters) {
         Ref data(api.Invoke(monsterById, monstersData.get(), {&id}));
         Ref name(data.get() ? api.Invoke(monsterName, data.get()) : nullptr);
         if (name.get()) monsterNames[id] = api.String(name.get());
+        if (data.get()) dropsByMonster[id] = &DropsOf(id, data.get());
     }
     std::set<int> questMonsters, missing, done;
     Ref block(api.New(api.Class(Ui, UiSpace, "VisualElement")));
@@ -853,6 +880,16 @@ void DecorateTooltip(Obj builder) {
                     bool concerned = false;
                     for (const auto& [monster, name] : monsterNames)
                         if (ObjectiveOnMonster(objective->parameters, monster, objective->folded, itemSearch::Fold(name))) { questMonsters.insert(monster); concerned = true; }
+                    // An item to bring: the monsters that drop it, while some is still missing.
+                    int64_t owned = 0;
+                    if (objective->item) {
+                        owned = recipeNative::Owned(objective->item).Total();
+                        for (const auto& [monster, drops] : dropsByMonster)
+                            if (drops->count(objective->item)) {
+                                concerned = true;
+                                if (owned < objective->quantity) questMonsters.insert(monster);
+                            }
+                    }
                     if (!concerned || shown >= 3) continue;
                     ++shown; any = true;
                     Ref line(Band(block.get()));
@@ -863,11 +900,27 @@ void DecorateTooltip(Obj builder) {
                     Ref words(Element(line.get()));
                     Set<float>(words.get(), "flexShrink", 1.f); Set<float>(words.get(), "flexGrow", 1.f);
                     Ref title(Label(words.get(), objective->quest, nativeStyle::Strong));
-                    Ref detail(Label(words.get(), objective->text, nativeStyle::Secondary));
+                    if (objective->item) {
+                        Ref row(Element(words.get()));
+                        Set<int>(row.get(), "flexDirection", 2); Set<int>(row.get(), "alignItems", 2); Pixels(row.get(), "marginTop", 2);
+                        Ref picture(Element(row.get()));
+                        Pixels(picture.get(), "width", 26); Pixels(picture.get(), "height", 26); Pixels(picture.get(), "marginRight", 6);
+                        Set<float>(picture.get(), "flexShrink", 0.f);
+                        if (objective->itemIcon > 0) {
+                            Ref address(resourceMap::ItemIconAddress(objective->itemIcon));
+                            bool yes = true;
+                            api.Invoke(loadIcon, nullptr, {picture.get(), api.object_unbox(address.get()), nullptr, nullptr, nullptr, &yes, &yes});
+                        }
+                        Ref texts(Element(row.get()));
+                        Ref itemLabel(Label(texts.get(), objective->itemName, nativeStyle::Secondary));
+                        Ref count(Label(texts.get(), Gathered(owned, objective->quantity), nativeStyle::Secondary));
+                        nativeStyle::Tone(count.get(), true, false);
+                    } else Label(words.get(), objective->text, nativeStyle::Secondary);
                 }
             }
-            if (!questsSummarized) {
+            if (!questsSummarized || (shown && !questsShownLogged)) {
                 questsSummarized = true;
+                if (shown) questsShownLogged = true;
                 Log("MONSTER_TOOLTIP_QUESTS quests=" + std::to_string(quests.size()) + " activeObjectives=" + std::to_string(objectives) + " shown=" + std::to_string(shown));
             }
         }
@@ -1093,6 +1146,13 @@ void InstallBossAchievements() {
         objectiveText = api.FindVerified(questObjective, "get_text", 0, 0x7C0E10);
         objectiveStep = api.FindVerified(questObjective, "get_questStep", 0, 0x7C0D80);
         Field(api.Class(DataImage, questSpace, "QuestStepData"), "questId", 20);
+        bringItemClass = api.Class(DataImage, "Core.DataCenter.Metadata.Quest.Objective", "QuestObjectiveBringItemToNpcData");
+        bringItemId = api.FindVerified(bringItemClass, "get_itemId", 0, 0x7BFF30);
+        bringQuantity = api.FindVerified(bringItemClass, "get_quantity", 0, 0x7C0070);
+        bringItem = api.FindVerified(bringItemClass, "get_item", 0, 0x7BFF40);
+        Field(api.Class(DataImage, "Core.DataCenter.Metadata.Monster", "MonsterData"), "drops", 56);
+        Field(api.Class(DataImage, "Core.DataCenter.Metadata.Monster", "MonsterDropData"), "objectId", 24);
+        Field(api.Class(DataImage, "Core.DataCenter.Metadata.Item", "ItemData"), "iconId", 36);
         const auto questParameters = api.Class(DataImage, "Core.DataCenter.Metadata.Quest.Objective", "QuestObjectiveParametersData");
         Field(questParameters, "parameter0", 20); Field(questParameters, "parameter4", 36);
         questServiceClass = api.Class("Core.dll", "", "fdi");

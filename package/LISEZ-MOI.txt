@@ -10,9 +10,13 @@ all game rights belong to Ankama. I do not know whether using this mod is
 allowed by Ankama's terms: a ban cannot be completely ruled out. Use it at
 your own risk; the software is provided "as is", without any warranty.
 
-BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.12.0
+BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.12.1
 
 INSTALLATION : double-clique sur BetterDofusLoader.exe, puis lance Dofus.
+
+VERSION 2.12.1 : LES QUÊTES À RESSOURCE DANS L’INFOBULLE DES MONSTRES
+- Une quête qui demande de ramener un objet apparaît sur les monstres qui le lâchent,
+  avec ce que tu en as (26 sur 50), sac, banque et havre-sac compris.
 
 VERSION 2.12.0 : UNE INFOBULLE DES MONSTRES PLUS LISIBLE
 - Quêtes et succès y ont un bandeau vert, et les monstres sont alignés à gauche, avec
