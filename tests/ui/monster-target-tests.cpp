@@ -31,6 +31,8 @@ int main() {
         Check(badge.x == 100.f - BadgeSize / 2 && badge.y == 50.f - BadgeSize - BadgeGap && badge.width == BadgeSize && badge.height == BadgeSize,
             "The badge is centred above the sprites");
         Check(Finite(badge) && !Finite(Badge(NAN, 1.f)), "Projection failures are caught");
+        Check(Bob(0) == 0.f && std::fabs(Bob(BobPeriodMs / 2) - BobPixels) < 1e-4f && Bob(BobPeriodMs) == 0.f, "The badge rises and falls back");
+        for (uint64_t t = 0; t < 5000; t += 37) Check(Bob(t) >= 0.f && Bob(t) <= BobPixels + 1e-4f, "The rise stays bounded");
     } catch (const std::exception& error) {
         std::cerr << error.what() << '\n';
         return 1;

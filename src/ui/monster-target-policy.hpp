@@ -1,6 +1,7 @@
 #pragma once
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <vector>
 
 // « Monstres ciblés » (2.15.0): the monsters the player targets from the bestiary, and
@@ -39,7 +40,13 @@ inline bool Targeted(const std::vector<int>& targets, const std::vector<int>& mo
 // The badge in the HUD's coordinates (origin at the top left, y down): centred on the
 // top of the group's sprites, a little above it.
 struct Rect { float x = 0, y = 0, width = 0, height = 0; };
-inline constexpr float BadgeSize = 26.f, BadgeGap = 2.f;
+inline constexpr float BadgeSize = 40.f, BadgeGap = 4.f, BobPixels = 3.f;
+inline constexpr uint64_t BobPeriodMs = 1200;
+// A slow rise and fall that catches the eye, 0 to BobPixels and back.
+inline float Bob(uint64_t nowMs) {
+    const float phase = static_cast<float>(nowMs % BobPeriodMs) / BobPeriodMs;
+    return BobPixels * (1.f - std::cos(phase * 6.2831853f)) / 2.f;
+}
 inline bool Finite(Rect r) { return std::isfinite(r.x) && std::isfinite(r.y) && std::isfinite(r.width) && std::isfinite(r.height); }
 inline Rect Badge(float centerX, float topY, float size = BadgeSize) {
     return {centerX - size / 2, topY - size - BadgeGap, size, size};

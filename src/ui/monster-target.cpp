@@ -15,7 +15,11 @@ constexpr const char* UiSpace = "UnityEngine.UIElements";
 constexpr const char* Engine = "UnityEngine.CoreModule.dll";
 constexpr const char* Figma = "Core.UILogic.Components.Figma";
 constexpr int IconArchimonster = 10; // FigmaIcons.archimonster, the game's own badge.
-constexpr float Violet[4] = {0.72f, 0.42f, 1.f, 1.f};
+constexpr float Violet[4] = {0.78f, 0.38f, 1.f, 1.f};
+constexpr float ButtonViolet[4] = {0.50f, 0.20f, 0.78f, 1.f};
+constexpr float BadgeBack[4] = {0.10f, 0.04f, 0.18f, 0.88f};
+constexpr float BadgeIcon[4] = {0.96f, 0.62f, 1.f, 1.f};
+constexpr float BadgeInset = 5.f;
 constexpr uint64_t ScanMs = 300;
 constexpr size_t MaxBadges = 32;
 // BestiaryTabUI: its binding (a struct at 16) holds the monster card and its header.
@@ -26,7 +30,9 @@ constexpr const char* TargetTip = "Cibler ce monstre : icône violette au-dessus
 constexpr const char* UntargetTip = "Ne plus cibler ce monstre";
 // A row's button, the monster its row shows now (the list reuses its rows), and the
 // status of the row's own buttons, given back when the monster is not targeted.
-struct RowButton { Ref button; int monster = 0, baseStatus = 0; };
+struct RowButton { Ref button, tooltip, stripe; const char* tip = nullptr; int shownAs = -1; int monster = 0, baseStatus = 0; };
+constexpr int IconTarget = 303; // FigmaIcons.target: the row's own link button already shows the archimonster.
+constexpr float RowGap = 6.f;   // As between the row's own buttons.
 struct Vec2 { float x, y; };
 struct Vec3 { float x, y, z; };
 struct Bounds { Vec3 center, extents; };
@@ -46,8 +52,8 @@ using RefreshFn = void (*)(Obj, Obj, Method);
 RefreshFn originalRefresh = nullptr;
 using BindFn = void (*)(Obj, Obj, int, Method);
 BindFn originalBind = nullptr;
-Klass buttonClass{};
-Method itemsSource{};
+Klass buttonClass{}, tooltipClass{};
+Method itemsSource{}, tooltipCtor{}, hideTooltip{}, addManipulator{}, removeManipulator{};
 Method rootGetter{}, toPanel{}, toLocal{}, cameraGetter{}, toScreen{}, exists{}, groupStore{}, iconSet{}, iconColor{};
 Klass checkboxClass{}, iconClass{}, cameraServiceClass{}, layerServiceClass{}, layerRootClass{}, storeServiceClass{}, visualClass{};
 bool installed = false, reported = false;
@@ -76,6 +82,27 @@ void Pixels(Obj element, const char* name, float value) {
     Ref box(ReadStyle(element, name)); int unit = 0;
     Ref length(api.New(api.Class(Ui, UiSpace, "Length"), {&value, &unit}));
     api.Call(box.get(), "set_value", {api.object_unbox(length.get())}); WriteStyle(element, name, box.get());
+}
+void ColorStyle(Obj element, const char* name, const float (&color)[4]) {
+    Ref box(ReadStyle(element, name)); float value[4] = {color[0], color[1], color[2], color[3]};
+    api.Call(box.get(), "set_value", {value}); WriteStyle(element, name, box.get());
+}
+// Back to the style sheet's value (StyleKeyword.Null).
+void ResetStyle(Obj element, const char* name) {
+    Ref box(ReadStyle(element, name)); int keyword = 1;
+    api.Call(box.get(), "set_keyword", {&keyword}); WriteStyle(element, name, box.get());
+}
+void FloatStyle(Obj element, const char* name, float value) {
+    Ref box(ReadStyle(element, name)); api.Call(box.get(), "set_value", {&value}); WriteStyle(element, name, box.get());
+}
+// A border all around, rounded.
+void Frame(Obj element, float width, const float (&color)[4], float radius) {
+    for (const char* side : {"Left", "Right", "Top", "Bottom"}) {
+        FloatStyle(element, (std::string("border") + side + "Width").c_str(), width);
+        ColorStyle(element, (std::string("border") + side + "Color").c_str(), color);
+    }
+    for (const char* corner : {"borderTopLeftRadius", "borderTopRightRadius", "borderBottomLeftRadius", "borderBottomRightRadius"})
+        Pixels(element, corner, radius);
 }
 void Passive(Obj element) {
     int ignore = 1; api.Call(element, "set_pickingMode", {&ignore});
@@ -118,15 +145,37 @@ void RefreshHook(Obj tab, Obj wrapper, Method method) {
     try { Decorate(tab, wrapper); } catch (const std::exception& error) { Report("bestiary", error); }
 }
 // The bestiary's list: a button beside each row's own (location, achievements, link).
-void ShowRow(const RowButton& row) {
+// The game's own text tooltip, replaced when the text changes.
+void ClearTip(RowButton& row) {
+    if (!row.tooltip.get()) return;
+    api.Invoke(hideTooltip, row.tooltip.get());
+    if (row.button.get()) api.Invoke(removeManipulator, nullptr, {row.button.get(), row.tooltip.get()});
+    row.tooltip.reset(); row.tip = nullptr;
+}
+void ShowRow(RowButton& row) {
     const bool on = Contains(module->settings.targetMonsters, row.monster);
-    int status = on ? StatusStrong : row.baseStatus;
-    api.Call(row.button.get(), "set_status", {&status});
-    Ref tip(api.string_new(on ? UntargetTip : TargetTip));
-    api.Call(row.button.get(), "set_tooltip", {tip.get()});
+    if (row.shownAs != static_cast<int>(on)) {
+        int status = on ? StatusStrong : row.baseStatus;
+        api.Call(row.button.get(), "set_status", {&status});
+        if (on) ColorStyle(row.button.get(), "backgroundColor", ButtonViolet);
+        else ResetStyle(row.button.get(), "backgroundColor");
+        if (row.stripe.get()) EnumStyle(row.stripe.get(), "display", on ? 0 : 1);
+        row.shownAs = on;
+    }
+    const char* tip = on ? UntargetTip : TargetTip;
+    if (tip == row.tip) return;
+    Ref service(module->FindService("fou"));
+    if (!service.get()) return;
+    ClearTip(row);
+    Ref text(api.string_new(tip));
+    row.tooltip.reset(api.object_new(tooltipClass));
+    int origin = 1, source = 7, behavior = 1; bool front = false;
+    api.Invoke(tooltipCtor, row.tooltip.get(), {service.get(), text.get(), &origin, &source, &behavior, &front});
+    api.Invoke(addManipulator, nullptr, {row.button.get(), row.tooltip.get()});
+    row.tip = tip;
 }
 void ShowRows(int monster) {
-    for (const auto& row : state.rows)
+    for (auto& row : state.rows)
         if (row.monster == monster && row.button.get()) ShowRow(row);
 }
 void SetTarget(int monster, bool on) {
@@ -208,8 +257,16 @@ void DecorateRow(Obj tab, Obj element, int index) {
         int size = api.Value<int>(api.Call(model.get(), "get_size")), style = api.Value<int>(api.Call(model.get(), "get_mainStyle"));
         row.baseStatus = api.Value<int>(api.Call(model.get(), "get_status"));
         api.Call(row.button.get(), "set_size", {&size}); api.Call(row.button.get(), "set_mainStyle", {&style});
-        int icon = IconArchimonster; api.Call(row.button.get(), "set_icon", {&icon});
+        int icon = IconTarget; api.Call(row.button.get(), "set_icon", {&icon});
+        Pixels(row.button.get(), "marginRight", RowGap);
         int first = 0; api.Call(buttons.get(), "Insert", {&first, row.button.get()});
+        // A violet band on the row's left edge, shown while its monster is targeted.
+        Ref line(Named(element, "ctr_bestiaryLine"));
+        if (!line.get()) line.reset(element);
+        row.stripe.reset(api.New(visualClass)); Passive(row.stripe.get());
+        Pixels(row.stripe.get(), "left", 0); Pixels(row.stripe.get(), "top", 0); Pixels(row.stripe.get(), "bottom", 0);
+        Pixels(row.stripe.get(), "width", 5); ColorStyle(row.stripe.get(), "backgroundColor", Violet);
+        api.Call(line.get(), "Add", {row.stripe.get()});
         state.rows.push_back(std::move(row));
         found = std::prev(state.rows.end());
     }
@@ -322,15 +379,21 @@ void DrawBadges() {
         Vec2 point{};
         if (!Anchor(group, camera.get(), panel.get(), root.get(), point)) continue;
         if (shown == state.badges.size()) {
+            // A dark disc ringed in violet, the archimonster icon inside.
+            Ref frame(api.New(visualClass)); Passive(frame.get());
+            Pixels(frame.get(), "width", BadgeSize); Pixels(frame.get(), "height", BadgeSize);
+            ColorStyle(frame.get(), "backgroundColor", BadgeBack); Frame(frame.get(), 2.f, Violet, BadgeSize / 2);
             Ref icon(api.New(iconClass));
             int figma = IconArchimonster; api.Invoke(iconSet, icon.get(), {&figma});
-            float color[4] = {Violet[0], Violet[1], Violet[2], Violet[3]}; api.Invoke(iconColor, icon.get(), {color});
+            float color[4] = {BadgeIcon[0], BadgeIcon[1], BadgeIcon[2], BadgeIcon[3]}; api.Invoke(iconColor, icon.get(), {color});
             Passive(icon.get());
-            Pixels(icon.get(), "width", BadgeSize); Pixels(icon.get(), "height", BadgeSize);
-            api.Call(state.overlay.get(), "Add", {icon.get()});
-            state.badges.push_back(std::move(icon));
+            Pixels(icon.get(), "left", BadgeInset - 2); Pixels(icon.get(), "top", BadgeInset - 2);
+            Pixels(icon.get(), "width", BadgeSize - 2 * BadgeInset); Pixels(icon.get(), "height", BadgeSize - 2 * BadgeInset);
+            api.Call(frame.get(), "Add", {icon.get()});
+            api.Call(state.overlay.get(), "Add", {frame.get()});
+            state.badges.push_back(std::move(frame));
         }
-        const auto rect = Badge(point.x, point.y);
+        const auto rect = Badge(point.x, point.y - Bob(GetTickCount64()));
         const auto badge = state.badges[shown++].get();
         Pixels(badge, "left", rect.x); Pixels(badge, "top", rect.y);
         EnumStyle(badge, "display", 0);
@@ -386,6 +449,12 @@ void InstallMonsterTarget() {
         Field(bindings, "_gd_list", TabList);
         const auto tab = api.Class("Core.dll", "Core.UILogic.Bestiary", "BestiaryTabUI");
         AddHook(api.FindVerified(tab, "BindBestiaryItem", 2, 0x155A0D0), 0x155A0D0, reinterpret_cast<void*>(&BindHook), reinterpret_cast<void**>(&originalBind));
+        tooltipClass = api.Class("Core.dll", "Core.UILogic.Components.Tooltips", "TooltipManipulator");
+        tooltipCtor = api.FindVerified(tooltipClass, ".ctor", 6, 0x15D9580);
+        hideTooltip = api.FindVerified(api.Class("Core.dll", "Core.UILogic.Components.Tooltips", "BaseTooltipManipulator"), "HideTooltip", 0, 0x15C6AD0);
+        const auto extensions = api.Class(Ui, UiSpace, "VisualElementExtensions");
+        addManipulator = api.FindVerified(extensions, "AddManipulator", 2, 0x563A930);
+        removeManipulator = api.FindVerified(extensions, "RemoveManipulator", 2, 0x563BDD0);
         nativeClick::AddHandler(&RowClicked);
         AddHook(api.FindVerified(tab, "RefreshMonsterDetails", 1, 0x1564270), 0x1564270, reinterpret_cast<void*>(&RefreshHook), reinterpret_cast<void**>(&originalRefresh));
         installed = true;
@@ -413,7 +482,7 @@ void RestoreMonsterTarget() {
     state.cleanupPending = false;
     try {
         Detach(state.checkbox); state.details.reset(); state.monster = 0;
-        for (auto& row : state.rows) Detach(row.button);
+        for (auto& row : state.rows) { ClearTip(row); Detach(row.button); Detach(row.stripe); }
         state.rows.clear();
         Detach(state.overlay); state.badges.clear(); state.groups.clear(); state.root.reset();
     } catch (const std::exception& error) { Report("restore", error); state.cleanupPending = true; }

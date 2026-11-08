@@ -10,9 +10,15 @@ all game rights belong to Ankama. I do not know whether using this mod is
 allowed by Ankama's terms: a ban cannot be completely ruled out. Use it at
 your own risk; the software is provided "as is", without any warranty.
 
-BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.15.1
+BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.15.2
 
 INSTALLATION : double-clique sur BetterDofusLoader.exe, puis lance Dofus.
+
+VERSION 2.15.2 : MONSTRES CIBLÉS PLUS VISIBLES
+- Sur la carte, l’icône est plus grande, sur une pastille sombre cerclée de violet, et
+  monte et descend doucement.
+- Dans le bestiaire, le bouton a un viseur et une infobulle ; une ligne ciblée a une
+  bande violette à gauche et son bouton en violet.
 
 VERSION 2.15.1 : CIBLER DEPUIS LA LISTE DU BESTIAIRE
 - Chaque ligne du bestiaire a un bouton à l’icône d’archimonstre, à côté de la loupe :
