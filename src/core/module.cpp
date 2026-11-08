@@ -31,6 +31,7 @@
 #include "ui/item-search.hpp"
 #include "jobs/craft-list-panel.hpp"
 #include "ui/boss-achievements.hpp"
+#include "ui/auction-house-select.hpp"
 #include "travel/quest-travel.hpp"
 #include "maps/archi-zones.hpp"
 #include "stats/stats.hpp"
@@ -562,6 +563,7 @@ static DWORD WINAPI Worker(void*) {
         InstallJobsXp();
         InstallRecipeCard(); // never throws: RECIPE_CARD_UNAVAILABLE leaves the game's recipes as they are
         InstallItemSearch();
+        InstallAuctionHouseSelect(); // never throws: AUCTION_SELECT_UNAVAILABLE leaves the game's Shift click as it is
         InstallCraftList(); // never throws: CRAFT_LIST_UNAVAILABLE leaves the game as it is
         InstallBossAchievements(); // never throws: BOSS_ACHIEVEMENTS_UNAVAILABLE leaves the menu as it is
         InstallQuestTravel(); // never throws: QUEST_TRAVEL_UNAVAILABLE leaves the menu as it is

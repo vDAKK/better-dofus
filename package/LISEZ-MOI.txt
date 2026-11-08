@@ -10,9 +10,13 @@ all game rights belong to Ankama. I do not know whether using this mod is
 allowed by Ankama's terms: a ban cannot be completely ruled out. Use it at
 your own risk; the software is provided "as is", without any warranty.
 
-BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.13.1
+BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.14.0
 
 INSTALLATION : double-clique sur BetterDofusLoader.exe, puis lance Dofus.
+
+VERSION 2.14.0 : SÉLECTION AVEC MAJ À L’HÔTEL DE VENTE
+- Dans l’onglet Vente, Maj + clic sur un lot, sa ligne ou sa case, sélectionne aussi tous
+  les lots entre lui et le dernier cliqué sans Maj, même ceux sortis de l’écran.
 
 VERSION 2.13.1 : FINITIONS DE L’INFOBULLE DES MONSTRES
 - En-tête et ligne d’XP teintés, titres plus grands, compteur en deux couleurs, pied
