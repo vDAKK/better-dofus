@@ -192,6 +192,11 @@ Settings Settings::Read(const std::filesystem::path& path, bool* autoLoadSpecifi
                 const auto where = std::lower_bound(items.begin(), items.end(), value);
                 if (items.size() < 128 && (where == items.end() || *where != value)) items.insert(where, value);
             }
+            else if (key == "targetMonster" && value > 0 && value <= 1000000) {
+                auto& targets = settings.targetMonsters;
+                const auto where = std::lower_bound(targets.begin(), targets.end(), value);
+                if (targets.size() < 128 && (where == targets.end() || *where != value)) targets.insert(where, value);
+            }
             else if (key == "soulPanelX" && ValidPanelPosition(value)) settings.soulPanelX = value;
             else if (key == "soulPanelY" && ValidPanelPosition(value)) settings.soulPanelY = value;
             else if (key == "preferredMode" && value >= 1 && value <= 2) { settings.preferredMode = value; preferredRead = true; }
@@ -261,6 +266,7 @@ void Settings::Save(const std::filesystem::path& path, bool withMetamobSync) con
     if (mode < 0 || mode > 2) throw std::runtime_error("Invalid display mode");
     if (!ValidMonsterGlowMode(monsterGlowMode)) throw std::runtime_error("Invalid monster glow mode");
     if (!ValidResourceSelection(resourceMapItems)) throw std::runtime_error("Invalid resource map selection");
+    if (!ValidResourceSelection(targetMonsters)) throw std::runtime_error("Invalid monster targets");
     if (roleplayMode < -1 || roleplayMode > 2 || preferredMode < 1 || preferredMode > 2 ||
         preferredRoleplayMode < 1 || preferredRoleplayMode > 2)
         throw std::runtime_error("Invalid context display preferences");
@@ -372,6 +378,7 @@ void Settings::Save(const std::filesystem::path& path, bool withMetamobSync) con
         if (withMetamobSync) file << "\nmetamobSync=" << (metamobSync ? 1 : 0);
         file << "\nsoulPanelX=" << soulPanelX << "\nsoulPanelY=" << soulPanelY << '\n';
         for (int item : resourceMapItems) file << "resourceMapItem=" << item << '\n';
+        for (int monster : targetMonsters) file << "targetMonster=" << monster << '\n';
         file.flush();
         if (!file) throw std::runtime_error("Cannot save settings");
     }

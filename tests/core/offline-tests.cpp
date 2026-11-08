@@ -916,6 +916,19 @@ int main() {
             { std::ofstream file(path); for (int i=1;i<=200;++i) file << "resourceMapItem=" << i << '\n'; }
             Require(Settings::Read(path).resourceMapItems.size() == 128, "Resource selection read must be bounded");
         }
+        {
+            Settings targets;
+            targets.targetMonsters = {31, 494, 2877};
+            targets.Save(path);
+            Require(Settings::Read(path) == targets, "Targeted monsters persist");
+            auto bad = targets; bad.targetMonsters = {494, 31};
+            bool rejected = false;
+            try { bad.Save(path); } catch (const std::exception&) { rejected = true; }
+            Require(rejected && Settings::Read(path) == targets, "Unsorted targets are rejected before writing");
+            { std::ofstream file(path); file << "targetMonster=494\ntargetMonster=31\ntargetMonster=494\ntargetMonster=0\ntargetMonster=no\n"; }
+            Require(Settings::Read(path).targetMonsters == std::vector<int>({31, 494}), "Targets read sorted, once, valid only");
+            Require(Settings{}.targetMonsters.empty(), "No target by default");
+        }
         { std::ofstream file(path); file << "mode=0\nroleplayMode=2\nanimationMode=3\nautoLoad=1\n"; }
         const auto existing = Settings::Read(path, &autoLoadSpecified);
         Require(existing.mode==0 && existing.roleplayMode==2 && existing.LegacyAnimationMode()==3 && existing.autoLoad && autoLoadSpecified,

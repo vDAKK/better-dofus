@@ -39,4 +39,7 @@ void InstallEntities();
 // managed references belong to the result; no entity or registry is retained
 // internally between frames.
 Snapshot ReadEntities();
+// The same read for the roleplay monster groups only, whatever the glow's boxes
+// (« Monstres ciblés »: a badge above a group of a targeted monster).
+Snapshot ReadMonsterGroups();
 }

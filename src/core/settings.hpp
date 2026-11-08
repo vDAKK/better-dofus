@@ -93,6 +93,8 @@ struct Settings {
     std::array<GaugeVerticalBox, 26> gaugeVerticalBoxes{};
     bool metamobSync = false; // Metamob : +1 dans la quête Metamob après chaque capture d'archimonstre ou de boss (la clé n'est jamais ici)
     std::vector<int> resourceMapItems{};
+    // Monstres ciblés (2.15.0) : ids des monstres choisis dans le bestiaire, triés, 128 au plus.
+    std::vector<int> targetMonsters{};
     bool githubUpdates = true;
     bool chatTravelLinks = true; // Chat : TP à côté des positions et des groupes de monstres partagés
     bool chatSoulInventory = true; // Chat : « Âme en sac » / « Pas en sac » à côté des archimonstres et boss de L’éternelle moisson partagés

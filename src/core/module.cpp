@@ -32,6 +32,7 @@
 #include "jobs/craft-list-panel.hpp"
 #include "ui/boss-achievements.hpp"
 #include "ui/auction-house-select.hpp"
+#include "ui/monster-target.hpp"
 #include "travel/quest-travel.hpp"
 #include "maps/archi-zones.hpp"
 #include "stats/stats.hpp"
@@ -184,6 +185,7 @@ void Module::Change(Settings next, bool save) {
         throw std::runtime_error("Display mode outside valid range");
     if (!Settings::ValidMonsterGlowMode(next.monsterGlowMode)) throw std::runtime_error("Invalid monster glow mode");
     if (!Settings::ValidResourceSelection(next.resourceMapItems)) throw std::runtime_error("Invalid resource map selection");
+    if (!Settings::ValidResourceSelection(next.targetMonsters)) throw std::runtime_error("Invalid monster targets");
     if (!Settings::ValidCustomCursorColor(next.customCursorColor) || !Settings::ValidCustomCursorSize(next.customCursorSize))
         throw std::runtime_error("Invalid cursor choice");
     if (!Settings::ValidGaugeVertical(next.gaugeVertical)) throw std::runtime_error("Invalid vertical gauges");
@@ -327,6 +329,7 @@ void Module::Pump(Obj source) {
     startupStage("item-search", [] { TickItemSearch(); });
     startupStage("craft-list", [] { TickCraftList(); });
     startupStage("boss-achievements", [] { TickBossAchievements(); });
+    startupStage("monster-target", [] { TickMonsterTarget(); });
     startupStage("stats-window", [] { TickStatsWindow(); });
     // After the panels: a window a layout opens is placed the pump its panel builds it.
     startupStage("preset-windows", [] { TickPresetWindows(); });
@@ -396,6 +399,7 @@ void Module::Stop() {
     RestoreItemSearch();
     RestoreCraftList();
     RestoreBossAchievements();
+    RestoreMonsterTarget();
     RestoreStatsWindow();
     RestorePresetWindows();
     toolsUi::Restore();
@@ -431,7 +435,7 @@ void Module::Stop() {
     Log("STOPPED miniatureConversions=" + std::to_string(features->miniatureCount));
     // The worker disables hooks; the DLL remains resident to avoid unloading code on an active stack.
     stopRequested.store(true);
-    stopCompleted.store(!ui->CleanupPending() && !MonsterGlowCleanupPending() && !SoulHelperCleanupPending() && !SoulWidgetCleanupPending() && !ChatTpLinksCleanupPending() && !SpousePartyWidgetCleanupPending() && !PartyTravelWidgetCleanupPending() && !MapPreloadCleanupPending() && !resourceMap::UiCleanupPending() && !resourceMap::RenderCleanupPending() && !TreasurePanelCleanupPending() && !NotebookPanelCleanupPending() && !ItemSearchCleanupPending() && !CraftListCleanupPending() && !BossAchievementsCleanupPending() && !StatsWindowCleanupPending() && !toolsUi::CleanupPending() && !JobsXpCleanupPending() && !ArchiZonesCleanupPending() && !CalendarKraloveCleanupPending() && !MapInfoCleanupPending() && !PerfOverlayCleanupPending() && !CustomCursorCleanupPending() && !VerticalGaugesCleanupPending());
+    stopCompleted.store(!ui->CleanupPending() && !MonsterGlowCleanupPending() && !SoulHelperCleanupPending() && !SoulWidgetCleanupPending() && !ChatTpLinksCleanupPending() && !SpousePartyWidgetCleanupPending() && !PartyTravelWidgetCleanupPending() && !MapPreloadCleanupPending() && !resourceMap::UiCleanupPending() && !resourceMap::RenderCleanupPending() && !TreasurePanelCleanupPending() && !NotebookPanelCleanupPending() && !ItemSearchCleanupPending() && !CraftListCleanupPending() && !BossAchievementsCleanupPending() && !MonsterTargetCleanupPending() && !StatsWindowCleanupPending() && !toolsUi::CleanupPending() && !JobsXpCleanupPending() && !ArchiZonesCleanupPending() && !CalendarKraloveCleanupPending() && !MapInfoCleanupPending() && !PerfOverlayCleanupPending() && !CustomCursorCleanupPending() && !VerticalGaugesCleanupPending());
     if (!stopCompleted.load()) Log("STOPPING awaiting owned UI cleanup on main thread");
     try { WriteStartupStatus(folder, GetCurrentProcessId(), "STOPPED"); }
     catch (const std::exception& e) { Log(std::string("STATUS_ERROR ") + e.what()); }
@@ -478,6 +482,7 @@ static void UpdateHook(Obj self, Method method) {
             if (ItemSearchCleanupPending()) RestoreItemSearch();
             if (CraftListCleanupPending()) RestoreCraftList();
             if (BossAchievementsCleanupPending()) RestoreBossAchievements();
+            if (MonsterTargetCleanupPending()) RestoreMonsterTarget();
             if (StatsWindowCleanupPending()) RestoreStatsWindow();
             if (toolsUi::CleanupPending()) toolsUi::Restore();
             if (JobsXpCleanupPending()) RestoreJobsXp();
@@ -492,7 +497,7 @@ static void UpdateHook(Obj self, Method method) {
             if (PartyTravelWidgetCleanupPending()) RestorePartyTravelWidget();
             if (CustomCursorCleanupPending()) RestoreCustomCursor();
             if (VerticalGaugesCleanupPending()) RestoreVerticalGauges();
-            if (!module->ui->CleanupPending() && !MonsterGlowCleanupPending() && !SoulHelperCleanupPending() && !SoulWidgetCleanupPending() && !ChatTpLinksCleanupPending() && !SpousePartyWidgetCleanupPending() && !PartyTravelWidgetCleanupPending() && !MapPreloadCleanupPending() && !resourceMap::UiCleanupPending() && !resourceMap::RenderCleanupPending() && !TreasurePanelCleanupPending() && !NotebookPanelCleanupPending() && !ItemSearchCleanupPending() && !CraftListCleanupPending() && !BossAchievementsCleanupPending() && !StatsWindowCleanupPending() && !toolsUi::CleanupPending() && !JobsXpCleanupPending() && !ArchiZonesCleanupPending() && !CalendarKraloveCleanupPending() && !MapInfoCleanupPending() && !PerfOverlayCleanupPending() && !CustomCursorCleanupPending() && !VerticalGaugesCleanupPending()) module->stopCompleted.store(true);
+            if (!module->ui->CleanupPending() && !MonsterGlowCleanupPending() && !SoulHelperCleanupPending() && !SoulWidgetCleanupPending() && !ChatTpLinksCleanupPending() && !SpousePartyWidgetCleanupPending() && !PartyTravelWidgetCleanupPending() && !MapPreloadCleanupPending() && !resourceMap::UiCleanupPending() && !resourceMap::RenderCleanupPending() && !TreasurePanelCleanupPending() && !NotebookPanelCleanupPending() && !ItemSearchCleanupPending() && !CraftListCleanupPending() && !BossAchievementsCleanupPending() && !MonsterTargetCleanupPending() && !StatsWindowCleanupPending() && !toolsUi::CleanupPending() && !JobsXpCleanupPending() && !ArchiZonesCleanupPending() && !CalendarKraloveCleanupPending() && !MapInfoCleanupPending() && !PerfOverlayCleanupPending() && !CustomCursorCleanupPending() && !VerticalGaugesCleanupPending()) module->stopCompleted.store(true);
         }
         return;
     }
@@ -564,6 +569,7 @@ static DWORD WINAPI Worker(void*) {
         InstallRecipeCard(); // never throws: RECIPE_CARD_UNAVAILABLE leaves the game's recipes as they are
         InstallItemSearch();
         InstallAuctionHouseSelect(); // never throws: AUCTION_SELECT_UNAVAILABLE leaves the game's Shift click as it is
+        InstallMonsterTarget(); // never throws: MONSTER_TARGET_UNAVAILABLE leaves the bestiary and the map as they are
         InstallCraftList(); // never throws: CRAFT_LIST_UNAVAILABLE leaves the game as it is
         InstallBossAchievements(); // never throws: BOSS_ACHIEVEMENTS_UNAVAILABLE leaves the menu as it is
         InstallQuestTravel(); // never throws: QUEST_TRAVEL_UNAVAILABLE leaves the menu as it is

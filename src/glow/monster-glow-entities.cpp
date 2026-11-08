@@ -201,9 +201,15 @@ void InstallEntities() {
     methods.installed = true;
 }
 
-Snapshot ReadEntities() {
+namespace { Snapshot ReadActors(bool monstersOnly); }
+Snapshot ReadEntities() { return ReadActors(false); }
+Snapshot ReadMonsterGroups() { return ReadActors(true); }
+
+namespace {
+Snapshot ReadActors(bool monstersOnly) {
     Snapshot result;
     result.reason = "session";
+    if (monstersOnly && module && module->InCombat()) return result;
     if (!methods.installed || !module || !module->servicesReady || module->stopped ||
         !module->compositor.get() || !Is(module->creatures.get(), methods.creature) ||
         !Is(module->fight.get(), methods.fight)) return result;
@@ -245,14 +251,15 @@ Snapshot ReadEntities() {
         // the rendered roots in budget order: the accepted targets go to the
         // first categories, whatever the roster order of a crowded map.
         const auto& settings = module->settings;
-        const bool players = !owners.combat && (settings.glowSelf || settings.glowParty || settings.glowPlayers);
+        const bool players = !monstersOnly && !owners.combat && (settings.glowSelf || settings.glowParty || settings.glowPlayers);
         const auto identity = players ? ReadIdentity() : Features::RoleplayIdentity{};
         std::vector<Candidate> candidates;
         for (int i = 0; i < count; ++i) {
             if (!owners.Current()) return {};
             Ref info(api.Call(list.get(), "get_Item", {&i}));
             GlowCategory category = GlowCategory::Monster;
-            if (settings.glowMonsters && Monster(info.get(), owners.combat)) ++result.monsterCount;
+            if ((monstersOnly || settings.glowMonsters) && Monster(info.get(), owners.combat)) ++result.monsterCount;
+            else if (monstersOnly) continue;
             else if (settings.glowNpcs && Npc(info.get(), owners.combat)) { category = GlowCategory::Npc; ++result.npcCount; }
             else if (identity.self && Is(info.get(), methods.information)) {
                 // The ID first, then the player flags only for a ticked
@@ -299,5 +306,6 @@ Snapshot ReadEntities() {
         reported = true; return {};
     }
     return result;
+}
 }
 }

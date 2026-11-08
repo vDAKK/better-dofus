@@ -10,9 +10,14 @@ all game rights belong to Ankama. I do not know whether using this mod is
 allowed by Ankama's terms: a ban cannot be completely ruled out. Use it at
 your own risk; the software is provided "as is", without any warranty.
 
-BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.14.0
+BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.15.0
 
 INSTALLATION : double-clique sur BetterDofusLoader.exe, puis lance Dofus.
+
+VERSION 2.15.0 : MONSTRES CIBLÉS
+- Dans la fiche d’un monstre du bestiaire, une case « Cibler ce monstre ». Sur la
+  carte, chaque groupe qui contient un monstre ciblé porte l’icône d’archimonstre en
+  violet au-dessus de lui. La liste est gardée d’une session à l’autre.
 
 VERSION 2.14.0 : SÉLECTION AVEC MAJ À L’HÔTEL DE VENTE
 - Dans l’onglet Vente, Maj + clic sur un lot, sa ligne ou sa case, sélectionne aussi tous
