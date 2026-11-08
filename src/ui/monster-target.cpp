@@ -1,6 +1,7 @@
 #include "ui/monster-target.hpp"
 #include "ui/monster-target-policy.hpp"
 #include "glow/monster-glow-entities.hpp"
+#include "ui/native-click.hpp"
 #include "core/module.hpp"
 #include <algorithm>
 #include <cmath>
@@ -18,7 +19,14 @@ constexpr float Violet[4] = {0.72f, 0.42f, 1.f, 1.f};
 constexpr uint64_t ScanMs = 300;
 constexpr size_t MaxBadges = 32;
 // BestiaryTabUI: its binding (a struct at 16) holds the monster card and its header.
-constexpr size_t TabDetails = 240, TabInfo = 248, WrapperData = 32, MonsterId = 20;
+constexpr size_t TabList = 232, TabDetails = 240, TabInfo = 248, WrapperData = 32, MonsterId = 20;
+constexpr int StatusStrong = 2; // ButtonStatusEnum.strong: a targeted monster's row button.
+constexpr size_t MaxRowButtons = 96;
+constexpr const char* TargetTip = "Cibler ce monstre : icône violette au-dessus de ses groupes";
+constexpr const char* UntargetTip = "Ne plus cibler ce monstre";
+// A row's button, the monster its row shows now (the list reuses its rows), and the
+// status of the row's own buttons, given back when the monster is not targeted.
+struct RowButton { Ref button; int monster = 0, baseStatus = 0; };
 struct Vec2 { float x, y; };
 struct Vec3 { float x, y, z; };
 struct Bounds { Vec3 center, extents; };
@@ -30,11 +38,16 @@ struct State {
     Ref overlay, root;
     std::vector<Ref> badges;
     std::vector<Group> groups;
+    std::vector<RowButton> rows;
     uint64_t nextScan = 0;
     bool cleanupPending = false;
 } state;
 using RefreshFn = void (*)(Obj, Obj, Method);
 RefreshFn originalRefresh = nullptr;
+using BindFn = void (*)(Obj, Obj, int, Method);
+BindFn originalBind = nullptr;
+Klass buttonClass{};
+Method itemsSource{};
 Method rootGetter{}, toPanel{}, toLocal{}, cameraGetter{}, toScreen{}, exists{}, groupStore{}, iconSet{}, iconColor{};
 Klass checkboxClass{}, iconClass{}, cameraServiceClass{}, layerServiceClass{}, layerRootClass{}, storeServiceClass{}, visualClass{};
 bool installed = false, reported = false;
@@ -104,18 +117,123 @@ void RefreshHook(Obj tab, Obj wrapper, Method method) {
     if (!tab || !Session()) return;
     try { Decorate(tab, wrapper); } catch (const std::exception& error) { Report("bestiary", error); }
 }
+// The bestiary's list: a button beside each row's own (location, achievements, link).
+void ShowRow(const RowButton& row) {
+    const bool on = Contains(module->settings.targetMonsters, row.monster);
+    int status = on ? StatusStrong : row.baseStatus;
+    api.Call(row.button.get(), "set_status", {&status});
+    Ref tip(api.string_new(on ? UntargetTip : TargetTip));
+    api.Call(row.button.get(), "set_tooltip", {tip.get()});
+}
+void ShowRows(int monster) {
+    for (const auto& row : state.rows)
+        if (row.monster == monster && row.button.get()) ShowRow(row);
+}
+void SetTarget(int monster, bool on) {
+    auto next = module->settings;
+    next.targetMonsters = Toggle(next.targetMonsters, monster, on);
+    if (next.targetMonsters == module->settings.targetMonsters) return;
+    module->Change(next);
+    state.nextScan = 0;
+    ShowRows(monster);
+    if (state.monster == monster && state.checkbox.get()) {
+        state.shown = on;
+        bool value = on; api.Call(state.checkbox.get(), "set_value", {&value});
+    }
+    Log("MONSTER_TARGET " + std::string(on ? "ADD " : "REMOVE ") + std::to_string(monster) +
+        " count=" + std::to_string(next.targetMonsters.size()));
+}
+Obj Child(Obj parent, int index) {
+    Ref hierarchy(api.Call(parent, "get_hierarchy"));
+    const int count = api.Value<int>(api.Call(hierarchy.get(), "get_childCount"));
+    return index >= 0 && index < count ? api.Call(hierarchy.get(), "get_Item", {&index}) : nullptr;
+}
+// The row's button bar, found by its name in the row's template.
+Obj Named(Obj root, const char* name, int depth = 0) {
+    if (!root || depth > 6) return nullptr;
+    Ref hierarchy(api.Call(root, "get_hierarchy"));
+    const int count = api.Value<int>(api.Call(hierarchy.get(), "get_childCount"));
+    for (int i = 0; i < count && i < 64; ++i) {
+        Ref child(api.Call(hierarchy.get(), "get_Item", {&i}));
+        if (!child.get()) continue;
+        if (api.String(api.Call(child.get(), "get_name")) == name) return child.get();
+        if (const auto found = Named(child.get(), name, depth + 1)) return found;
+    }
+    return nullptr;
+}
+// Else the first element with two of the game's buttons as children.
+Obj ButtonBar(Obj root, int depth = 0) {
+    if (!root || depth > 6) return nullptr;
+    Ref hierarchy(api.Call(root, "get_hierarchy"));
+    const int count = api.Value<int>(api.Call(hierarchy.get(), "get_childCount"));
+    int buttons = 0;
+    for (int i = 0; i < count && i < 64; ++i) {
+        Ref child(api.Call(hierarchy.get(), "get_Item", {&i}));
+        if (child.get() && api.object_get_class(child.get()) == buttonClass && ++buttons == 2) return root;
+    }
+    for (int i = 0; i < count && i < 64; ++i) {
+        Ref child(api.Call(hierarchy.get(), "get_Item", {&i}));
+        if (const auto found = ButtonBar(child.get(), depth + 1)) return found;
+    }
+    return nullptr;
+}
+void DecorateRow(Obj tab, Obj element, int index) {
+    const auto list = Read<Obj>(tab, TabList);
+    if (!list || !element || index < 0) return;
+    Ref source(api.Invoke(itemsSource, list));
+    if (!source.get()) return;
+    Ref wrapper(api.Call(source.get(), "get_Item", {&index}));
+    const int monster = SelectedMonster(wrapper.get());
+    Ref buttons(Named(element, "ctr_buttons"));
+    if (!buttons.get()) buttons.reset(ButtonBar(element));
+    if (monster <= 0 || !buttons.get()) {
+        static bool logged = false;
+        if (!logged) Log("MONSTER_TARGET_ROW_UNMATCHED monster=" + std::to_string(monster));
+        logged = true;
+        return;
+    }
+    auto found = std::find_if(state.rows.begin(), state.rows.end(),
+        [&](const RowButton& row) { return row.button.get() && api.Call(row.button.get(), "get_parent") == buttons.get(); });
+    if (found == state.rows.end()) {
+        // Rows of a closed window: their buttons went with it.
+        if (state.rows.size() >= MaxRowButtons)
+            state.rows.erase(std::remove_if(state.rows.begin(), state.rows.end(),
+                [](const RowButton& row) { return !row.button.get() || !api.Call(row.button.get(), "get_panel"); }), state.rows.end());
+        if (state.rows.size() >= MaxRowButtons) return;
+        // Dressed as the row's first button, the location one.
+        Ref model(Child(buttons.get(), 0));
+        if (!model.get() || api.object_get_class(model.get()) != buttonClass) return;
+        RowButton row;
+        row.button.reset(api.New(buttonClass));
+        int size = api.Value<int>(api.Call(model.get(), "get_size")), style = api.Value<int>(api.Call(model.get(), "get_mainStyle"));
+        row.baseStatus = api.Value<int>(api.Call(model.get(), "get_status"));
+        api.Call(row.button.get(), "set_size", {&size}); api.Call(row.button.get(), "set_mainStyle", {&style});
+        int icon = IconArchimonster; api.Call(row.button.get(), "set_icon", {&icon});
+        int first = 0; api.Call(buttons.get(), "Insert", {&first, row.button.get()});
+        state.rows.push_back(std::move(row));
+        found = std::prev(state.rows.end());
+    }
+    found->monster = monster;
+    ShowRow(*found);
+}
+void BindHook(Obj tab, Obj element, int index, Method method) {
+    originalBind(tab, element, index, method);
+    if (!tab || !Session()) return;
+    try { DecorateRow(tab, element, index); } catch (const std::exception& error) { Report("bestiary-row", error); }
+}
+bool RowClicked(Obj button) {
+    const auto found = std::find_if(state.rows.begin(), state.rows.end(), [&](const RowButton& row) { return row.button.get() == button; });
+    if (found == state.rows.end()) return false;
+    try { if (Session() && found->monster > 0) SetTarget(found->monster, !Contains(module->settings.targetMonsters, found->monster)); }
+    catch (const std::exception& error) { Report("bestiary-click", error); }
+    return true;
+}
 void PollCheckbox() {
     if (!state.checkbox.get() || state.monster <= 0 || !api.Call(state.checkbox.get(), "get_panel")) return;
     const bool value = api.Value<bool>(api.Call(state.checkbox.get(), "get_value"));
     if (value == state.shown) return;
     state.shown = value;
-    auto next = module->settings;
-    next.targetMonsters = Toggle(next.targetMonsters, state.monster, value);
-    if (next.targetMonsters == module->settings.targetMonsters) return;
-    module->Change(next);
-    state.nextScan = 0;
-    Log("MONSTER_TARGET " + std::string(value ? "ADD " : "REMOVE ") + std::to_string(state.monster) +
-        " count=" + std::to_string(next.targetMonsters.size()));
+    SetTarget(state.monster, value);
 }
 
 // The map: the groups of a targeted monster, read every ScanMs, then their badge each frame.
@@ -259,7 +377,16 @@ void InstallMonsterTarget() {
         Field(bindings, "_ctr_monsterDetails", TabDetails); Field(bindings, "_ctr_monsterInfo", TabInfo);
         Field(api.Class("Core.dll", "Core.UILogic.Bestiary", "MonsterInfoWrapper"), "data", WrapperData);
         Field(api.Class("Ankama.Dofus.Core.DataCenter.dll", "Core.DataCenter.Metadata.Monster", "MonsterData"), "id", MonsterId);
+        buttonClass = api.Class("Core.dll", Figma, "DofusButtonCustom");
+        api.FindVerified(buttonClass, ".ctor", 0, 0x1707180); api.FindVerified(buttonClass, "set_icon", 1, 0x1707A70);
+        api.FindVerified(buttonClass, "set_size", 1, 0x1707DC0); api.FindVerified(buttonClass, "get_size", 0, 0x1707790);
+        api.FindVerified(buttonClass, "set_mainStyle", 1, 0x1707CA0); api.FindVerified(buttonClass, "get_mainStyle", 0, 0x16C8310);
+        api.FindVerified(buttonClass, "set_status", 1, 0x1707E90); api.FindVerified(buttonClass, "get_status", 0, 0x1700490);
+        itemsSource = api.FindVerified(api.Class(Ui, UiSpace, "BaseVerticalCollectionView"), "get_itemsSource", 0, 0x557C7C0);
+        Field(bindings, "_gd_list", TabList);
         const auto tab = api.Class("Core.dll", "Core.UILogic.Bestiary", "BestiaryTabUI");
+        AddHook(api.FindVerified(tab, "BindBestiaryItem", 2, 0x155A0D0), 0x155A0D0, reinterpret_cast<void*>(&BindHook), reinterpret_cast<void**>(&originalBind));
+        nativeClick::AddHandler(&RowClicked);
         AddHook(api.FindVerified(tab, "RefreshMonsterDetails", 1, 0x1564270), 0x1564270, reinterpret_cast<void*>(&RefreshHook), reinterpret_cast<void**>(&originalRefresh));
         installed = true;
         Log("MONSTER_TARGET_READY targets=" + std::to_string(module ? module->settings.targetMonsters.size() : 0));
@@ -286,6 +413,8 @@ void RestoreMonsterTarget() {
     state.cleanupPending = false;
     try {
         Detach(state.checkbox); state.details.reset(); state.monster = 0;
+        for (auto& row : state.rows) Detach(row.button);
+        state.rows.clear();
         Detach(state.overlay); state.badges.clear(); state.groups.clear(); state.root.reset();
     } catch (const std::exception& error) { Report("restore", error); state.cleanupPending = true; }
 }
