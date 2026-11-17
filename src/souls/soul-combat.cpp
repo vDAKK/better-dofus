@@ -87,27 +87,27 @@ CombatSnapshot Snapshot(CombatState status, int level = 0) {
 
 void InstallCombat() {
     if (state.installed) return;
-    methods.inCombat = Verified("Core.dll", "", "fxc", "bfzw", 0, 0x73C610);
-    methods.information = Verified("Core.dll", "", "fxc", "bfzz", 0, 0x11DEB00);
-    methods.phase = Verified("Core.dll", "", "fxj", "bhxx", 0, 0x94D300);
-    methods.flags = Verified("Core.dll", "", "fxj", "bhxv", 0, 0x960FC0);
-    methods.fightType = Verified("Core.dll", "", "fxj", "bhxz", 0, 0x751E60);
-    methods.localId = Verified("Core.dll", "", "esg", "zcx", 0, 0x18B7060);
-    methods.findEntity = Verified("Core.dll", "", "evv", "bamm", 2, 0x195CFF0);
-    methods.entities = Verified("Core.dll", "", "evv", "baml", 0, 0x195CF60);
+    methods.inCombat = Verified("Core.dll", "", "fxc", "bfzw", 0, 0x733FC0);
+    methods.information = Verified("Core.dll", "", "fxc", "bfzz", 0, 0x11D9600);
+    methods.phase = Verified("Core.dll", "", "fxj", "bhxx", 0, 0x947E00);
+    methods.flags = Verified("Core.dll", "", "fxj", "bhxv", 0, 0x95BAC0);
+    methods.fightType = Verified("Core.dll", "", "fxj", "bhxz", 0, 0x749810);
+    methods.localId = Verified("Core.dll", "", "esg", "zcx", 0, 0x18B07F0);
+    methods.findEntity = Verified("Core.dll", "", "evv", "bamm", 2, 0x1950980);
+    methods.entities = Verified("Core.dll", "", "evv", "baml", 0, 0x19508F0);
     constexpr const char* ns = "Core.Services.Entities.EntityInformationServices";
-    methods.flagsTest = Verified("Core.dll", ns, "EntityInfo", "bajs", 1, 0x1956AC0);
-    methods.teamTryGet = Verified("Core.dll", ns, "EntityInfo", "bajy", 2, 0x1956D30);
-    methods.boolGet = Verified("Core.dll", ns, "EntityInfo", "bake", 1, 0x1956F80);
-    methods.intTryGet = Verified("Core.dll", ns, "EntityInfo", "baks", 2, 0x1957500);
+    methods.flagsTest = Verified("Core.dll", ns, "EntityInfo", "bajs", 1, 0x193E4A0);
+    methods.teamTryGet = Verified("Core.dll", ns, "EntityInfo", "bajy", 2, 0x193E710);
+    methods.boolGet = Verified("Core.dll", ns, "EntityInfo", "bake", 1, 0x193E960);
+    methods.intTryGet = Verified("Core.dll", ns, "EntityInfo", "baks", 2, 0x193EEE0);
     constexpr const char* data = "Ankama.Dofus.Core.DataCenter.dll";
     methods.monsters.Install();
-    methods.currentMap = Verified("Core.dll", "", "esg", "zeo", 0, 0x1854C30);
+    methods.currentMap = Verified("Core.dll", "", "esg", "zeo", 0, 0x18516B0);
     constexpr const char* worldNs = "Core.DataCenter.Metadata.World";
-    methods.mapId = Verified(data, worldNs, "WorldPoint", "get_mapId", 0, 0x68D2B0);
-    methods.mapById = Verified(data, worldNs, "MapInformationData", "GetMapInformationById", 1, 0x7BB050);
-    methods.mapCaptureAllowed = Verified(data, worldNs, "MapInformationData", "get_allowSoulCapture", 0, 0x7BB1B0);
-    AddHook(api.Find(api.Class("Core.dll", "", "fxj"), "bhyl", 0), 0x1DE1B60,
+    methods.mapId = Verified(data, worldNs, "WorldPoint", "get_mapId", 0, 0x68E2B0);
+    methods.mapById = Verified(data, worldNs, "MapInformationData", "GetMapInformationById", 1, 0x7B5980);
+    methods.mapCaptureAllowed = Verified(data, worldNs, "MapInformationData", "get_allowSoulCapture", 0, 0x7B5AE0);
+    AddHook(api.Find(api.Class("Core.dll", "", "fxj"), "bhyl", 0), 0x1E18FF0,
         reinterpret_cast<void*>(PhaseHook), reinterpret_cast<void**>(&originalPhase));
     state.installed = true;
 }

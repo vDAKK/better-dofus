@@ -112,12 +112,12 @@ std::string Api::String(Obj o)const{return fake::Get(o).text;}
 void* Api::Native(Method m,uintptr_t rva)const{
  const auto& v=*static_cast<const fake::MethodInfo*>(m);
  const std::map<uintptr_t,std::pair<std::string,int>> expected={
- {0x27C50C0,{"SetCursor",4}},{0x27C4EF0,{"RemoveCursor",2}},
- {0x7C99B0,{"set_sourcePlacementOrigin",1}},{0x766EB0,{"set_tooltipPlacementOrigin",1}},
- {0x1658370,{".ctor",0}},{0x16586F0,{"set_data",1}},{0x1658F80,{"set_slotSize",1}},{0x1654850,{"DisableDrag",0}},
- {0x1659080,{"set_slotType",1}},
- {0x1EC99B0,{"bfpo",1}},{0x1ECA510,{"bfps",2}},{0x1ECB420,{"bfqc",1}},
- {0x1641A60,{".ctor",2}},{0x1641550,{".ctor",4}},{0x1611540,{"UpdateContent",2}},{0x16601B0,{".ctor",1}},{0x1609BD0,{"CreateItemTooltip",9}}};
+ {0x27C88D0,{"SetCursor",4}},{0x27C8700,{"RemoveCursor",2}},
+ {0x7C42E0,{"set_sourcePlacementOrigin",1}},{0x74F210,{"set_tooltipPlacementOrigin",1}},
+ {0x16502D0,{".ctor",0}},{0x1650650,{"set_data",1}},{0x1650EE0,{"set_slotSize",1}},{0x164C7B0,{"DisableDrag",0}},
+ {0x1650FE0,{"set_slotType",1}},
+ {0x1EDA940,{"bfpo",1}},{0x1EDB4A0,{"bfps",2}},{0x1EDC3B0,{"bfqc",1}},
+ {0x16399C0,{".ctor",2}},{0x16396B0,{".ctor",4}},{0x16096A0,{"UpdateContent",2}},{0x1658110,{".ctor",1}},{0x1601D30,{"CreateItemTooltip",9}}};
  const auto& e=expected.at(rva);fake::Check(v.name==e.first&&v.argc==e.second,"Native guard contract mismatch");return reinterpret_cast<void*>(rva);
 }
 }
@@ -128,12 +128,12 @@ void Log(const std::string& s){fake::logs.push_back(s);}
 void AddHook(managed::Method m,uintptr_t rva,void* replace,void** original){
  const auto& v=*static_cast<const fake::MethodInfo*>(m);
  fake::Check(v.type->name=="Slot","Only Slot callbacks expected");
- if(rva==0x16569A0){fake::Check(v.name=="Refresh"&&v.argc==0,"Refresh ABI");fake::refreshHook=reinterpret_cast<fake::RefreshFn>(replace);*original=reinterpret_cast<void*>(&fake::OriginalRefresh);return;}
+ if(rva==0x164E900){fake::Check(v.name=="Refresh"&&v.argc==0,"Refresh ABI");fake::refreshHook=reinterpret_cast<fake::RefreshFn>(replace);*original=reinterpret_cast<void*>(&fake::OriginalRefresh);return;}
  fake::Check(v.argc==1,"Native event ABI");
- if(rva==0x1655C00){fake::Check(v.name=="OnMouseEnter","Enter ABI");fake::enterHook=reinterpret_cast<fake::EventFn>(replace);*original=reinterpret_cast<void*>(&fake::OriginalEnter);}
- else if(rva==0x1655C90){fake::Check(v.name=="OnMouseLeave","Leave ABI");fake::leaveHook=reinterpret_cast<fake::EventFn>(replace);*original=reinterpret_cast<void*>(&fake::OriginalLeave);}
- else if(rva==0x1655880){fake::Check(v.name=="OnDetachedFromPanel","Detach ABI");fake::detachHook=reinterpret_cast<fake::EventFn>(replace);*original=reinterpret_cast<void*>(&fake::OriginalDetach);}
- else {fake::Check(rva==0x16552D0&&v.name=="OnClick","Click ABI");fake::clickHook=reinterpret_cast<fake::EventFn>(replace);*original=reinterpret_cast<void*>(&fake::OriginalClick);}
+ if(rva==0x164DB60){fake::Check(v.name=="OnMouseEnter","Enter ABI");fake::enterHook=reinterpret_cast<fake::EventFn>(replace);*original=reinterpret_cast<void*>(&fake::OriginalEnter);}
+ else if(rva==0x164DBF0){fake::Check(v.name=="OnMouseLeave","Leave ABI");fake::leaveHook=reinterpret_cast<fake::EventFn>(replace);*original=reinterpret_cast<void*>(&fake::OriginalLeave);}
+ else if(rva==0x164D7E0){fake::Check(v.name=="OnDetachedFromPanel","Detach ABI");fake::detachHook=reinterpret_cast<fake::EventFn>(replace);*original=reinterpret_cast<void*>(&fake::OriginalDetach);}
+ else {fake::Check(rva==0x164D230&&v.name=="OnClick","Click ABI");fake::clickHook=reinterpret_cast<fake::EventFn>(replace);*original=reinterpret_cast<void*>(&fake::OriginalClick);}
 }
 namespace fake {
 struct Fixture {

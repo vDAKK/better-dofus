@@ -11,7 +11,7 @@
 
 // Pure local-release policy. No registry, process access or filesystem actions.
 namespace LocalRelease {
-inline constexpr std::string_view ClientVersion = "3.7.13.17";
+inline constexpr std::string_view ClientVersion = "3.7.14.18";
 // A release's folder: BetterDofus-X.Y.Z. Its siblings share the preferences.
 inline constexpr std::string_view FolderPrefix = "BetterDofus-";
 inline constexpr std::array<std::string_view, 3> BinaryNames{

@@ -230,17 +230,17 @@ Method Api::FindVerified(Klass klass,const char* name,int count,uintptr_t rva)co
     const auto key=*static_cast<std::string*>(klass)+"."+name;
     if(key==fake::failVerified)throw std::runtime_error("Verified method unavailable: "+key);
     static const std::map<std::string,std::pair<int,uintptr_t>> expected={
-        {"esg.zeo",{0,0x1854C30}},{"MapInformationData.GetMapInformationById",{1,0x7BB050}},{"MapInformationData.get_subArea",{0,0x7BB300}},
-        {"SubAreaData.get_worldmapId",{0,0x7C7E90}},{"ChatviewBinding.get_ti_chatInput",{0,0x2E7C330}},
-        {"ChatView.IsTextLengthValid",{1,0x2D51A20}},{"ChatView.AppendTextToInputAndFocus",{1,0x2D4D400}},{"ChatView.TrySendMessage",{1,0x2D5C6F0}},
-        {"WorldMapData.GetWorldMapById",{1,0x7CABA0}},{"WorldMapData.get_name",{0,0x7CAC30}},{"SubAreaData.get_name",{0,0x7C7DB0}},
+        {"esg.zeo",{0,0x18516B0}},{"MapInformationData.GetMapInformationById",{1,0x7B5980}},{"MapInformationData.get_subArea",{0,0x7B5C30}},
+        {"SubAreaData.get_worldmapId",{0,0x7C27C0}},{"ChatviewBinding.get_ti_chatInput",{0,0x2E80F70}},
+        {"ChatView.IsTextLengthValid",{1,0x2D589E0}},{"ChatView.AppendTextToInputAndFocus",{1,0x2D543C0}},{"ChatView.TrySendMessage",{1,0x2D636B0}},
+        {"WorldMapData.GetWorldMapById",{1,0x7C54D0}},{"WorldMapData.get_name",{0,0x7C5560}},{"SubAreaData.get_name",{0,0x7C26E0}},
         // Map pins.
-        {"ccn..ctor",{10,0x2635240}},{"cco..ctor",{2,0x26353C0}},{"fhk.beoo",{1,0x1C35A40}},{"fhk.beon",{1,0x1C358F0}},{"fhk.beop",{1,0x1C35BF0}},
+        {"ccn..ctor",{10,0x2637270}},{"cco..ctor",{2,0x26373F0}},{"fhk.beoo",{1,0x1C37520}},{"fhk.beon",{1,0x1C373D0}},{"fhk.beop",{1,0x1C376D0}},
         // Row menus.
-        {"DofusContextualMenuManipulator..ctor",{4,0x16CA640}},{"VisualElementExtensions.AddManipulator",{2,0x563A930}},
-        {"VisualElementExtensions.RemoveManipulator",{2,0x563BDD0}},{"DofusContextualMenuPopulateEvent.get_menu",{0,0x11DEB40}},
-        {"DofusContextualMenu.AppendTitle",{1,0x16D1A00}},{"DofusContextualMenu.AppendDefaultItem",{13,0x16D06F0}},
-        {"ContextMenuItem.get_m_callback",{0,0x16C8AD0}},{"EventBase.StopPropagation",{0,0x5732D00}}};
+        {"DofusContextualMenuManipulator..ctor",{4,0x16C25A0}},{"VisualElementExtensions.AddManipulator",{2,0x563CDD0}},
+        {"VisualElementExtensions.RemoveManipulator",{2,0x563E270}},{"DofusContextualMenuPopulateEvent.get_menu",{0,0x11D9640}},
+        {"DofusContextualMenu.AppendTitle",{1,0x16C9960}},{"DofusContextualMenu.AppendDefaultItem",{13,0x16C8650}},
+        {"ContextMenuItem.get_m_callback",{0,0x16C0A30}},{"EventBase.StopPropagation",{0,0x57351A0}}};
     fake::Check(expected.contains(key)&&expected.at(key)==std::pair{count,rva},"Exact native notebook contract: "+key);
     fake::Check(std::any_of(std::begin(Signatures),std::end(Signatures),[&](const NativeSignature& guard){return guard.rva==rva;}),"Every notebook contract has its 16-byte guard: "+key);
     auto method=std::make_unique<fake::MethodInfo>(fake::MethodInfo{*static_cast<std::string*>(klass),name,rva});auto result=method.get();fake::methods.push_back(std::move(method));return result;

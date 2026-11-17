@@ -103,7 +103,11 @@ bool ctrlHeld = false, altHeld = false;
 constexpr int AlignLeft = 3, AlignStart = 1; // TextAnchor.MiddleLeft, Align.FlexStart.
 constexpr int IconTick = 307, IconTrophy = 300, IconExclamation = 130; // FigmaIcons: tick, success, exclamationMark.
 using AnswerFn = void (*)(Obj, Obj, Method);
-std::array<AnswerFn, 2> originalAnswer{};
+// fcv's four copies of the achievement details' handler (mdv): the build's obfuscation
+// keeps them apart, and which ones the game subscribes is not visible in the files.
+constexpr std::array<std::pair<const char*, uintptr_t>, 4> AnswerHandlers{{
+    {"bcvi", 0x1A8EF60}, {"xm", 0x1A9D2A0}, {"omk", 0x1A9CC00}, {"ldu", 0x1A9B790}}};
+std::array<AnswerFn, 4> originalAnswer{};
 // fcv's handler of a finished achievement always adds it to the account's set, and to
 // the character's set only when it was achieved by the character in play.
 Klass serviceClass = nullptr;
@@ -255,6 +259,10 @@ template <size_t Index> void AnswerHook(Obj self, Obj message, Method method) {
         answers[id] = std::move(answer);
         panel.dirty = true; state.nextRefresh = 0; tooltipView.dirty = true;
     } catch (const std::exception& error) { Log(std::string("BOSS_ACHIEVEMENTS_DETAILS_ERROR ") + error.what()); }
+}
+template <size_t... I> void HookAnswers(Klass handler, std::index_sequence<I...>) {
+    (AddHook(api.FindVerified(handler, AnswerHandlers[I].first, 1, AnswerHandlers[I].second), AnswerHandlers[I].second,
+             reinterpret_cast<void*>(&AnswerHook<I>), reinterpret_cast<void**>(&originalAnswer[I])), ...);
 }
 // The menu.
 int HereMap() {
@@ -1195,20 +1203,20 @@ void RefreshTooltip() {
 void InstallBossAchievements() {
     try {
         const auto data = api.Class(DataImage, "Core.DataCenter", "DataCenterModule");
-        achievementsRoot = api.FindVerified(data, "get_achievementsDataRoot", 0, 0x7B1270);
-        monstersRoot = api.FindVerified(data, "get_monstersDataRoot", 0, 0x7B6270);
-        dungeonsRoot = api.FindVerified(data, "get_dungeonsDataRoot", 0, 0x7B3610);
-        achievementById = api.FindVerified(api.Class(DataImage, QuestSpace, "AchievementsDataRoot"), "GetAchievementById", 1, 0x7AEF30);
+        achievementsRoot = api.FindVerified(data, "get_achievementsDataRoot", 0, 0x7ABBA0);
+        monstersRoot = api.FindVerified(data, "get_monstersDataRoot", 0, 0x7B0BA0);
+        dungeonsRoot = api.FindVerified(data, "get_dungeonsDataRoot", 0, 0x7ADF40);
+        achievementById = api.FindVerified(api.Class(DataImage, QuestSpace, "AchievementsDataRoot"), "GetAchievementById", 1, 0x7A9860);
         const auto achievement = api.Class(DataImage, QuestSpace, "AchievementData");
         Field(achievement, "points", 36); Field(achievement, "level", 40); Field(achievement, "categoryId", 24); Field(achievement, "iconId", 32);
         const auto category = api.Class("Core.dll", "", "nz");
-        categoryOf = api.FindVerified(category, "ova", 1, 0x2D09FB0);
-        categoryVisible = api.FindVerified(category, "ovb", 1, 0x2D0A0D0);
+        categoryOf = api.FindVerified(category, "ova", 1, 0x2D0DBD0);
+        categoryVisible = api.FindVerified(category, "ovb", 1, 0x2D0DCF0);
         const auto settings = api.Class("Core.dll", "Core.UILogic.Components", "DofusUISettings");
-        settingsOf = api.FindVerified(settings, "GetSettings", 0, 0x1591A70);
-        cardAsset = api.FindVerified(settings, "get_achievementItem", 0, 0x1592E50);
-        cloneTree = api.FindVerified(api.Class(Ui, UiSpace, "VisualTreeAsset"), "CloneTree", 1, 0x5643780);
-        loadIcon = api.FindVerified(api.Class("Core.dll", "", "pq"), "paw", 7, 0x2E547E0);
+        settingsOf = api.FindVerified(settings, "GetSettings", 0, 0x1589BD0);
+        cardAsset = api.FindVerified(settings, "get_achievementItem", 0, 0x158AFB0);
+        cloneTree = api.FindVerified(api.Class(Ui, UiSpace, "VisualTreeAsset"), "CloneTree", 1, 0x5645C20);
+        loadIcon = api.FindVerified(api.Class("Core.dll", "", "pq"), "paw", 7, 0x2E57A00);
         resourceMap::InstallIcons();
         iconTypeField = api.class_get_field_from_name(api.Class("Core.dll", "", "rz"), "deuy");
         if (!iconTypeField || api.field_get_offset(iconTypeField) != 800) throw std::runtime_error("Achievement icon catalog layout");
@@ -1216,61 +1224,61 @@ void InstallBossAchievements() {
         Field(display, "m_successList", 312);
         Field(api.Class("Core.dll", "Core.UILogic.Bindings", "ChallengeSelectionDisplayBinding"), "_success_list", 72);
         iconClass = api.Class("Core.dll", "Core.UILogic.Components.Figma", "ChallengeIcon");
-        api.FindVerified(iconClass, ".ctor", 0, 0x16FCD40);
-        api.FindVerified(iconClass, "get_clickable", 0, 0x158B930);
-        updateIcon = api.FindVerified(iconClass, "UpdateChallengeIcon", 1, 0x16FC960);
-        addManipulator = api.FindVerified(api.Class(Ui, UiSpace, "VisualElementExtensions"), "AddManipulator", 2, 0x563A930);
+        api.FindVerified(iconClass, ".ctor", 0, 0x16F4CA0);
+        api.FindVerified(iconClass, "get_clickable", 0, 0x1583A90);
+        updateIcon = api.FindVerified(iconClass, "UpdateChallengeIcon", 1, 0x16F48C0);
+        addManipulator = api.FindVerified(api.Class(Ui, UiSpace, "VisualElementExtensions"), "AddManipulator", 2, 0x563CDD0);
         clickableClass = api.Class("Core.dll", "Core.UILogic.Components.Figma", "ExtendedClickable");
-        clickableCtor = api.FindVerified(clickableClass, ".ctor", 1, 0x1725300);
+        clickableCtor = api.FindVerified(clickableClass, ".ctor", 1, 0x171D260);
         tooltipClass = api.Class("Core.dll", "Core.UILogic.Components.Tooltips", "TooltipManipulator");
-        tooltipCtor = api.FindVerified(tooltipClass, ".ctor", 6, 0x15D9580);
+        tooltipCtor = api.FindVerified(tooltipClass, ".ctor", 6, 0x15D16E0);
         Field(achievement, "objectiveIds", 56);
-        objectivesRoot = api.FindVerified(data, "get_achievementObjectivesDataRoot", 0, 0x7B1130);
+        objectivesRoot = api.FindVerified(data, "get_achievementObjectivesDataRoot", 0, 0x7ABA60);
         const auto objective = api.Class(DataImage, QuestSpace, "AchievementObjectiveData");
         Field(objective, "criterion", 32);
-        objectiveName = api.FindVerified(objective, "get_name", 0, 0x7AEB40);
+        objectiveName = api.FindVerified(objective, "get_name", 0, 0x7A9470);
         const auto checkbox = api.Class("Core.dll", "Core.UILogic.Components.Figma", "CheckboxCustom");
-        api.FindVerified(checkbox, ".ctor", 0, 0x16FE760); api.FindVerified(checkbox, "get_value", 0, 0x16FEAE0);
-        api.FindVerified(checkbox, "set_value", 1, 0x16FF100); api.FindVerified(checkbox, "set_rightText", 1, 0x16FF020);
+        api.FindVerified(checkbox, ".ctor", 0, 0x16F66C0); api.FindVerified(checkbox, "get_value", 0, 0x16F6A40);
+        api.FindVerified(checkbox, "set_value", 1, 0x16F7060); api.FindVerified(checkbox, "set_rightText", 1, 0x16F6F80);
         // As AchievementsUI.OnAchievementSelected: cvo, handled by fcr, which sends mdk. Many
         // one-short messages share this constructor's address: the class is named here by
         // what the window allocates, and checked on the handler's own parameter.
         senderClass = api.Class("Core.dll", "", "fcr");
-        api.FindVerified(senderClass, ".ctor", 3, 0xDDD4F0);
-        sendDetails = api.FindVerified(senderClass, "bcus", 1, 0x1AA4B20);
+        api.FindVerified(senderClass, ".ctor", 3, 0xDD7FF0);
+        sendDetails = api.FindVerified(senderClass, "bcus", 1, 0x1A8C870);
         requestClass = api.Class("Core.dll", "", "cvo");
-        api.FindVerified(requestClass, ".ctor", 1, 0x26384F0);
+        api.FindVerified(requestClass, ".ctor", 1, 0x263A520);
         if (api.class_from_type(api.method_get_param(sendDetails, 0)) != requestClass) throw std::runtime_error("Achievement details request class");
         const auto links = "Core.UILogic.Components.Hyperlink";
         linkClass = api.Class("Core.dll", links, "HyperlinkShowAchievement");
-        linkCtor = api.FindVerified(linkClass, ".ctor", 7, 0x1698450);
-        linkOpen = api.FindVerified(linkClass, "OnHyperlinkLeftClick", 1, 0x16983A0);
+        linkCtor = api.FindVerified(linkClass, ".ctor", 7, 0x16903B0);
+        linkOpen = api.FindVerified(linkClass, "OnHyperlinkLeftClick", 1, 0x1690300);
         const auto array = api.Class("mscorlib.dll", "System", "Array");
-        createArray = api.FindVerified(array, "CreateInstance", 2, 0x42C58D0);
-        setArray = api.FindVerified(array, "SetValue", 2, 0x42C82C0);
+        createArray = api.FindVerified(array, "CreateInstance", 2, 0x42C7D70);
+        setArray = api.FindVerified(array, "SetValue", 2, 0x42CA760);
         stringType.reset(api.type_get_object(api.class_get_type(api.Class("mscorlib.dll", "System", "String"))));
         const auto details = api.Class("Core.dll", "", "gw");
-        answerOf = api.FindVerified(details, "mxn", 1, 0x25992F0);
+        answerOf = api.FindVerified(details, "mxn", 1, 0x25ABFB0);
         Field(details, "dcmb", 16); Field(details, "dcmc", 24);
         Field(api.Class("Core.dll", "", "gv"), "dcly", 16);
         Field(api.Class("Ankama.Dofus.Protocol.Game.dll", "", "mdv"), "fgtm", 24);
         const auto questSpace = "Core.DataCenter.Metadata.Quest";
-        questObjectivesRoot = api.FindVerified(data, "get_questObjectivesDataRoot", 0, 0X7B7030);
-        questObjectiveById = api.FindVerified(api.Class(DataImage, "Core.DataCenter.Metadata.Quest", "QuestObjectivesDataRoot"), "GetQuestObjectiveById", 1, 0X7C2220);
-        questsRoot = api.FindVerified(data, "get_questsDataRoot", 0, 0X7B7210);
-        questById = api.FindVerified(api.Class(DataImage, "Core.DataCenter.Metadata.Quest", "QuestsDataRoot"), "GetQuestById", 1, 0X7C27D0);
+        questObjectivesRoot = api.FindVerified(data, "get_questObjectivesDataRoot", 0, 0X7B1960);
+        questObjectiveById = api.FindVerified(api.Class(DataImage, "Core.DataCenter.Metadata.Quest", "QuestObjectivesDataRoot"), "GetQuestObjectiveById", 1, 0X7BCB50);
+        questsRoot = api.FindVerified(data, "get_questsDataRoot", 0, 0X7B1B40);
+        questById = api.FindVerified(api.Class(DataImage, "Core.DataCenter.Metadata.Quest", "QuestsDataRoot"), "GetQuestById", 1, 0X7BD100);
         const auto questData = api.Class(DataImage, questSpace, "QuestData");
-        questName = api.FindVerified(questData, "get_name", 0, 0x7BFB90);
+        questName = api.FindVerified(questData, "get_name", 0, 0x7BA4C0);
         const auto questObjective = api.Class(DataImage, questSpace, "QuestObjectiveData");
         Field(questObjective, "parameters", 32);
-        objectiveText = api.FindVerified(questObjective, "get_text", 0, 0x7C0E10);
-        objectiveStep = api.FindVerified(questObjective, "get_questStep", 0, 0x7C0D80);
+        objectiveText = api.FindVerified(questObjective, "get_text", 0, 0x7BB740);
+        objectiveStep = api.FindVerified(questObjective, "get_questStep", 0, 0x7BB6B0);
         Field(api.Class(DataImage, questSpace, "QuestStepData"), "questId", 20);
-        keyHeld = api.FindVerified(api.Class("UnityEngine.InputLegacyModule.dll", "UnityEngine", "Input"), "GetKey", 1, 0x54963B0);
+        keyHeld = api.FindVerified(api.Class("UnityEngine.InputLegacyModule.dll", "UnityEngine", "Input"), "GetKey", 1, 0x5498850);
         bringItemClass = api.Class(DataImage, "Core.DataCenter.Metadata.Quest.Objective", "QuestObjectiveBringItemToNpcData");
-        bringItemId = api.FindVerified(bringItemClass, "get_itemId", 0, 0x7BFF30);
-        bringQuantity = api.FindVerified(bringItemClass, "get_quantity", 0, 0x7C0070);
-        bringItem = api.FindVerified(bringItemClass, "get_item", 0, 0x7BFF40);
+        bringItemId = api.FindVerified(bringItemClass, "get_itemId", 0, 0x7BA860);
+        bringQuantity = api.FindVerified(bringItemClass, "get_quantity", 0, 0x7BA9A0);
+        bringItem = api.FindVerified(bringItemClass, "get_item", 0, 0x7BA870);
         Field(api.Class(DataImage, "Core.DataCenter.Metadata.Monster", "MonsterData"), "drops", 56);
         Field(api.Class(DataImage, "Core.DataCenter.Metadata.Monster", "MonsterDropData"), "objectId", 24);
         Field(api.Class(DataImage, "Core.DataCenter.Metadata.Item", "ItemData"), "iconId", 36);
@@ -1281,46 +1289,45 @@ void InstallBossAchievements() {
         Field(api.Class("Core.dll", "", "fcz"), "dtbt", 24); // By objective, its status (fde.bcyw).
         Field(api.Class("Core.dll", "", "fcz"), "dtbu", 32); // By objective, its counter (QuestList.BindQuest).
         Field(api.Class("Core.dll", "", "fda"), "current", 16); Field(api.Class("Core.dll", "", "fda"), "dtbw", 18);
-        arrayGetValue = api.FindVerified(array, "GetValue", 1, 0X42C6670);
+        arrayGetValue = api.FindVerified(array, "GetValue", 1, 0X42C8B10);
         shortType.reset(api.type_get_object(api.class_get_type(api.Class("mscorlib.dll", "System", "Int16"))));
         statusIconClass = api.Class("Core.dll", "Core.UILogic.Components.Figma", "DofusIcon");
-        iconCtor = api.FindVerified(statusIconClass, ".ctor", 0, 0x1708660);
-        iconSet = api.FindVerified(statusIconClass, "set_icon", 1, 0x1708F10);
-        iconColor = api.FindVerified(statusIconClass, "set_color", 1, 0x1708CC0);
-        api.FindVerified(statusIconClass, "get_icon", 0, 0x1591900);
+        iconCtor = api.FindVerified(statusIconClass, ".ctor", 0, 0x17005C0);
+        iconSet = api.FindVerified(statusIconClass, "set_icon", 1, 0x1700E70);
+        iconColor = api.FindVerified(statusIconClass, "set_color", 1, 0x1700C20);
+        api.FindVerified(statusIconClass, "get_icon", 0, 0x1589A60);
         const auto visual = api.Class(Ui, UiSpace, "VisualElement");
-        api.FindVerified(visual, "Insert", 2, 0x55AAA50); api.FindVerified(visual, "IndexOf", 1, 0x55AA8F0);
+        api.FindVerified(visual, "Insert", 2, 0x55ACEF0); api.FindVerified(visual, "IndexOf", 1, 0x55ACD90);
         const auto tooltipBinding = api.Class("Core.dll", "Core.UI.Bindings", "WorldRpMonstersGroupTooltipBinding");
-        api.FindVerified(tooltipBinding, "get_ctr_content", 0, 0x18A2010); api.FindVerified(tooltipBinding, "get_ctr_monsterList", 0, 0x18A2390);
-        api.FindVerified(tooltipBinding, "get_tooltipHeader", 0, 0x18A2C10); api.FindVerified(tooltipBinding, "get_ctr_rewards", 0, 0x18A2450);
+        api.FindVerified(tooltipBinding, "get_ctr_content", 0, 0x1882A70); api.FindVerified(tooltipBinding, "get_ctr_monsterList", 0, 0x1882DF0);
+        api.FindVerified(tooltipBinding, "get_tooltipHeader", 0, 0x1883670); api.FindVerified(tooltipBinding, "get_ctr_rewards", 0, 0x1882EB0);
         const auto groupTooltip = api.Class("Core.dll", "Core.UILogic.Components.Tooltips.Builder", "WorldRpMonstersGroupTooltipBuilder");
         Field(groupTooltip, "m_monstersInfo", 320);
-        AddHook(api.FindVerified(groupTooltip, "SetupViewWithContent", 0, 0x1666600), 0x1666600, reinterpret_cast<void*>(&TooltipSetupHook), reinterpret_cast<void**>(&originalTooltipSetup));
+        AddHook(api.FindVerified(groupTooltip, "SetupViewWithContent", 0, 0x165E560), 0x165E560, reinterpret_cast<void*>(&TooltipSetupHook), reinterpret_cast<void**>(&originalTooltipSetup));
         const auto handler = api.Class("Core.dll", "", "fcv");
-        AddHook(api.FindVerified(handler, "bcvi", 1, 0x1AA7320), 0x1AA7320, reinterpret_cast<void*>(&AnswerHook<0>), reinterpret_cast<void**>(&originalAnswer[0]));
-        AddHook(api.FindVerified(handler, "jnm", 1, 0x1AAEB40), 0x1AAEB40, reinterpret_cast<void*>(&AnswerHook<1>), reinterpret_cast<void**>(&originalAnswer[1]));
-        AddHook(api.FindVerified(display, "DisplayChallenges", 0, 0x2CA08D0), 0x2CA08D0, reinterpret_cast<void*>(&DisplayHook), reinterpret_cast<void**>(&originalDisplay));
+        HookAnswers(handler, std::make_index_sequence<AnswerHandlers.size()>{});
+        AddHook(api.FindVerified(display, "DisplayChallenges", 0, 0x2CA7B10), 0x2CA7B10, reinterpret_cast<void*>(&DisplayHook), reinterpret_cast<void**>(&originalDisplay));
         // The card's class of a finished achievement (AchievementItem.Init). Without it,
         // the section's title still says so.
         try {
-            doneClassOf = api.FindVerified(api.Class("Core.dll", "<PrivateImplementationDetails>{CB22598B-AE9F-4989-A466-01138C0A3A23}", "a"), "nvp", 0, 0x242AA10);
+            doneClassOf = api.FindVerified(api.Class("Core.dll", "<PrivateImplementationDetails>{D665CA48-B117-4A7E-BBD5-26D86C9BB54D}", "a"), "mks", 0, 0x2426020);
         } catch (const std::exception& error) { Log(std::string("BOSS_ACHIEVEMENTS_DONE_CLASS ") + error.what()); }
-        achievementName = api.FindVerified(achievement, "get_name", 0, 0x7AE6F0);
-        achievementDescription = api.FindVerified(achievement, "get_description", 0, 0x7AE770);
-        monsterById = api.FindVerified(api.Class(DataImage, "Core.DataCenter.Metadata.Monster", "MonstersDataRoot"), "GetMonsterById", 1, 0x7DF5F0);
+        achievementName = api.FindVerified(achievement, "get_name", 0, 0x7A9020);
+        achievementDescription = api.FindVerified(achievement, "get_description", 0, 0x7A90A0);
+        monsterById = api.FindVerified(api.Class(DataImage, "Core.DataCenter.Metadata.Monster", "MonstersDataRoot"), "GetMonsterById", 1, 0x7D9F20);
         const auto monster = api.Class(DataImage, "Core.DataCenter.Metadata.Monster", "MonsterData");
         Field(monster, "achievements", 176);
-        isBoss = api.FindVerified(monster, "get_isBoss", 0, 0x7BB210);
-        monsterName = api.FindVerified(monster, "get_name", 0, 0x7DE880);
-        dungeonByMap = api.FindVerified(api.Class(DataImage, "Core.DataCenter.Metadata.World", "DungeonsDataRoot"), "GetDungeonByMapId", 1, 0x7B9500);
+        isBoss = api.FindVerified(monster, "get_isBoss", 0, 0x7B5B40);
+        monsterName = api.FindVerified(monster, "get_name", 0, 0x7D91B0);
+        dungeonByMap = api.FindVerified(api.Class(DataImage, "Core.DataCenter.Metadata.World", "DungeonsDataRoot"), "GetDungeonByMapId", 1, 0x7B3E30);
         const auto dungeon = api.Class(DataImage, "Core.DataCenter.Metadata.World", "DungeonData");
         Field(dungeon, "achievements", 72); Field(dungeon, "bosses", 80);
         serviceClass = api.Class("Core.dll", "", "fcx");
-        finishedAccount = api.FindVerified(serviceClass, "bcwx", 0, 0x69A650);
-        finishedCharacter = api.FindVerified(serviceClass, "bcxd", 0, 0x73FA90);
-        currentMap = api.FindVerified(api.Class("Core.dll", "", "esg"), "zeo", 0, 0x1854C30);
-        append = api.FindVerified(api.Class("Core.dll", "Core.UILogic.Components.ContextMenu", "DofusContextualMenu"), "AppendDefaultItem", 13, 0x16D06F0);
-        unsubscribe = api.FindVerified(api.Class("Core.dll", "Core.Engine.Inputs.Events", "InputCustomEvent"), "UnSubscribe", 1, 0x2097300);
+        finishedAccount = api.FindVerified(serviceClass, "bcwx", 0, 0x69B650);
+        finishedCharacter = api.FindVerified(serviceClass, "bcxd", 0, 0x737440);
+        currentMap = api.FindVerified(api.Class("Core.dll", "", "esg"), "zeo", 0, 0x18516B0);
+        append = api.FindVerified(api.Class("Core.dll", "Core.UILogic.Components.ContextMenu", "DofusContextualMenu"), "AppendDefaultItem", 13, 0x16C8650);
+        unsubscribe = api.FindVerified(api.Class("Core.dll", "Core.Engine.Inputs.Events", "InputCustomEvent"), "UnSubscribe", 1, 0x20E65D0);
         soul::SetAuxiliaryPanelMenus(NoPopulate, Clicked);
         soul::SetAuxiliaryPanelAction(Action); nativeClick::AddHandler(Action);
         toolsUi::Register(Key, "Succès du monstre", IconFlag, [] { return wanted; }, [] { wanted = !wanted && !shown.ids.empty(); return true; }, {},
@@ -1346,7 +1353,7 @@ void RestoreBossAchievements() {
         if (state.header.get() && api.Value<bool>(api.Invoke(api.Find(mouse, "HasMouseCapture", 1), nullptr, {state.header.get()}))) {
             *static_cast<bool*>(api.FieldAddress(state.dragger.get(), "m_active")) = false;
             api.Invoke(api.Find(mouse, "ReleaseMouse", 1), nullptr, {state.header.get()});
-            reinterpret_cast<void (*)(bool, Method)>(api.NativeAt(0x16679C0))(false, nullptr);
+            reinterpret_cast<void (*)(bool, Method)>(api.NativeAt(0x165F920))(false, nullptr);
         }
         if (state.dragger.get()) api.Call(state.dragger.get(), "RemoveSnapPreview");
         bool locked = true; int none = 0;

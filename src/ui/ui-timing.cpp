@@ -8,7 +8,7 @@
 namespace {
 using namespace managed;
 // gob`1, the base of the game's windows; one shared code for all its instantiations.
-constexpr uintptr_t ConstructorRva = 0x3BBFF00, ToggleRva = 0x3BBFC50, AppearRva = 0x3BBF440;
+constexpr uintptr_t ConstructorRva = 0x3BC4CE0, ToggleRva = 0x3BC4A30, AppearRva = 0x3BC4230;
 using ConstructorFn = void (*)(Obj, Obj, Obj, Method);
 using ToggleFn = void (*)(Obj, bool, Method);
 using AppearFn = void (*)(Obj, Method);

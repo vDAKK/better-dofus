@@ -483,67 +483,67 @@ void InstallJobsXp(){
     FieldContract(handler,"m_jobWindowRecipesUI",0x50);
     const auto recipes=api.Class("Core.dll","Core.UILogic.Crafting.Recipes","RecipesUI");
     FieldContract(recipes,"m_currentRecipesFilter",0x208);
-    bindTile=api.FindVerified(recipes,"BindTileData",3,0x2D19E30);
+    bindTile=api.FindVerified(recipes,"BindTileData",3,0x2D20DF0);
     const auto item=api.Class("Core.dll","","mc");
-    createItem=api.FindVerified(item,"ohc",5,0x2A6BF80);
-    api.FindVerified(item,"myx",0,0x2A69C20);
+    createItem=api.FindVerified(item,"ohc",5,0x2935200);
+    api.FindVerified(item,"myx",0,0x29330F0);
     FieldContract(api.Class("Ankama.Dofus.Core.DataCenter.dll","Core.DataCenter.Metadata.Item","ItemData"),"id",0x14);
     const auto tile=api.Class("Core.dll","Core.UILogic.Components.Slots","Tile");
     FieldContract(tile,"onRightClickCallback",0x3F8);
-    api.FindVerified(tile,".ctor",0,0x165E6A0);api.FindVerified(tile,"set_tileSize",1,0x165F7F0);
-    api.FindVerified(tile,"set_counterValue",1,0x165EB50);
+    api.FindVerified(tile,".ctor",0,0x1656600);api.FindVerified(tile,"set_tileSize",1,0x1657750);
+    api.FindVerified(tile,"set_counterValue",1,0x1656AB0);
     const auto cleanup=api.Class("Core.dll","","pq");
-    clearTileImage=api.FindVerified(cleanup,"paq",1,0x2E53F40);
-    clearTileEvents=api.FindVerified(cleanup,"pbo",1,0x2E565F0);
+    clearTileImage=api.FindVerified(cleanup,"paq",1,0x2E57160);
+    clearTileEvents=api.FindVerified(cleanup,"pbo",1,0x2E59810);
     const auto binding=api.Class("Core.dll","Core.UILogic.Bindings","JobRecipesAndSkillsBinding");
     for(const auto& [name,rva]:std::array<std::pair<const char*,uintptr_t>,7>{{
-        {"GetRootElement",0x68D2F0},{"get_ctr_tabs",0x2F1A0B0},{"get_content",0x2F19DF0},
-        {"get_tab_recipe",0x2F1A370},{"get_tab_ressources",0x2F1A420},{"get_recipesUI",0x2F1A2C0},{"get_jobSkillsUI",0x2F1A160}}})
+        {"GetRootElement",0x68E2F0},{"get_ctr_tabs",0x2F1ECF0},{"get_content",0x2F1EA30},
+        {"get_tab_recipe",0x2F1EFB0},{"get_tab_ressources",0x2F1F060},{"get_recipesUI",0x2F1EF00},{"get_jobSkillsUI",0x2F1EDA0}}})
         api.FindVerified(binding,name,0,rva);
     const auto tab=api.Class("Core.dll",Figma,"DofusTab");
-    api.FindVerified(tab,".ctor",0,0x170C850);api.FindVerified(tab,"set_text",1,0x170D180);
-    api.FindVerified(tab,"get_size",0,0x16C8310);api.FindVerified(tab,"set_size",1,0x170CFE0);
-    api.FindVerified(tab,"get_isOn",0,0x170C9E0);api.FindVerified(tab,"SetValueWithoutNotify",1,0x170B400);
-    api.FindVerified(tab,"get_fontCase",0,0x1700490);api.FindVerified(tab,"set_fontCase",1,0x170CA50);
-    api.FindVerified(tab,"get_group",0,0x15575D0);
-    api.FindVerified(api.Class("Core.dll","Core.UILogic.Components","SelectableGroup"),"ForceAllSelectionsOff",0,0x15BBA60);
-    api.FindVerified(api.Class(Ui,UiSpace,"VisualElement"),"get_resolvedStyle",0,0x55BC620);
+    api.FindVerified(tab,".ctor",0,0x17047B0);api.FindVerified(tab,"set_text",1,0x17050E0);
+    api.FindVerified(tab,"get_size",0,0x16C0270);api.FindVerified(tab,"set_size",1,0x1704F40);
+    api.FindVerified(tab,"get_isOn",0,0x1704940);api.FindVerified(tab,"SetValueWithoutNotify",1,0x1703360);
+    api.FindVerified(tab,"get_fontCase",0,0x16F83F0);api.FindVerified(tab,"set_fontCase",1,0x17049B0);
+    api.FindVerified(tab,"get_group",0,0x154F730);
+    api.FindVerified(api.Class("Core.dll","Core.UILogic.Components","SelectableGroup"),"ForceAllSelectionsOff",0,0x15B3BC0);
+    api.FindVerified(api.Class(Ui,UiSpace,"VisualElement"),"get_resolvedStyle",0,0x55BEAC0);
     const auto element=api.Class(Ui,UiSpace,"VisualElement");
-    api.FindVerified(element,"get_layout",0,0x55BBC70);
-    api.FindVerified(element,"get_transform",0,0x3116A10);
-    api.FindVerified(element,"UnityEngine.UIElements.ITransform.set_position",1,0x55B6610);
+    api.FindVerified(element,"get_layout",0,0x55BE110);
+    api.FindVerified(element,"get_transform",0,0x311B650);
+    api.FindVerified(element,"UnityEngine.UIElements.ITransform.set_position",1,0x55B8AB0);
     const auto resolved=api.Class(Ui,UiSpace,"ResolvedStyleAccess");
     for(const auto& [name,rva]:std::array<std::pair<const char*,uintptr_t>,9>{{
-        {"get_height",0x559ED80},{"get_bottom",0x559EB60},{"get_marginTop",0x559EEE0},
-        {"get_marginBottom",0x559EE50},{"get_marginLeft",0x559EE80},{"get_marginRight",0x559EEB0},
-        {"get_paddingTop",0x559F0D0},{"get_paddingBottom",0x559F040},{"get_alignSelf",0x559E690}}})
+        {"get_height",0x55A1220},{"get_bottom",0x55A1000},{"get_marginTop",0x55A1380},
+        {"get_marginBottom",0x55A12F0},{"get_marginLeft",0x55A1320},{"get_marginRight",0x55A1350},
+        {"get_paddingTop",0x55A1570},{"get_paddingBottom",0x55A14E0},{"get_alignSelf",0x55A0B30}}})
         api.FindVerified(resolved,name,0,rva);
-    api.FindVerified(api.Class("Core.dll","","fag"),"bbxi",1,0x1A11F90);
+    api.FindVerified(api.Class("Core.dll","","fag"),"bbxi",1,0x19FE760);
     const auto job=api.Class("Core.dll","","ll");
-    api.FindVerified(job,"obv",0,0x7E6000);api.FindVerified(job,"obx",0,0x73BCA0);api.FindVerified(job,"obt",0,0x68D2D0);
+    api.FindVerified(job,"obv",0,0x7E0930);api.FindVerified(job,"obx",0,0x733650);api.FindVerified(job,"obt",0,0x68E2D0);
     const auto input=api.Class("Core.dll",Figma,"TextInput");
-    api.FindVerified(input,".ctor",0,0x1787B20);api.FindVerified(input,"get_text",0,0x1787C30);
-    api.FindVerified(input,"set_text",1,0x1788AE0);api.FindVerified(input,"set_maxLength",1,0x1788840);
+    api.FindVerified(input,".ctor",0,0x177F8D0);api.FindVerified(input,"get_text",0,0x177F9E0);
+    api.FindVerified(input,"set_text",1,0x1780890);api.FindVerified(input,"set_maxLength",1,0x17805F0);
     const auto checkbox=api.Class("Core.dll",Figma,"CheckboxCustom");
-    api.FindVerified(checkbox,".ctor",0,0x16FE760);api.FindVerified(checkbox,"get_value",0,0x16FEAE0);
-    api.FindVerified(checkbox,"set_rightText",1,0x16FF020);
+    api.FindVerified(checkbox,".ctor",0,0x16F66C0);api.FindVerified(checkbox,"get_value",0,0x16F6A40);
+    api.FindVerified(checkbox,"set_rightText",1,0x16F6F80);
     const auto scroll=api.Class(Ui,UiSpace,"ScrollView");
-    api.FindVerified(scroll,".ctor",1,0x5706FB0);api.FindVerified(scroll,"get_contentContainer",0,0x5707F20);
-    api.FindVerified(scroll,"set_horizontalScrollerVisibility",1,0x57085C0);
-    api.FindVerified(scroll,"set_verticalScrollerVisibility",1,0x5708FF0);
+    api.FindVerified(scroll,".ctor",1,0x5709450);api.FindVerified(scroll,"get_contentContainer",0,0x570A3C0);
+    api.FindVerified(scroll,"set_horizontalScrollerVisibility",1,0x570AA60);
+    api.FindVerified(scroll,"set_verticalScrollerVisibility",1,0x570B490);
     // ListElementBasic contracts are verified by InstallSoulHelper first.
     const auto label=api.Class("Core.dll","Core.UILogic.Components","DofusLabel");
-    api.FindVerified(label,".ctor",0,0x158D3E0);api.FindVerified(label,"set_text",1,0x158E010);api.FindVerified(label,"set_isSingleLine",1,0x158DA50);
+    api.FindVerified(label,".ctor",0,0x1585540);api.FindVerified(label,"set_text",1,0x1586170);api.FindVerified(label,"set_isSingleLine",1,0x1585BB0);
     const auto button=api.Class("Core.dll",Figma,"DofusButtonCustom");
-    api.FindVerified(button,".ctor",0,0x1707180);api.FindVerified(button,"set_icon",1,0x1707A70);api.FindVerified(button,"set_text",1,0x1708080);
-    api.FindVerified(button,"set_mainStyle",1,0x1707CA0);api.FindVerified(button,"set_size",1,0x1707DC0);
+    api.FindVerified(button,".ctor",0,0x16FF0E0);api.FindVerified(button,"set_icon",1,0x16FF9D0);api.FindVerified(button,"set_text",1,0x16FFFE0);
+    api.FindVerified(button,"set_mainStyle",1,0x16FFC00);api.FindVerified(button,"set_size",1,0x16FFD20);
     const auto section=api.Class("Core.dll",Figma,"SectionHeader");
-    api.FindVerified(section,".ctor",5,0x173F9D0);api.FindVerified(section,"set_title",1,0x1740280);api.FindVerified(section,"set_isOpen",1,0x173FDC0);
-    api.FindVerified(section,"set_canBeOpened",1,0x173FB60);api.FindVerified(section,"AddSubContent",1,0x173DE30);
-    api.FindVerified(api.Class("Core.dll",Figma,"ListElementBasic"),"set_isActivated",1,0x172D6C0);
-    AddHook(api.FindVerified(ui,"OnEnable",0,0x2AB8A30),0x2AB8A30,reinterpret_cast<void*>(EnableHook),reinterpret_cast<void**>(&originalEnable));
-    AddHook(api.FindVerified(ui,"OnDisable",0,0x2AB89F0),0x2AB89F0,reinterpret_cast<void*>(DisableHook),reinterpret_cast<void**>(&originalDisable));
-    AddHook(api.FindVerified(handler,"SwitchTab",1,0x2A7E9E0),0x2A7E9E0,reinterpret_cast<void*>(SwitchHook),reinterpret_cast<void**>(&originalSwitch));
+    api.FindVerified(section,".ctor",5,0x1737930);api.FindVerified(section,"set_title",1,0x17381E0);api.FindVerified(section,"set_isOpen",1,0x1737D20);
+    api.FindVerified(section,"set_canBeOpened",1,0x1737AC0);api.FindVerified(section,"AddSubContent",1,0x1735D90);
+    api.FindVerified(api.Class("Core.dll",Figma,"ListElementBasic"),"set_isActivated",1,0x1725620);
+    AddHook(api.FindVerified(ui,"OnEnable",0,0x2ACB1E0),0x2ACB1E0,reinterpret_cast<void*>(EnableHook),reinterpret_cast<void**>(&originalEnable));
+    AddHook(api.FindVerified(ui,"OnDisable",0,0x2ACB1A0),0x2ACB1A0,reinterpret_cast<void*>(DisableHook),reinterpret_cast<void**>(&originalDisable));
+    AddHook(api.FindVerified(handler,"SwitchTab",1,0x2A91190),0x2A91190,reinterpret_cast<void*>(SwitchHook),reinterpret_cast<void**>(&originalSwitch));
     soul::SetAuxiliaryPanelAction(Action);nativeClick::AddHandler(Action);installed=true;
 }
 void RestoreJobsXp(){

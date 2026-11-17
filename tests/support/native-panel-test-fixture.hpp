@@ -319,7 +319,7 @@ Obj Invoke(Method method,Obj self,std::initializer_list<void*> arguments) {
     if(m.name=="RemoveFromHierarchy") { Detach(self);return nullptr; }
     if(m.name=="set_icon"||m.name=="set_mainStyle"||m.name=="set_size"||m.name=="set_status"||m.name=="set_fontCase"||m.name=="set_componentStyle"||m.name=="set_orientation") {obj.enums[m.name]=*static_cast<int*>(args.at(0));return nullptr;}
     if(m.name=="set_isActivated"||m.name=="set_canBeOpened"||m.name=="SetHeaderSize") {obj.enums[m.name]=*static_cast<bool*>(args.at(0))?1:0;return nullptr;}
-    // Native SectionHeader.set_isOpen (0x173FDC0) keeps the previous state unless canBeOpened is on; both are off after the constructor.
+    // Native SectionHeader.set_isOpen (0x1737D20) keeps the previous state unless canBeOpened is on; both are off after the constructor.
     if(m.name=="set_isOpen") {if(obj.enums["set_canBeOpened"]==1)obj.enums[m.name]=*static_cast<bool*>(args.at(0))?1:0;return nullptr;}
     if(m.name=="set_inlineText"||m.name=="set_title"||m.name=="set_choiceText") {obj.text=Get(args.at(0)).text;return nullptr;}
     // Native Dropdown: items with an id, selection without notification, read back by the owner.
@@ -387,41 +387,41 @@ void* Api::FieldAddress(Obj self,const char* name) const {
     if(std::string(name)=="id")return &fake::Get(self).id;
     throw std::runtime_error("Unexpected native field");
 }
-void* Api::NativeAt(uintptr_t rva) const {fake::Check(rva==0x16679C0,"Unexpected native helper");return reinterpret_cast<void*>(&fake::DragFlag);}
+void* Api::NativeAt(uintptr_t rva) const {fake::Check(rva==0x165F920,"Unexpected native helper");return reinterpret_cast<void*>(&fake::DragFlag);}
 void* Api::Native(Method method,uintptr_t rva) const {
     const auto& m=*static_cast<const fake::MethodInfo*>(method);
-    if(rva==0x11DEB40&&m.name=="get_menu"&&m.count==0)return reinterpret_cast<void*>(rva);
+    if(rva==0x11D9640&&m.name=="get_menu"&&m.count==0)return reinterpret_cast<void*>(rva);
     const std::map<uintptr_t,std::pair<std::string,int>> expected={
-        {0x17D2290,{"AddPresetContextualMenuItems",1}},{0x16CFE60,{"AppendCheckboxItem",9}},{0x16D0D80,{"AppendRadioButtonItem",12}},
-        {0x5707F10,{".ctor",0}},{0x5707F20,{"get_contentContainer",0}},
-        {0x55A5C20,{"BringToFront",0}},{0x158DA50,{"set_isSingleLine",1}},
-        {0x1787FE0,{"set_isMultiline",1}},{0x5610520,{"set_enableRichText",1}},
-        {0x1787B20,{".ctor",0}},{0x1787C30,{"get_text",0}},{0x1788AE0,{"set_text",1}},{0x1788930,{"set_placeholderText",1}},{0x1788840,{"set_maxLength",1}},
-        {0x15B9570,{"set_headerIconRight",1}},{0x1727640,{"set_showRightButton",1}},
-        {0x16CA640,{".ctor",4}},{0x16C9F60,{"OnContextualMenuEvent",1}},
-        {0x16D1A00,{"AppendTitle",1}},{0x16D1170,{"AppendSeparator",0}},{0x16D06F0,{"AppendDefaultItem",13}},{0x563A930,{"AddManipulator",2}},{0x563BDD0,{"RemoveManipulator",2}},
-        {0x1591930,{"get_slotType",0}},{0x16586C0,{"get_slotSize",0}},
-        {0x2E57130,{"pbs",0}}, {0x15AC880,{".ctor",0}}, {0x15ABAB0,{"Init",1}},
-        {0x15ACEE0,{"set_hasBackground",1}}, {0x15B96A0,{"set_headerTitle",1}}, {0x15B95B0,{"set_headerIcon",1}},
-        {0x15B9620,{"set_headerSize",1}}, {0x15B95F0,{"set_headerShowCloseButton",1}},
-        {0x15B9790,{"set_verticalResizable",1}}, {0x15B96E0,{"set_horizontalResizable",1}},
-        {0x15B93D0,{"set_cornerResizable",1}}, {0x15B9470,{"set_dragPosition",1}}, {0x15B9700,{"set_isUILocked",1}},
-        {0x157EDD0,{"get_headerWidget",0}}, {0x157EDF0,{"get_contentContainer",0}},
-        {0x68D2C0,{"bfre",0}}, {0x682030,{"bfri",0}}, {0x69A450,{"ydf",0}},
-        {0x73FA90,{"ydh",0}}, {0x11DEB40,{"ydj",0}}, {0x11DEB00,{"ydl",0}},
-        {0x68D2D0,{"get_Target",0}}, {0x2097300,{"UnSubscribe",1}}, {0x166AF30,{"RemoveSnapPreview",0}},
-        {0x172E100,{".ctor",0}}, {0x172E1D0,{"set_listElementStyle",1}},
-        {0x576F310,{"HasMouseCapture",1}}, {0x576F480,{"ReleaseMouse",1}},
-        {0x15AC250,{"SetHeaderSize",1}},{0x17D39A0,{"CreateHeaderSubMenu",0}},{0x17D7C70,{"SetAllHeaderState",1}},
-        {0x16D22E0,{"InsertItem",2}},{0x16D2680,{"RemoveItemAt",1}}, // tools-ui: the mod's rows among the game's header sub-menu rows
-        {0x1725170,{"ProcessUpEvent",3}},{0x750870,{"get_active",0}},{0x5555940,{"ContainsPointer",1}},{0x3099CD0,{"get_target",0}},{0x55BB230,{"get_enabledInHierarchy",0}},
-        {0x170C850,{".ctor",0}},{0x170D180,{"set_text",1}},{0x170CFE0,{"set_size",1}},{0x170CA50,{"set_fontCase",1}},{0x170C9E0,{"get_isOn",0}},{0x170B400,{"SetValueWithoutNotify",1}},
-        {0x1707180,{".ctor",0}},{0x1707A70,{"set_icon",1}},{0x1708080,{"set_text",1}},{0x1707CA0,{"set_mainStyle",1}},{0x1707DC0,{"set_size",1}},{0x1707E90,{"set_status",1}},
-        {0x173F9D0,{".ctor",5}},{0x1740280,{"set_title",1}},{0x173FCD0,{"set_icon",1}},{0x173FDC0,{"set_isOpen",1}},{0x173FB60,{"set_canBeOpened",1}},{0x173DE30,{"AddSubContent",1}},
-        {0x17056A0,{".ctor",0}},{0x1705850,{"set_componentStyle",1}},{0x1705BF0,{"set_orientation",1}},{0x1705B50,{"set_inlineText",1}},
-        {0x172D6A0,{"set_icon",1}},{0x172D6C0,{"set_isActivated",1}},
-        {0x1721D90,{".ctor",0}},{0x1722200,{"set_dropdownType",1}},{0x17220F0,{"set_dropdownSize",1}},{0x171E310,{"AddListElementBasic",6}},
-        {0x1720080,{"SelectItemIdWithoutNotify",1}},{0x15575D0,{"get_selectedElement",0}},{0x1722020,{"set_choiceText",1}}
+        {0x17CA050,{"AddPresetContextualMenuItems",1}},{0x16C7DC0,{"AppendCheckboxItem",9}},{0x16C8CE0,{"AppendRadioButtonItem",12}},
+        {0x570A3B0,{".ctor",0}},{0x570A3C0,{"get_contentContainer",0}},
+        {0x55A80C0,{"BringToFront",0}},{0x1585BB0,{"set_isSingleLine",1}},
+        {0x177FD90,{"set_isMultiline",1}},{0x56129C0,{"set_enableRichText",1}},
+        {0x177F8D0,{".ctor",0}},{0x177F9E0,{"get_text",0}},{0x1780890,{"set_text",1}},{0x17806E0,{"set_placeholderText",1}},{0x17805F0,{"set_maxLength",1}},
+        {0x15B16D0,{"set_headerIconRight",1}},{0x171F5A0,{"set_showRightButton",1}},
+        {0x16C25A0,{".ctor",4}},{0x16C1EC0,{"OnContextualMenuEvent",1}},
+        {0x16C9960,{"AppendTitle",1}},{0x16C90D0,{"AppendSeparator",0}},{0x16C8650,{"AppendDefaultItem",13}},{0x563CDD0,{"AddManipulator",2}},{0x563E270,{"RemoveManipulator",2}},
+        {0x1589A90,{"get_slotType",0}},{0x1650620,{"get_slotSize",0}},
+        {0x2E5A350,{"pbs",0}}, {0x15A49E0,{".ctor",0}}, {0x15A3C10,{"Init",1}},
+        {0x15A5040,{"set_hasBackground",1}}, {0x15B1800,{"set_headerTitle",1}}, {0x15B1710,{"set_headerIcon",1}},
+        {0x15B1780,{"set_headerSize",1}}, {0x15B1750,{"set_headerShowCloseButton",1}},
+        {0x15B18F0,{"set_verticalResizable",1}}, {0x15B1840,{"set_horizontalResizable",1}},
+        {0x15B1530,{"set_cornerResizable",1}}, {0x15B15D0,{"set_dragPosition",1}}, {0x15B1860,{"set_isUILocked",1}},
+        {0x1576F30,{"get_headerWidget",0}}, {0x1576F50,{"get_contentContainer",0}},
+        {0x68E2C0,{"bfre",0}}, {0x683030,{"bfri",0}}, {0x69B450,{"ydf",0}},
+        {0x737440,{"ydh",0}}, {0x11D9640,{"ydj",0}}, {0x11D9600,{"ydl",0}},
+        {0x68E2D0,{"get_Target",0}}, {0x20E65D0,{"UnSubscribe",1}}, {0x1662E90,{"RemoveSnapPreview",0}},
+        {0x1726060,{".ctor",0}}, {0x1726130,{"set_listElementStyle",1}},
+        {0x57717B0,{"HasMouseCapture",1}}, {0x5771920,{"ReleaseMouse",1}},
+        {0x15A43B0,{"SetHeaderSize",1}},{0x17CB760,{"CreateHeaderSubMenu",0}},{0x17CFA30,{"SetAllHeaderState",1}},
+        {0x16CA240,{"InsertItem",2}},{0x16CA5E0,{"RemoveItemAt",1}}, // tools-ui: the mod's rows among the game's header sub-menu rows
+        {0x171D0D0,{"ProcessUpEvent",3}},{0x748220,{"get_active",0}},{0x5557DE0,{"ContainsPointer",1}},{0x309E910,{"get_target",0}},{0x55BD6D0,{"get_enabledInHierarchy",0}},
+        {0x17047B0,{".ctor",0}},{0x17050E0,{"set_text",1}},{0x1704F40,{"set_size",1}},{0x17049B0,{"set_fontCase",1}},{0x1704940,{"get_isOn",0}},{0x1703360,{"SetValueWithoutNotify",1}},
+        {0x16FF0E0,{".ctor",0}},{0x16FF9D0,{"set_icon",1}},{0x16FFFE0,{"set_text",1}},{0x16FFC00,{"set_mainStyle",1}},{0x16FFD20,{"set_size",1}},{0x16FFDF0,{"set_status",1}},
+        {0x1737930,{".ctor",5}},{0x17381E0,{"set_title",1}},{0x1737C30,{"set_icon",1}},{0x1737D20,{"set_isOpen",1}},{0x1737AC0,{"set_canBeOpened",1}},{0x1735D90,{"AddSubContent",1}},
+        {0x16FD600,{".ctor",0}},{0x16FD7B0,{"set_componentStyle",1}},{0x16FDB50,{"set_orientation",1}},{0x16FDAB0,{"set_inlineText",1}},
+        {0x1725600,{"set_icon",1}},{0x1725620,{"set_isActivated",1}},
+        {0x1719CF0,{".ctor",0}},{0x171A160,{"set_dropdownType",1}},{0x171A050,{"set_dropdownSize",1}},{0x1716270,{"AddListElementBasic",6}},
+        {0x1717FE0,{"SelectItemIdWithoutNotify",1}},{0x154F730,{"get_selectedElement",0}},{0x1719F80,{"set_choiceText",1}}
     };
     const auto& contract=expected.at(rva);
     fake::Check(m.name==contract.first&&m.count==contract.second,"Native metadata contract mismatch");
@@ -443,31 +443,31 @@ managed::Obj Module::FindService(const char* name) const {
 void Log(const std::string& message) {fake::logs.push_back(message);}
 void AddHook(managed::Method m,uintptr_t rva,void* replacement,void** original) {
     const auto& method=*static_cast<const fake::MethodInfo*>(m);
-    if(rva==0x17D2290) {fake::modulesHook=reinterpret_cast<fake::DragFn>(replacement);*original=reinterpret_cast<void*>(&fake::OriginalPopulate);return;}
-    if(rva==0x16C9F60) {
+    if(rva==0x17CA050) {fake::modulesHook=reinterpret_cast<fake::DragFn>(replacement);*original=reinterpret_cast<void*>(&fake::OriginalPopulate);return;}
+    if(rva==0x16C1EC0) {
         fake::Check(method.name=="OnContextualMenuEvent"&&method.count==1,"Native menu population ABI");
         fake::populateHook=reinterpret_cast<fake::DragFn>(replacement);*original=reinterpret_cast<void*>(&fake::OriginalPopulate);return;
     }
-    if(rva==0x1669D80) {
+    if(rva==0x1661CE0) {
         fake::Check(method.name=="NotifyDragCompleted"&&method.count==0,"Native magnetic notification ABI");
         fake::notifyHook=reinterpret_cast<fake::ActionFn>(replacement);*original=reinterpret_cast<void*>(&fake::OriginalNotify);return;
     }
-    if(rva==0x172D320) {
+    if(rva==0x1725280) {
         fake::Check(method.name=="<AssignClickAction>b__27_0"&&method.count==0,"Action hook ABI");
         fake::actionHook=reinterpret_cast<fake::ActionFn>(replacement);*original=reinterpret_cast<void*>(&fake::OriginalAction);return;
     }
-    if(rva==0x1669F00) {
+    if(rva==0x1661E60) {
         fake::Check(method.name=="OnMouseDown"&&method.count==1,"Drag-down hook ABI");
         fake::downHook=reinterpret_cast<fake::DragFn>(replacement);*original=reinterpret_cast<void*>(&fake::OriginalDown);return;
     }
-    if(rva==0x1725170) {fake::Check(method.name=="ProcessUpEvent"&&method.count==3,"Native button click hook ABI");fake::clickHook=reinterpret_cast<fake::UpFn>(replacement);*original=reinterpret_cast<void*>(&fake::OriginalButtonUp);return;}
-    if(rva==0x17D39A0) {fake::Check(method.name=="CreateHeaderSubMenu"&&method.count==0,"Header sub-menu hook ABI");fake::subMenuHook=reinterpret_cast<fake::SubMenuFn>(replacement);*original=reinterpret_cast<void*>(&fake::OriginalSubMenu);return;}
-    if(rva==0x17D7C70) {fake::Check(method.name=="SetAllHeaderState"&&method.count==1,"All headers hook ABI");fake::allHeadersHook=reinterpret_cast<fake::AllFn>(replacement);*original=reinterpret_cast<void*>(&fake::OriginalAllHeaders);return;}
-    fake::Check(rva==0x166A450&&method.name=="OnMouseUp"&&method.count==1,"Drag hook ABI");
+    if(rva==0x171D0D0) {fake::Check(method.name=="ProcessUpEvent"&&method.count==3,"Native button click hook ABI");fake::clickHook=reinterpret_cast<fake::UpFn>(replacement);*original=reinterpret_cast<void*>(&fake::OriginalButtonUp);return;}
+    if(rva==0x17CB760) {fake::Check(method.name=="CreateHeaderSubMenu"&&method.count==0,"Header sub-menu hook ABI");fake::subMenuHook=reinterpret_cast<fake::SubMenuFn>(replacement);*original=reinterpret_cast<void*>(&fake::OriginalSubMenu);return;}
+    if(rva==0x17CFA30) {fake::Check(method.name=="SetAllHeaderState"&&method.count==1,"All headers hook ABI");fake::allHeadersHook=reinterpret_cast<fake::AllFn>(replacement);*original=reinterpret_cast<void*>(&fake::OriginalAllHeaders);return;}
+    fake::Check(rva==0x16623B0&&method.name=="OnMouseUp"&&method.count==1,"Drag hook ABI");
     fake::upHook=reinterpret_cast<fake::DragFn>(replacement);*original=reinterpret_cast<void*>(&fake::OriginalUp);
 }
 void AddNativeHook(uintptr_t rva,void* replacement,void** original) {
-    fake::Check(rva==0x16679C0,"Unexpected raw hook");
+    fake::Check(rva==0x165F920,"Unexpected raw hook");
     fake::flagHook=reinterpret_cast<fake::FlagFn>(replacement);*original=reinterpret_cast<void*>(&fake::DragFlag);
 }
 

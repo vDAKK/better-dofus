@@ -341,28 +341,28 @@ Method Api::FindVerified(Klass klass, const char* name, int argc, uintptr_t rva)
     // Exact contracts of the pinned snapshot verified by the options UI.
     struct Contract { uintptr_t rva; const char* owner; const char* method; int argc; };
     static const Contract contracts[] = {
-        {0x2D47D20, "TextButtonOptionElement", "get_m_textButtonOption", 0}, {0x5371D90, "Application", "OpenURL", 1},
-        {0x2D47990, "TextButtonOptionElement", "Init", 1},
-        {0x1787B20, "TextInput", ".ctor", 0}, {0x1787C30, "TextInput", "get_text", 0}, {0x1788AE0, "TextInput", "set_text", 1},
-        {0x1788930, "TextInput", "set_placeholderText", 1}, {0x1788840, "TextInput", "set_maxLength", 1},
-        {0x1788780, "TextInput", "set_isPassword", 1},
-        {0x55BC4C0, "VisualElement", "get_parent", 0}, {0x55AA8F0, "VisualElement", "IndexOf", 1},
-        {0x55AAA50, "VisualElement", "Insert", 2}, {0x55ACF10, "VisualElement", "RemoveFromHierarchy", 0},
-        {0x55BC7E0, "VisualElement", "get_style", 0}, {0x55BA3F0, "VisualElement", ".ctor", 0}, {0x55A4E10, "VisualElement", "Add", 1},
-        {0x171B330, "DofusVisualElement", "SetEnabled", 1},
-        {0x55965B0, "InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_display", 0}, {0x5598B30, "InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_display", 1},
-        {0x5596700, "InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_flexDirection", 0}, {0x5598DC0, "InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_flexDirection", 1},
-        {0x5595FA0, "InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_alignItems", 0}, {0x5597BB0, "InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_alignItems", 1},
-        {0x55979F0, "InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_whiteSpace", 0}, {0x559B6B0, "InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_whiteSpace", 1},
-        {0x1707180, "DofusButtonCustom", ".ctor", 0}, {0x1707DC0, "DofusButtonCustom", "set_size", 1}, {0x1707CA0, "DofusButtonCustom", "set_mainStyle", 1},
-        {0x1707E90, "DofusButtonCustom", "set_status", 1}, {0x1707A70, "DofusButtonCustom", "set_icon", 1}, {0x1708080, "DofusButtonCustom", "set_text", 1},
-        {0x158D3E0, "DofusLabel", ".ctor", 0}, {0x158E010, "DofusLabel", "set_text", 1},
-        {0x2D62DF0, "MultipleChoiceOption", "set_needRebuild", 1}};
+        {0x2D4ECE0, "TextButtonOptionElement", "get_m_textButtonOption", 0}, {0x5374230, "Application", "OpenURL", 1},
+        {0x2D4E950, "TextButtonOptionElement", "Init", 1},
+        {0x177F8D0, "TextInput", ".ctor", 0}, {0x177F9E0, "TextInput", "get_text", 0}, {0x1780890, "TextInput", "set_text", 1},
+        {0x17806E0, "TextInput", "set_placeholderText", 1}, {0x17805F0, "TextInput", "set_maxLength", 1},
+        {0x1780530, "TextInput", "set_isPassword", 1},
+        {0x55BE960, "VisualElement", "get_parent", 0}, {0x55ACD90, "VisualElement", "IndexOf", 1},
+        {0x55ACEF0, "VisualElement", "Insert", 2}, {0x55AF3B0, "VisualElement", "RemoveFromHierarchy", 0},
+        {0x55BEC80, "VisualElement", "get_style", 0}, {0x55BC890, "VisualElement", ".ctor", 0}, {0x55A72B0, "VisualElement", "Add", 1},
+        {0x1713290, "DofusVisualElement", "SetEnabled", 1},
+        {0x5598A50, "InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_display", 0}, {0x559AFD0, "InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_display", 1},
+        {0x5598BA0, "InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_flexDirection", 0}, {0x559B260, "InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_flexDirection", 1},
+        {0x5598440, "InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_alignItems", 0}, {0x559A050, "InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_alignItems", 1},
+        {0x5599E90, "InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_whiteSpace", 0}, {0x559DB50, "InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_whiteSpace", 1},
+        {0x16FF0E0, "DofusButtonCustom", ".ctor", 0}, {0x16FFD20, "DofusButtonCustom", "set_size", 1}, {0x16FFC00, "DofusButtonCustom", "set_mainStyle", 1},
+        {0x16FFDF0, "DofusButtonCustom", "set_status", 1}, {0x16FF9D0, "DofusButtonCustom", "set_icon", 1}, {0x16FFFE0, "DofusButtonCustom", "set_text", 1},
+        {0x1585540, "DofusLabel", ".ctor", 0}, {0x1586170, "DofusLabel", "set_text", 1},
+        {0x2D69DB0, "MultipleChoiceOption", "set_needRebuild", 1}};
     const auto& owner = static_cast<fake::Class*>(klass)->name;
     fake::Check(std::any_of(std::begin(contracts), std::end(contracts), [&](const Contract& contract) {
         return contract.rva == rva && owner == contract.owner && std::string(name) == contract.method && argc == contract.argc;
     }), "Wrong verified options contract");
-    if (rva == 0x2D62DF0 && fake::failRebuildContract) throw std::runtime_error("Synthetic missing contract: set_needRebuild");
+    if (rva == 0x2D69DB0 && fake::failRebuildContract) throw std::runtime_error("Synthetic missing contract: set_needRebuild");
     fake::verifiedRvas.push_back(rva);
     return Find(klass, name, argc);
 }
@@ -602,16 +602,16 @@ void OpenStatsWindow() { ++fake::statsOpens; }
 void OpenModFolder(const std::filesystem::path& folder) { fake::openedFolders.push_back(folder); }
 void AddHook(managed::Method, uintptr_t rva, void* replacement, void** original) {
     ++fake::uiHooks;
-    if (rva == 0x2D3F860) {
+    if (rva == 0x2D46820) {
         fake::enableHook = reinterpret_cast<fake::EnableFn>(replacement);
         *original = reinterpret_cast<void*>(fake::NativeEnable);
-    } else if (rva == 0x2D442B0) {
+    } else if (rva == 0x2D4B270) {
         fake::initHook = reinterpret_cast<fake::InitFn>(replacement);
         *original = reinterpret_cast<void*>(fake::NativeInit);
-    } else if (rva == 0x2D47BF0) {
+    } else if (rva == 0x2D4EBB0) {
         fake::textButtonHook = reinterpret_cast<fake::TextButtonFn>(replacement);
         *original = reinterpret_cast<void*>(fake::NativeTextButton);
-    } else if (rva == 0x2D47990) {
+    } else if (rva == 0x2D4E950) {
         fake::textInitHook = reinterpret_cast<fake::TextButtonFn>(replacement);
         *original = reinterpret_cast<void*>(fake::NativeTextInit);
     } else throw std::runtime_error("Unexpected hook in options test");
@@ -749,7 +749,7 @@ std::vector<ExpectedSection> Layout(OptionsUi& ui) {
             CheckRow(ui.githubOption, ui.githubSource, "Mises à jour GitHub", true),
             // 1.20.2: the relogin after an inactivity disconnection, on by default.
             CheckRow(ui.extraOptions[ReloginGuardExtra], ui.extraSources[ReloginGuardExtra], "Reconnexion après une déconnexion", true)}},
-        {"À propos", {ButtonRow(ui.creditsOption, "Better Dofus 2.15.2 — par DAKK"), ButtonRow(ui.modFolderOption, "Dossier du mod")}}};
+        {"À propos", {ButtonRow(ui.creditsOption, "Better Dofus 2.15.3 — par DAKK"), ButtonRow(ui.modFolderOption, "Dossier du mod")}}};
 }
 std::vector<Obj> Models(const ExpectedSection& section) {
     std::vector<Obj> models;
@@ -856,8 +856,8 @@ void Refresh(Fixture& f) { f.Ui().nextKeyFieldRefresh = 0; f.Ui().Tick(); }
 void CheckLayout(Fixture& f) {
     const auto parent = f.Categories().back();
     Check(Name(parent) == ModCategoryTitle, "Loaded revision missing from category");
-    Check(std::string(ModCategoryTitle) == "Better Dofus" && std::string(ModSemanticVersion) == "2.15.2" && std::string(ModVersion) == "2.15.2" &&
-        ModRevision == 2015002,
+    Check(std::string(ModCategoryTitle) == "Better Dofus" && std::string(ModSemanticVersion) == "2.15.3" && std::string(ModVersion) == "2.15.3" &&
+        ModRevision == 2015003,
         "Tab name carries no revision; version is x.y.z");
     const auto layout = Layout(f.Ui());
     Check(!Get(parent).booleans["isSubCategory"] && Rows(parent).empty() && Sections(parent).size() == SectionCount && layout.size() == SectionCount,
@@ -904,9 +904,9 @@ void CheckLayout(Fixture& f) {
     // « À propos »: the credits row alone, named after the x.y.z version.
     const auto credits = Rows(Section(parent, AboutSection)).at(0);
     const auto description = Description(credits);
-    Check(Label(credits).find("2.15.2") != std::string::npos && Label(credits).find("par DAKK") != std::string::npos &&
+    Check(Label(credits).find("2.15.3") != std::string::npos && Label(credits).find("par DAKK") != std::string::npos &&
         description.find("DAKK") != std::string::npos && description.find("Altansar") != std::string::npos &&
-        description.find("3.7.13.17") != std::string::npos && description.find("3.7.12.12") == std::string::npos &&
+        description.find("3.7.14.18") != std::string::npos && description.find("3.7.13.17") == std::string::npos &&
         description.find("https://github.com/vDAKK/better-dofus") != std::string::npos &&
         description.find("révision") == std::string::npos,
         "Credits must name the version, the author and the project page, without the revision");
@@ -915,8 +915,8 @@ void CheckLayout(Fixture& f) {
     Check(sourceModels == 82 && optionModels == 82 + 4,
         "The UI must create eighty-two private sources and eighty-six rows");
     Check(uiHooks == 4, "Only native page callbacks, the text button action and its view Init must be hooked");
-    for (const uintptr_t rva : {uintptr_t{0x2D47990}, uintptr_t{0x1788780}, uintptr_t{0x55AAA50}, uintptr_t{0x55ACF10}, uintptr_t{0x5598B30},
-        uintptr_t{0x55965B0}, uintptr_t{0x171B330}, uintptr_t{0x1707180}, uintptr_t{0x158D3E0}, uintptr_t{0x55A4E10}})
+    for (const uintptr_t rva : {uintptr_t{0x2D4E950}, uintptr_t{0x1780530}, uintptr_t{0x55ACEF0}, uintptr_t{0x55AF3B0}, uintptr_t{0x559AFD0},
+        uintptr_t{0x5598A50}, uintptr_t{0x1713290}, uintptr_t{0x16FF0E0}, uintptr_t{0x1585540}, uintptr_t{0x55A72B0}})
         Check(std::find(verifiedRvas.begin(), verifiedRvas.end(), rva) != verifiedRvas.end(), "The view Init and the key row's calls must be exact verified contracts");
     Check(clickHandler != nullptr, "The key row's buttons are handled through the game's click");
     const auto& displayed = Get(Get(f.page).refs.at("m_optionsDisplayed")).items;
@@ -2866,7 +2866,7 @@ void ModFolderRow() {
         ui.modFolderMarker.get() != ui.metamobKeyMarker.get(), "« Dossier du mod » is an owned text button known by its own description reference");
     Check(Label(row) == "Dossier du mod" && ButtonText(row) == "Ouvrir", "Its button: « Ouvrir »");
     const auto text = Description(row);
-    for (const char* term : {"Ouvre dans l’Explorateur de Windows le dossier de cette version du mod", "BetterDofus-2.15.2",
+    for (const char* term : {"Ouvre dans l’Explorateur de Windows le dossier de cette version du mod", "BetterDofus-2.15.3",
             "BetterDofus.dll", "module.log", "BetterDofus-settings.ini", "dans le dossier au-dessus",
             "ne modifie ni ne supprime aucun fichier"})
         Check(text.find(term) != std::string::npos, std::string("« Dossier du mod » says: ") + term);

@@ -143,22 +143,22 @@ void InstallAuctionHouseSelect() {
         Field(api.Class("Core.dll", "Core.UILogic.Bindings", "AuctionHouseSellBinding"), "_gd_itemList", BindingItemList + 16);
         Field(line, "m_auctionHouseSell", LineSell); Field(line, "m_item", LineLot); Field(line, "m_itemLineBinding", LineBinding);
         Field(api.Class("Core.dll", "Core.UILogic.Bindings", "AuctionHouseSell_ItemLineBinding"), "_chk_remove", BindingCheckbox + 16);
-        isSelected = api.FindVerified(sell, "ItemSelectedToBeRemoved", 1, 0x2830D00);
+        isSelected = api.FindVerified(sell, "ItemSelectedToBeRemoved", 1, 0x2835DB0);
         // The lot's struct, from the parameter that takes it.
         const auto lot = api.class_from_type(api.method_get_param(isSelected, 0));
         if (!lot || !api.class_is_valuetype(lot)) throw std::runtime_error("Auction house lot type");
         Field(lot, "itemWrapper", LotItem + 16); Field(lot, "selected", LotSelected + 16); Field(lot, "index", LotIndex + 16);
         Field(lot, "isInit", 48); // The last field: with the item's alignment, 40 bytes.
-        updateButtons = api.FindVerified(sell, "UpdateButtonsState", 0, 0x2840150);
-        updateCheckAll = api.FindVerified(sell, "UpdateChkAllState", 0, 0x2840810);
-        refreshItems = api.FindVerified(api.Class("UnityEngine.UIElementsModule.dll", "UnityEngine.UIElements", "BaseVerticalCollectionView"), "RefreshItems", 0, 0x5578EE0);
+        updateButtons = api.FindVerified(sell, "UpdateButtonsState", 0, 0x2845200);
+        updateCheckAll = api.FindVerified(sell, "UpdateChkAllState", 0, 0x28458C0);
+        refreshItems = api.FindVerified(api.Class("UnityEngine.UIElementsModule.dll", "UnityEngine.UIElements", "BaseVerticalCollectionView"), "RefreshItems", 0, 0x557B380);
         const auto checkbox = api.Class("Core.dll", "Core.UILogic.Components.Figma", "CheckboxCustom");
-        checkboxValue = api.FindVerified(checkbox, "get_value", 0, 0x16FEAE0);
-        setCheckbox = api.FindVerified(checkbox, "set_value", 1, 0x16FF100);
-        keyHeld = api.FindVerified(api.Class("UnityEngine.InputLegacyModule.dll", "UnityEngine", "Input"), "GetKey", 1, 0x54963B0);
-        AddHook(api.FindVerified(line, "OnLineSingleClicked", 0, 0x285CFD0), 0x285CFD0, reinterpret_cast<void*>(&SingleHook), reinterpret_cast<void**>(&originalSingle));
-        AddHook(api.FindVerified(line, "OnLineCtrlClicked", 0, 0x285CF20), 0x285CF20, reinterpret_cast<void*>(&CtrlHook), reinterpret_cast<void**>(&originalCtrl));
-        AddHook(api.FindVerified(line, "OnCheckboxValueChanged", 1, 0x285CDF0), 0x285CDF0, reinterpret_cast<void*>(&ValueHook), reinterpret_cast<void**>(&originalValue));
+        checkboxValue = api.FindVerified(checkbox, "get_value", 0, 0x16F6A40);
+        setCheckbox = api.FindVerified(checkbox, "set_value", 1, 0x16F7060);
+        keyHeld = api.FindVerified(api.Class("UnityEngine.InputLegacyModule.dll", "UnityEngine", "Input"), "GetKey", 1, 0x5498850);
+        AddHook(api.FindVerified(line, "OnLineSingleClicked", 0, 0x2862080), 0x2862080, reinterpret_cast<void*>(&SingleHook), reinterpret_cast<void**>(&originalSingle));
+        AddHook(api.FindVerified(line, "OnLineCtrlClicked", 0, 0x2861FD0), 0x2861FD0, reinterpret_cast<void*>(&CtrlHook), reinterpret_cast<void**>(&originalCtrl));
+        AddHook(api.FindVerified(line, "OnCheckboxValueChanged", 1, 0x2861EA0), 0x2861EA0, reinterpret_cast<void*>(&ValueHook), reinterpret_cast<void**>(&originalValue));
         installed = true;
         Log("AUCTION_SELECT_READY");
     } catch (const std::exception& error) { Log(std::string("AUCTION_SELECT_UNAVAILABLE ") + error.what()); }

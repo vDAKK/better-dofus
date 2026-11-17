@@ -4,8 +4,8 @@
 #include <string>
 #include <vector>
 
-inline constexpr char ExpectedGameHash[] = "ad013415455d93bd865aef70fcf1b7c6f704c799f85e2ef301aa7fa610ef2591";
-inline constexpr char ExpectedMetadataHash[] = "ad2880162d7e0aee219fdc81e4a3817cc86cca4aba3df3ce86fd470c1bb9a6af";
+inline constexpr char ExpectedGameHash[] = "af866f65f0d08eebe9008ffda54462e2814d994c81059fffd766f0d685503ab3";
+inline constexpr char ExpectedMetadataHash[] = "781890cf890114c5231b5bf04595acbceaf8317f7998fd8053c017de1ae23206";
 std::string FileHash(const std::filesystem::path& path);
 std::filesystem::path ModulePath(HMODULE module);
 bool SupportedClient(const std::filesystem::path& exe);

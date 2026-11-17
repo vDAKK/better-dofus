@@ -60,21 +60,21 @@ void QuestReason(const std::string& reason) {
 void Install() {
     if (state.installed) return;
     auto inventoryService = api.Class("Core.dll","","feh");
-    api.FindVerified(inventoryService,"bdoq",0,0x11E4900);
+    api.FindVerified(inventoryService,"bdoq",0,0x11DF400);
     state.itemClass = api.Class("Core.dll","","mc");
     state.maskClass = api.Class("Core.dll","Core.UILogic.Inventory","ItemMasks");
     state.integerClass = api.Class("Ankama.Dofus.Core.DataCenter.dll","Core.DataCenter.Metadata.Effect.Instance","EffectInstanceInteger");
-    api.FindVerified(state.itemClass,"myn",0,0xF179C0);
-    api.FindVerified(state.itemClass,"myo",0,0x858AF0);
-    api.FindVerified(state.itemClass,"nag",0,0x2A6A4F0);
-    api.FindVerified(state.itemClass,"mzb",0,0x2A69C90);
-    api.FindVerified(state.itemClass,"myt",0,0x2A69920);
-    api.FindVerified(state.itemClass,"myx",0,0x2A69C20); // Its ItemData, as capture-detect reads it.
+    api.FindVerified(state.itemClass,"myn",0,0xF124C0);
+    api.FindVerified(state.itemClass,"myo",0,0x8535F0);
+    api.FindVerified(state.itemClass,"nag",0,0x29339A0);
+    api.FindVerified(state.itemClass,"mzb",0,0x2933160);
+    api.FindVerified(state.itemClass,"myt",0,0x2932DF0);
+    api.FindVerified(state.itemClass,"myx",0,0x29330F0); // Its ItemData, as capture-detect reads it.
     state.dataClass = api.Class("Ankama.Dofus.Core.DataCenter.dll","Core.DataCenter.Metadata.Item","ItemData");
     state.questClass = api.Class("Core.dll","","fdi");
     state.progressClass = api.Class("Core.dll","","fcz");
-    api.FindVerified(state.questClass,"bczk",0,0x94D320); // Completed quest IDs, short.
-    api.FindVerified(state.questClass,"bczg",0,0x749850); // Current per-quest progress.
+    api.FindVerified(state.questClass,"bczk",0,0x947E20); // Completed quest IDs, short.
+    api.FindVerified(state.questClass,"bczg",0,0x741200); // Current per-quest progress.
     state.installed = true;
 }
 // A boss soul (type 327) holds every monster its static effects 4058 list: a

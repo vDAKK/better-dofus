@@ -1,7 +1,7 @@
 [Français](README.md) | English
 
 # 🐉 **Better Dofus**
-![License](https://img.shields.io/badge/License-UNLICENSE-red) [![Version](https://img.shields.io/github/v/release/vDAKK/better-dofus?label=Version&color=blue)](../../releases/latest) ![Dofus Unity](https://img.shields.io/badge/Dofus%20Unity-3.7.13.17-orange) ![OS](https://img.shields.io/badge/OS-Windows-green)
+![License](https://img.shields.io/badge/License-UNLICENSE-red) [![Version](https://img.shields.io/github/v/release/vDAKK/better-dofus?label=Version&color=blue)](../../releases/latest) ![Dofus Unity](https://img.shields.io/badge/Dofus%20Unity-3.7.14.18-orange) ![OS](https://img.shields.io/badge/OS-Windows-green)
 
 > [!WARNING]
 > **Unofficial project: please read before using it**
@@ -106,7 +106,7 @@ If Dofus is not where the Ankama launcher puts it, the program asks for the path
 ## ❓ FAQ and notes
 
 - **Windows only** (64-bit).
-- **One Dofus version per mod version**: currently **Dofus Unity 3.7.13.17**. The mod checks the game’s exact fingerprints before loading.
+- **One Dofus version per mod version**: currently **Dofus Unity 3.7.14.18**. The mod checks the game’s exact fingerprints before loading.
 - **Ankama updated Dofus?** The mod may need an update: until a compatible version is published, it does not load and the game is left untouched. As soon as it is out, the automatic update installs it.
 - **Coming from Dofus Enhanced or Dofus Miniatures (before 2.0.0)?** Its automatic update no longer finds new versions. Extract the latest archive **into the folder that already holds your old versions** and double-click `BetterDofusLoader.exe`. Your settings, statistics, notebook, layouts and Metamob key are picked up at the first launch, and the old automatic loading is removed. Once everything works, you can delete the old `DofusMiniatures-…` folders and files.
 - **Logs**: `module.log` in the folder of the loaded version (`BetterDofus-X.Y.Z`), `autoload.log` in the folder of the automatic loading helper. **Options → Better Dofus → À propos → Dossier du mod** (mod folder, **Ouvrir** button) opens the loaded version’s folder in Windows Explorer; the shared settings and the statistics are in the folder above.

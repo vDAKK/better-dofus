@@ -10,9 +10,17 @@ all game rights belong to Ankama. I do not know whether using this mod is
 allowed by Ankama's terms: a ban cannot be completely ruled out. Use it at
 your own risk; the software is provided "as is", without any warranty.
 
-BETTER DOFUS — Dofus Unity 3.7.13.17 — VERSION 2.15.2
+BETTER DOFUS — Dofus Unity 3.7.14.18 — VERSION 2.15.3
 
 INSTALLATION : double-clique sur BetterDofusLoader.exe, puis lance Dofus.
+
+VERSION 2.15.3 : DOFUS 3.7.14.18
+- Le mod suit la mise à jour de Dofus du 16 novembre 2026 (3.7.14.18). Aucune
+  nouvelle fonction : les adresses, les signatures et les empreintes du jeu sont
+  celles de ce build.
+- Ce build n’a plus que deux copies du message de recette (fiche de recette) et en
+  a quatre pour la réponse aux détails d’un succès (succès des boss) : le mod suit
+  toutes celles du build.
 
 VERSION 2.15.2 : MONSTRES CIBLÉS PLUS VISIBLES
 - Sur la carte, l’icône est plus grande, sur une pastille sombre cerclée de violet, et

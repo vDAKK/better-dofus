@@ -30,8 +30,8 @@ constexpr const char* Protocol = "Ankama.Dofus.Protocol.Game.dll";
 constexpr const char* InventorySpace = "Core.UILogic.Inventory";
 // Character ids long enough never to be mistaken for an amount in a log line.
 constexpr int64_t A = 77001001, B = 77002002, C = 77003003;
-constexpr uintptr_t SetKamasRva = 0x2AB9190, ContentRva = 0x1B05200, StorageRva = 0x190A8E0, TradeRva = 0x1A1ED70;
-constexpr uintptr_t HarvestRva = 0x1A9B910, CraftRva = 0x19DEAA0, QuestRva = 0x1ABA1E0, AchievementRva = 0x1AA5D50;
+constexpr uintptr_t SetKamasRva = 0x2ACB940, ContentRva = 0x1B234E0, StorageRva = 0x18FF5C0, TradeRva = 0x1A0A7E0;
+constexpr uintptr_t HarvestRva = 0x1A84850, CraftRva = 0x19ED4E0, QuestRva = 0x1AA6FA0, AchievementRva = 0x1A8D990;
 struct Class { std::string image, space, name; std::map<std::string, size_t> layout; std::map<std::string, Class*> nested; };
 struct MethodInfo { Class* klass; std::string name; int argc; uintptr_t rva; };
 struct Raw {
@@ -312,9 +312,9 @@ Method Api::FindVerified(Klass klass, const char* name, int argc, uintptr_t rva)
     auto& type = *static_cast<fake::Class*>(klass);
     const auto key = type.name + "." + name;
     static const std::map<std::string, std::pair<int, uintptr_t>> expected{
-        {"PlayerInventory.SetKamas", {1, 0x2AB9190}}, {"fef.bdmu", {1, 0x1B05200}}, {"euk.zyv", {1, 0x190A8E0}},
-        {"faj.bcan", {7, 0x1A1ED70}}, {"fcp.bctq", {3, 0x1A9B910}}, {"ezt.bbvb", {1, 0x19DEAA0}},
-        {"fde.bcys", {1, 0x1ABA1E0}}, {"fcv.bcvg", {1, 0x1AA5D50}}};
+        {"PlayerInventory.SetKamas", {1, 0x2ACB940}}, {"fef.bdmu", {1, 0x1B234E0}}, {"euk.zyv", {1, 0x18FF5C0}},
+        {"faj.bcan", {7, 0x1A0A7E0}}, {"fcp.bctq", {3, 0x1A84850}}, {"ezt.bbvb", {1, 0x19ED4E0}},
+        {"fde.bcys", {1, 0x1AA6FA0}}, {"fcv.bcvg", {1, 0x1A8D990}}};
     if (fake::fails.contains(key)) throw std::runtime_error("Verified method unavailable");
     const auto found = expected.find(key);
     fake::Check(found != expected.end() && found->second == std::pair(argc, rva), "Economy native outside the pinned contract");
@@ -388,7 +388,7 @@ void InstallContract() {
     InstallStatsEconomy();
     Check(Logged("STATS_ECONOMY_DISABLED stage=character") && detours.empty(), "Without the character, no hook");
     // A moved craft field and a hook MinHook refuses: those parts stay off alone.
-    fails = {"lef.fade", "hook:190A8E0"};
+    fails = {"lef.fade", "hook:18FF5C0"};
     InstallStatsEconomy();
     Check(Logged("STATS_ECONOMY_DISABLED stage=kamas") && Logged("STATS_ECONOMY_DISABLED stage=craft"), "Each failed part says so");
     Check(detours.size() == 6 && detours.contains(SetKamasRva) && detours.contains(ContentRva) && !detours.contains(StorageRva) &&

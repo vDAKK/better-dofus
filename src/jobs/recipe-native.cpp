@@ -43,29 +43,29 @@ int64_t Quantity(Obj inventory, int item) {
 void Install() {
     if (installed) return;
     const auto data = api.Class(DataImage, "Core.DataCenter", "DataCenterModule");
-    recipesRoot = api.FindVerified(data, "get_recipesDataRoot", 0, 0x7B7350);
-    recipeByResult = api.FindVerified(api.Class(DataImage, JobSpace, "RecipesDataRoot"), "GetRecipeByResultId", 1, 0x7E08C0);
+    recipesRoot = api.FindVerified(data, "get_recipesDataRoot", 0, 0x7B1C80);
+    recipeByResult = api.FindVerified(api.Class(DataImage, JobSpace, "RecipesDataRoot"), "GetRecipeByResultId", 1, 0x7DB1F0);
     const auto recipe = api.Class(DataImage, JobSpace, "RecipeData");
     Field(recipe, "resultId", 16); Field(recipe, "resultLevel", 36); Field(recipe, "ingredientIds", 40); Field(recipe, "quantities", 48);
     const auto item = api.Class(DataImage, "Core.DataCenter.Metadata.Item", "ItemData");
-    itemById = api.FindVerified(item, "GetItemById", 1, 0x7DB910);
-    itemName = api.FindVerified(item, "get_name", 0, 0x7DBCD0);
+    itemById = api.FindVerified(item, "GetItemById", 1, 0x7D6240);
+    itemName = api.FindVerified(item, "get_name", 0, 0x7D6600);
     priceClass = api.Class("Core.dll", "", "ezo");
-    averagePrice = api.FindVerified(priceClass, "bbuc", 1, 0x19DBDA0);
+    averagePrice = api.FindVerified(priceClass, "bbuc", 1, 0x19EAC80);
     const auto inventories = api.Class("Core.dll", "", "feh");
-    bagInventory = api.FindVerified(inventories, "bdoq", 0, 0x11E4900);
+    bagInventory = api.FindVerified(inventories, "bdoq", 0, 0x11DF400);
     Field(inventories, "dtji", 256); // The bank's inventory, null until the game creates it.
     inventoryClass = inventories;
     const auto inventory = api.Class("Core.dll", "Core.UILogic.Inventory", "Inventory");
-    quantityOf = api.FindVerified(inventory, "GetItemsQuantityFromGid", 1, 0x2AAEF70);
-    objectNumber = api.FindVerified(inventory, "get_objectNumber", 0, 0x2AB2140);
-    itemWithGid = api.FindVerified(inventory, "GetItemWithGid", 1, 0x2AAEE50);
-    viewOf = api.FindVerified(inventory, "GetView", 1, 0x2AAF170);
-    viewContent = api.FindVerified(api.Class("Core.dll", "Core.UILogic.Inventory.Views", "AbstractStorageView"), "get_content", 0, 0x2AAA950);
+    quantityOf = api.FindVerified(inventory, "GetItemsQuantityFromGid", 1, 0x2AC1720);
+    objectNumber = api.FindVerified(inventory, "get_objectNumber", 0, 0x2AC48F0);
+    itemWithGid = api.FindVerified(inventory, "GetItemWithGid", 1, 0x2AC1600);
+    viewOf = api.FindVerified(inventory, "GetView", 1, 0x2AC1920);
+    viewContent = api.FindVerified(api.Class("Core.dll", "Core.UILogic.Inventory.Views", "AbstractStorageView"), "get_content", 0, 0x2ABD100);
     const auto places = api.Class("Core.dll", "", "lz");
-    bankOf = api.FindVerified(places, "odz", 0, 0x2A64B50);
-    havenBagOf = api.FindVerified(places, "oea", 0, 0x2A64B80);
-    api.FindVerified(api.Class("Core.dll", "", "mc"), "myq", 0, 0x744C80);
+    bankOf = api.FindVerified(places, "odz", 0, 0x292E110);
+    havenBagOf = api.FindVerified(places, "oea", 0, 0x292E140);
+    api.FindVerified(api.Class("Core.dll", "", "mc"), "myq", 0, 0x73C630);
     installed = true;
 }
 

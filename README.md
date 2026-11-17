@@ -1,7 +1,7 @@
 Français | [English](README_en.md)
 
 # 🐉 **Better Dofus**
-![License](https://img.shields.io/badge/License-UNLICENSE-red) [![Version](https://img.shields.io/github/v/release/vDAKK/better-dofus?label=Version&color=blue)](../../releases/latest) ![Dofus Unity](https://img.shields.io/badge/Dofus%20Unity-3.7.13.17-orange) ![OS](https://img.shields.io/badge/OS-Windows-green)
+![License](https://img.shields.io/badge/License-UNLICENSE-red) [![Version](https://img.shields.io/github/v/release/vDAKK/better-dofus?label=Version&color=blue)](../../releases/latest) ![Dofus Unity](https://img.shields.io/badge/Dofus%20Unity-3.7.14.18-orange) ![OS](https://img.shields.io/badge/OS-Windows-green)
 
 > [!WARNING]
 > **Projet non officiel : à lire avant toute utilisation**
@@ -106,7 +106,7 @@ Si Dofus est installé ailleurs que là où le lanceur Ankama le place, le progr
 ## ❓ FAQ et remarques
 
 - **Windows uniquement** (64 bits).
-- **Une version de Dofus par version du mod** : actuellement **Dofus Unity 3.7.13.17**. Le mod vérifie les empreintes exactes du jeu avant de se charger.
+- **Une version de Dofus par version du mod** : actuellement **Dofus Unity 3.7.14.18**. Le mod vérifie les empreintes exactes du jeu avant de se charger.
 - **Mise à jour de Dofus par Ankama ?** Le mod peut devoir être adapté : tant qu’aucune version compatible n’est publiée, il ne se charge pas et le jeu reste intact. Dès qu’elle sort, la mise à jour automatique l’installe.
 - **Tu viens de Dofus Enhanced ou de Dofus Miniatures (version antérieure à 2.0.0) ?** Sa mise à jour automatique ne trouve plus les nouvelles versions. Extrais la dernière archive **dans le dossier qui contient déjà tes anciennes versions** et double-clique sur `BetterDofusLoader.exe`. Tes réglages, statistiques, carnet, affichages et ta clé Metamob sont repris au premier lancement, et l’ancien chargement automatique est retiré. Une fois que tout marche, tu peux supprimer les anciens dossiers et fichiers `DofusMiniatures-…`.
 - **Journaux** : `module.log` dans le dossier de la version chargée (`BetterDofus-X.Y.Z`), `autoload.log` dans celui de l’assistant de chargement automatique. **Options → Better Dofus → À propos → Dossier du mod** (bouton **Ouvrir**) ouvre le dossier de la version chargée dans l’Explorateur de Windows ; les réglages partagés et les statistiques sont dans le dossier au-dessus.

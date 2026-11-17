@@ -9,7 +9,7 @@ namespace {
 using namespace managed;
 constexpr const char* DataImage = "Ankama.Dofus.Core.DataCenter.dll";
 constexpr const char* WorldSpace = "Core.DataCenter.Metadata.World";
-constexpr uintptr_t BuilderRva = 0x29E99E0;
+constexpr uintptr_t BuilderRva = 0x29F97C0;
 constexpr int IconZaap = 336;
 using BuilderFn = void (*)(Obj, Obj, Obj, Method);
 BuilderFn originalBuilder = nullptr;
@@ -99,11 +99,11 @@ void InstallQuestTravel() {
         Field(objective, "id", 16); Field(objective, "typeId", 24); Field(objective, "coords", 40); Field(objective, "mapId", 48);
         const auto info = api.Class(DataImage, WorldSpace, "MapInformationData");
         Field(info, "posX", 24); Field(info, "posY", 26);
-        mapInfo = api.FindVerified(info, "GetMapInformationById", 1, 0x7BB050);
-        subArea = api.FindVerified(info, "get_subArea", 0, 0x7BB300);
-        worldOf = api.FindVerified(api.Class(DataImage, WorldSpace, "SubAreaData"), "get_worldmapId", 0, 0x7C7E90);
-        currentMap = api.FindVerified(api.Class("Core.dll", "", "esg"), "zeo", 0, 0x1854C30);
-        append = api.FindVerified(api.Class("Core.dll", "Core.UILogic.Components.ContextMenu", "DofusContextualMenu"), "AppendDefaultItem", 13, 0x16D06F0);
+        mapInfo = api.FindVerified(info, "GetMapInformationById", 1, 0x7B5980);
+        subArea = api.FindVerified(info, "get_subArea", 0, 0x7B5C30);
+        worldOf = api.FindVerified(api.Class(DataImage, WorldSpace, "SubAreaData"), "get_worldmapId", 0, 0x7C27C0);
+        currentMap = api.FindVerified(api.Class("Core.dll", "", "esg"), "zeo", 0, 0x18516B0);
+        append = api.FindVerified(api.Class("Core.dll", "Core.UILogic.Components.ContextMenu", "DofusContextualMenu"), "AppendDefaultItem", 13, 0x16C8650);
         soul::SetAuxiliaryPanelMenus(NoPopulate, Clicked);
         AddHook(api.FindVerified(api.Class("Core.dll", "Core.UILogic.Quest", "QuestList"), "ObjectiveContextMenuBuilder", 2, BuilderRva), BuilderRva,
             reinterpret_cast<void*>(&BuilderHook), reinterpret_cast<void**>(&originalBuilder));

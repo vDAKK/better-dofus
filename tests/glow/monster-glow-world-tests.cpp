@@ -71,12 +71,12 @@ namespace managed {
 Api api{};
 Klass Api::Class(const char*,const char*,const char* name) const { return fake::Type(name); }
 Method Api::FindVerified(Klass,const char* name,int argc,uintptr_t rva) const {
-    static const std::map<std::string,uintptr_t> expected{{"xkj",0x1832640},{"xkd",0x11E3980},
-        {"op_Implicit",0x53FE4D0},{"get_enabled",0x53B7640},{"get_gameObject",0x53EF040},
-        {"get_activeInHierarchy",0x53F73C0},{"get_sortingLayerID",0x53B7940},
-        {"GetLayerValueFromID",0x538C320},{"get_sortingOrder",0x53B7B60},
-        {"GetSharedMaterials",0x53B6E10},{"get_renderQueue",0x53AA8E0},
-        {"get_sortingGroupID",0x53B77C0},{"get_invalidSortingGroupID",0x543CAE0}};
+    static const std::map<std::string,uintptr_t> expected{{"xkj",0x1831020},{"xkd",0x11DE480},
+        {"op_Implicit",0x5400970},{"get_enabled",0x53B9AE0},{"get_gameObject",0x53F14E0},
+        {"get_activeInHierarchy",0x53F9860},{"get_sortingLayerID",0x53B9DE0},
+        {"GetLayerValueFromID",0x538E7C0},{"get_sortingOrder",0x53BA000},
+        {"GetSharedMaterials",0x53B92B0},{"get_renderQueue",0x53ACD80},
+        {"get_sortingGroupID",0x53B9C60},{"get_invalidSortingGroupID",0x543EF80}};
     fake::Check(expected.at(name) == rva, "Unexpected world RVA");
     auto method = std::make_unique<fake::MethodInfo>(fake::MethodInfo{name,argc});
     auto result = method.get(); fake::methods.push_back(std::move(method)); return result;

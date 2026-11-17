@@ -373,10 +373,10 @@ void Log(const std::string& message) { fixture::logs.push_back(message); }
 void AddHook(managed::Method method, uintptr_t rva, void* replacement, void** original) {
     const auto& info = *static_cast<const fixture::MethodData*>(method);
     fixture::Check(info.type == "CalendarUI" && info.argc == 0, "Calendar hook ABI");
-    if (rva == 0x2DC59D0) {
+    if (rva == 0x2DCC990) {
         fixture::Check(info.name == "OnEnable", "OnEnable hook");
         fixture::enableHook = reinterpret_cast<fixture::HookFn>(replacement); *original = reinterpret_cast<void*>(fixture::NativeEnable);
-    } else if (rva == 0x2DC5940) {
+    } else if (rva == 0x2DCC900) {
         fixture::Check(info.name == "OnDisable", "OnDisable hook");
         fixture::disableHook = reinterpret_cast<fixture::HookFn>(replacement); *original = reinterpret_cast<void*>(fixture::NativeDisable);
     } else throw std::runtime_error("Unexpected hook");
@@ -599,27 +599,27 @@ void Install() {
     InstallCalendarKralove();
     Check(installed && enableHook && disableHook && clickHandler && clickHandlers == 1 && Logged("CALENDAR_KRALOVE_READY") == 1, "Installed");
     const std::vector<std::tuple<std::string, std::string, int, uintptr_t>> expected{
-        {"CalendarUIBinding", "get_ctr_days", 0, 0x2E614A0}, {"CalendarUIBinding", "get_gd_events", 0, 0x2E61990},
-        {"CalendarUIBinding", "get_gd_calendarFilters", 0, 0x2E618E0}, {"CalendarUI", "OnEnable", 0, 0x2DC59D0},
-        {"CalendarUI", "OnDisable", 0, 0x2DC5940}, {"DofusUISettings", "GetSettings", 0, 0x1591A70},
-        {"DofusUISettings", "get_calendarLine", 0, 0x1593550}, {"DofusUISettings", "get_calendarCard", 0, 0x1593490},
-        {"DofusUISettings", "get_calendarFilterItem", 0, 0x1593510}, {"VisualTreeAsset", "CloneTree", 1, 0x5643780},
-        {"VisualElement", "Insert", 2, 0x55AAA50}, {"VisualElement", "IndexOf", 1, 0x55AA8F0}, {"VisualElement", "AddToClassList", 1, 0x55A4B60},
-        {"VisualElement", "RemoveFromClassList", 1, 0x55ACDF0}, {"VisualElement", "get_childCount", 0, 0x55BACB0},
-        {"VisualElement", "ElementAt", 1, 0x55A8120}, {"VisualElement", "get_name", 0, 0x311BA90}, {"VisualElement", "set_visible", 1, 0x55BF4B0},
-        {"VisualElement", "RemoveFromHierarchy", 0, 0x55ACF10}, {"VisualElement", "get_layout", 0, 0x55BBC70},
-        {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_backgroundColor", 1, 0x5597EE0},
-        {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_backgroundColor", 0, 0x55960D0},
-        {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_unityBackgroundImageTintColor", 1, 0x559A870},
-        {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_unityBackgroundImageTintColor", 0, 0x5597300},
-        {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_left", 1, 0x55991F0},
-        {"DofusIcon", "set_icon", 1, 0x1708F10}, {"CheckboxCustom", "set_iconValue", 1, 0x16FECD0}, {"CheckboxCustom", "get_value", 0, 0x16FEAE0},
-        {"CheckboxCustom", "SetValueWithoutNotify", 1, 0x16FDF80}, {"ColorSquare", "SetColor", 1, 0x1702580},
-        {"ColorSquare", "set_selectable", 1, 0x1702F70}, {"TooltipManipulator", ".ctor", 6, 0x15D9580},
-        {"BaseTooltipManipulator", "HideTooltip", 0, 0x15C6AD0}, {"VisualElementExtensions", "AddManipulator", 2, 0x563A930},
-        {"VisualElementExtensions", "RemoveManipulator", 2, 0x563BDD0}, {"ExtendedClickable", ".ctor", 1, 0x1725300},
-        {"DofusCursor", "EnableCursorHandler", 3, 0x27C3D20}, {"DofusCursor", "RemoveCursorHandler", 1, 0x27C4D20},
-        {"Application", "OpenURL", 1, 0x5371D90}, {"DofusLabel", ".ctor", 0, 0x158D3E0}, {"TextElement", "set_enableRichText", 1, 0x5610520}};
+        {"CalendarUIBinding", "get_ctr_days", 0, 0x2E660E0}, {"CalendarUIBinding", "get_gd_events", 0, 0x2E665D0},
+        {"CalendarUIBinding", "get_gd_calendarFilters", 0, 0x2E66520}, {"CalendarUI", "OnEnable", 0, 0x2DCC990},
+        {"CalendarUI", "OnDisable", 0, 0x2DCC900}, {"DofusUISettings", "GetSettings", 0, 0x1589BD0},
+        {"DofusUISettings", "get_calendarLine", 0, 0x158B6B0}, {"DofusUISettings", "get_calendarCard", 0, 0x158B5F0},
+        {"DofusUISettings", "get_calendarFilterItem", 0, 0x158B670}, {"VisualTreeAsset", "CloneTree", 1, 0x5645C20},
+        {"VisualElement", "Insert", 2, 0x55ACEF0}, {"VisualElement", "IndexOf", 1, 0x55ACD90}, {"VisualElement", "AddToClassList", 1, 0x55A7000},
+        {"VisualElement", "RemoveFromClassList", 1, 0x55AF290}, {"VisualElement", "get_childCount", 0, 0x55BD150},
+        {"VisualElement", "ElementAt", 1, 0x55AA5C0}, {"VisualElement", "get_name", 0, 0x31206D0}, {"VisualElement", "set_visible", 1, 0x55C1950},
+        {"VisualElement", "RemoveFromHierarchy", 0, 0x55AF3B0}, {"VisualElement", "get_layout", 0, 0x55BE110},
+        {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_backgroundColor", 1, 0x559A380},
+        {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_backgroundColor", 0, 0x5598570},
+        {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_unityBackgroundImageTintColor", 1, 0x559CD10},
+        {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_unityBackgroundImageTintColor", 0, 0x55997A0},
+        {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_left", 1, 0x559B690},
+        {"DofusIcon", "set_icon", 1, 0x1700E70}, {"CheckboxCustom", "set_iconValue", 1, 0x16F6C30}, {"CheckboxCustom", "get_value", 0, 0x16F6A40},
+        {"CheckboxCustom", "SetValueWithoutNotify", 1, 0x16F5EE0}, {"ColorSquare", "SetColor", 1, 0x16FA4E0},
+        {"ColorSquare", "set_selectable", 1, 0x16FAED0}, {"TooltipManipulator", ".ctor", 6, 0x15D16E0},
+        {"BaseTooltipManipulator", "HideTooltip", 0, 0x15BEC30}, {"VisualElementExtensions", "AddManipulator", 2, 0x563CDD0},
+        {"VisualElementExtensions", "RemoveManipulator", 2, 0x563E270}, {"ExtendedClickable", ".ctor", 1, 0x171D260},
+        {"DofusCursor", "EnableCursorHandler", 3, 0x27C7530}, {"DofusCursor", "RemoveCursorHandler", 1, 0x27C8530},
+        {"Application", "OpenURL", 1, 0x5374230}, {"DofusLabel", ".ctor", 0, 0x1585540}, {"TextElement", "set_enableRichText", 1, 0x56129C0}};
     for (const auto& contract : expected)
         Check(std::find(contracts.begin(), contracts.end(), contract) != contracts.end(), "Contract verified: " + std::get<1>(contract));
     InstallCalendarKralove();
@@ -735,7 +735,7 @@ void Openings() {
         "Clique pour voir toutes les ouvertures sur metamob.fr.", "Its tooltip tells the others");
     Check(Get(more->root.get()).cursor && Get(enterMap).keys.contains(more->root.get()), "It is clickable too: the hand cursor");
     for (const auto& contract : std::vector<std::tuple<std::string, std::string, int, uintptr_t>>{
-        {"Dictionary`2", "ContainsKey", 1, 0x36B1E50}, {"Dictionary`2", "Remove", 1, 0x36B40F0}})
+        {"Dictionary`2", "ContainsKey", 1, 0x36B6AC0}, {"Dictionary`2", "Remove", 1, 0x36B8D60}})
         Check(std::find(contracts.begin(), contracts.end(), contract) != contracts.end(), "Cursor caches' " + std::get<1>(contract) + " verified");
     // Every element of the clones that registered itself (4 buttons a card, the
     // entry's checkbox and colour square) was released at once: the caches hold

@@ -68,18 +68,18 @@ CaptureState ReadCurrent(Obj fight, Obj cached, int64_t* participant = nullptr) 
 
 void InstallCapture() {
     if (installed) return;
-    methods.inCombat = Verified("", "fxc", "bfzw", 0, 0x73C610);
-    methods.information = Verified("", "fxc", "bfzz", 0, 0x11DEB00);
-    methods.phase = Verified("", "fxj", "bhxx", 0, 0x94D300);
-    methods.flags = Verified("", "fxj", "bhxv", 0, 0x960FC0);
-    methods.localId = Verified("", "esg", "zcx", 0, 0x18B7060);
-    methods.findEntity = Verified("", "evv", "bamm", 2, 0x195CFF0);
+    methods.inCombat = Verified("", "fxc", "bfzw", 0, 0x733FC0);
+    methods.information = Verified("", "fxc", "bfzz", 0, 0x11D9600);
+    methods.phase = Verified("", "fxj", "bhxx", 0, 0x947E00);
+    methods.flags = Verified("", "fxj", "bhxv", 0, 0x95BAC0);
+    methods.localId = Verified("", "esg", "zcx", 0, 0x18B07F0);
+    methods.findEntity = Verified("", "evv", "bamm", 2, 0x1950980);
     constexpr const char* entityNs = "Core.Services.Entities.EntityInformationServices";
-    methods.flagsTest = Verified(entityNs, "EntityInfo", "bajs", 1, 0x1956AC0);
-    methods.boolGet = Verified(entityNs, "EntityInfo", "bake", 1, 0x1956F80);
-    methods.teamTryGet = Verified(entityNs, "EntityInfo", "bajy", 2, 0x1956D30);
-    methods.currentState = Verified("", "ebs", "vpl", 0, 0x2731BF0);
-    methods.hasState = Verified("Core.Features.Fight.FightStates.State", "FightState", "vuk", 2, 0x273E630);
+    methods.flagsTest = Verified(entityNs, "EntityInfo", "bajs", 1, 0x193E4A0);
+    methods.boolGet = Verified(entityNs, "EntityInfo", "bake", 1, 0x193E960);
+    methods.teamTryGet = Verified(entityNs, "EntityInfo", "bajy", 2, 0x193E710);
+    methods.currentState = Verified("", "ebs", "vpl", 0, 0x2738320);
+    methods.hasState = Verified("Core.Features.Fight.FightStates.State", "FightState", "vuk", 2, 0x2745940);
     installed = true;
 }
 

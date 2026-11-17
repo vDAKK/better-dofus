@@ -263,7 +263,7 @@ Obj Invoke(Method method, Obj self, std::initializer_list<void*> arguments) {
     if (m.name == "get_isOn") return Box(obj.enums["isOn"] != 0);
     if (m.name == "SetValueWithoutNotify") { obj.enums["isOn"] = *static_cast<bool*>(args[0]) ? 1 : 0; return nullptr; }
     if (m.name == "set_canBeOpened") { obj.enums[m.name] = *static_cast<bool*>(args[0]) ? 1 : 0; return nullptr; }
-    // SectionHeader.set_isOpen (0x173FDC0) keeps the previous state unless canBeOpened is on; both are off after the constructor.
+    // SectionHeader.set_isOpen (0x1737D20) keeps the previous state unless canBeOpened is on; both are off after the constructor.
     if (m.name == "set_isOpen") { if (obj.enums["set_canBeOpened"] == 1) obj.enums[m.name] = *static_cast<bool*>(args[0]) ? 1 : 0; return nullptr; }
     if (m.name == "AddSubContent") { Add(obj.fields.at("content"), args[0]); return nullptr; }
     // The session's native dependencies and input events.
@@ -285,50 +285,50 @@ Obj Invoke(Method method, Obj self, std::initializer_list<void*> arguments) {
 // The exact contracts the window, the tool menus and the native clicks check.
 struct Contract { const char* owner; const char* name; int count; };
 const std::map<uintptr_t, Contract> Contracts = {
-    {0x170C850, {"DofusTab", ".ctor", 0}}, {0x170D180, {"DofusTab", "set_text", 1}}, {0x170CFE0, {"DofusTab", "set_size", 1}},
-    {0x170CA50, {"DofusTab", "set_fontCase", 1}}, {0x170C9E0, {"DofusTab", "get_isOn", 0}}, {0x170B400, {"DofusTab", "SetValueWithoutNotify", 1}},
-    {0x1707180, {"DofusButtonCustom", ".ctor", 0}}, {0x1707A70, {"DofusButtonCustom", "set_icon", 1}}, {0x1708080, {"DofusButtonCustom", "set_text", 1}},
-    {0x1707CA0, {"DofusButtonCustom", "set_mainStyle", 1}}, {0x1707DC0, {"DofusButtonCustom", "set_size", 1}}, {0x1707E90, {"DofusButtonCustom", "set_status", 1}},
-    {0x173F9D0, {"SectionHeader", ".ctor", 5}}, {0x1740280, {"SectionHeader", "set_title", 1}}, {0x173FCD0, {"SectionHeader", "set_icon", 1}},
-    {0x173FDC0, {"SectionHeader", "set_isOpen", 1}}, {0x173FB60, {"SectionHeader", "set_canBeOpened", 1}}, {0x173DE30, {"SectionHeader", "AddSubContent", 1}},
-    {0x17056A0, {"Divider", ".ctor", 0}}, {0x1705850, {"Divider", "set_componentStyle", 1}}, {0x1705BF0, {"Divider", "set_orientation", 1}},
-    {0x15B95F0, {"ResizableWindow", "set_headerShowCloseButton", 1}},
-    {0x55BA3F0, {"VisualElement", ".ctor", 0}}, {0x55A4E10, {"VisualElement", "Add", 1}}, {0x55ACF10, {"VisualElement", "RemoveFromHierarchy", 0}},
-    {0x55A5C20, {"VisualElement", "BringToFront", 0}}, {0x55BC4C0, {"VisualElement", "get_parent", 0}}, {0x55BC4B0, {"VisualElement", "get_panel", 0}},
-    {0x55BC7E0, {"VisualElement", "get_style", 0}}, {0x55BC620, {"VisualElement", "get_resolvedStyle", 0}}, {0x55BE9B0, {"VisualElement", "set_name", 1}},
-    {0x55BEDF0, {"VisualElement", "set_tooltip", 1}}, {0x55BB230, {"VisualElement", "get_enabledInHierarchy", 0}},
-    {0x158D3E0, {"DofusLabel", ".ctor", 0}}, {0x158DA50, {"DofusLabel", "set_isSingleLine", 1}}, {0x55A4B60, {"VisualElement", "AddToClassList", 1}}, {0x5610AC0, {"TextElement", "set_text", 1}}, {0x5610520, {"TextElement", "set_enableRichText", 1}},
-    {0x559F7A0, {"ResolvedStyleAccess", "get_width", 0}}, {0x2097300, {"InputCustomEvent", "UnSubscribe", 1}},
-    {0x55965B0, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_display", 0}}, {0x5598B30, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_display", 1}},
-    {0x5596700, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_flexDirection", 0}}, {0x5598DC0, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_flexDirection", 1}},
-    {0x5595FA0, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_alignItems", 0}}, {0x5597BB0, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_alignItems", 1}},
-    {0x55968C0, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_justifyContent", 0}}, {0x5599140, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_justifyContent", 1}},
-    {0x55967B0, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_flexWrap", 0}}, {0x5598F90, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_flexWrap", 1}},
-    {0x55979F0, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_whiteSpace", 0}}, {0x559B6B0, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_whiteSpace", 1}},
-    {0x55976F0, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_unityTextAlign", 0}}, {0x559B210, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_unityTextAlign", 1}},
-    {0x5596D70, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_position", 0}}, {0x5599BF0, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_position", 1}},
-    {0x5596790, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_flexGrow", 0}}, {0x5598E70, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_flexGrow", 1}},
-    {0x55967A0, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_flexShrink", 0}}, {0x5598F00, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_flexShrink", 1}},
-    {0x5596840, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_fontSize", 0}}, {0x5599040, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_fontSize", 1}},
-    {0x5596510, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_color", 0}}, {0x5598910, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_color", 1}},
-    {0x5597A80, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_width", 0}}, {0x559B730, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_width", 1}},
-    {0x5596B90, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_minWidth", 0}}, {0x5599750, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_minWidth", 1}},
-    {0x5596B50, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_minHeight", 0}}, {0x55996B0, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_minHeight", 1}},
-    {0x5596CB0, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_paddingLeft", 0}}, {0x5599A10, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_paddingLeft", 1}},
-    {0x5596CF0, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_paddingRight", 0}}, {0x5599AB0, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_paddingRight", 1}},
-    {0x5596D30, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_paddingTop", 0}}, {0x5599B50, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_paddingTop", 1}},
-    {0x5596C70, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_paddingBottom", 0}}, {0x5599970, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_paddingBottom", 1}},
+    {0x17047B0, {"DofusTab", ".ctor", 0}}, {0x17050E0, {"DofusTab", "set_text", 1}}, {0x1704F40, {"DofusTab", "set_size", 1}},
+    {0x17049B0, {"DofusTab", "set_fontCase", 1}}, {0x1704940, {"DofusTab", "get_isOn", 0}}, {0x1703360, {"DofusTab", "SetValueWithoutNotify", 1}},
+    {0x16FF0E0, {"DofusButtonCustom", ".ctor", 0}}, {0x16FF9D0, {"DofusButtonCustom", "set_icon", 1}}, {0x16FFFE0, {"DofusButtonCustom", "set_text", 1}},
+    {0x16FFC00, {"DofusButtonCustom", "set_mainStyle", 1}}, {0x16FFD20, {"DofusButtonCustom", "set_size", 1}}, {0x16FFDF0, {"DofusButtonCustom", "set_status", 1}},
+    {0x1737930, {"SectionHeader", ".ctor", 5}}, {0x17381E0, {"SectionHeader", "set_title", 1}}, {0x1737C30, {"SectionHeader", "set_icon", 1}},
+    {0x1737D20, {"SectionHeader", "set_isOpen", 1}}, {0x1737AC0, {"SectionHeader", "set_canBeOpened", 1}}, {0x1735D90, {"SectionHeader", "AddSubContent", 1}},
+    {0x16FD600, {"Divider", ".ctor", 0}}, {0x16FD7B0, {"Divider", "set_componentStyle", 1}}, {0x16FDB50, {"Divider", "set_orientation", 1}},
+    {0x15B1750, {"ResizableWindow", "set_headerShowCloseButton", 1}},
+    {0x55BC890, {"VisualElement", ".ctor", 0}}, {0x55A72B0, {"VisualElement", "Add", 1}}, {0x55AF3B0, {"VisualElement", "RemoveFromHierarchy", 0}},
+    {0x55A80C0, {"VisualElement", "BringToFront", 0}}, {0x55BE960, {"VisualElement", "get_parent", 0}}, {0x55BE950, {"VisualElement", "get_panel", 0}},
+    {0x55BEC80, {"VisualElement", "get_style", 0}}, {0x55BEAC0, {"VisualElement", "get_resolvedStyle", 0}}, {0x55C0E50, {"VisualElement", "set_name", 1}},
+    {0x55C1290, {"VisualElement", "set_tooltip", 1}}, {0x55BD6D0, {"VisualElement", "get_enabledInHierarchy", 0}},
+    {0x1585540, {"DofusLabel", ".ctor", 0}}, {0x1585BB0, {"DofusLabel", "set_isSingleLine", 1}}, {0x55A7000, {"VisualElement", "AddToClassList", 1}}, {0x5612F60, {"TextElement", "set_text", 1}}, {0x56129C0, {"TextElement", "set_enableRichText", 1}},
+    {0x55A1C40, {"ResolvedStyleAccess", "get_width", 0}}, {0x20E65D0, {"InputCustomEvent", "UnSubscribe", 1}},
+    {0x5598A50, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_display", 0}}, {0x559AFD0, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_display", 1}},
+    {0x5598BA0, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_flexDirection", 0}}, {0x559B260, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_flexDirection", 1}},
+    {0x5598440, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_alignItems", 0}}, {0x559A050, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_alignItems", 1}},
+    {0x5598D60, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_justifyContent", 0}}, {0x559B5E0, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_justifyContent", 1}},
+    {0x5598C50, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_flexWrap", 0}}, {0x559B430, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_flexWrap", 1}},
+    {0x5599E90, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_whiteSpace", 0}}, {0x559DB50, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_whiteSpace", 1}},
+    {0x5599B90, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_unityTextAlign", 0}}, {0x559D6B0, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_unityTextAlign", 1}},
+    {0x5599210, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_position", 0}}, {0x559C090, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_position", 1}},
+    {0x5598C30, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_flexGrow", 0}}, {0x559B310, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_flexGrow", 1}},
+    {0x5598C40, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_flexShrink", 0}}, {0x559B3A0, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_flexShrink", 1}},
+    {0x5598CE0, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_fontSize", 0}}, {0x559B4E0, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_fontSize", 1}},
+    {0x55989B0, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_color", 0}}, {0x559ADB0, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_color", 1}},
+    {0x5599F20, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_width", 0}}, {0x559DBD0, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_width", 1}},
+    {0x5599030, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_minWidth", 0}}, {0x559BBF0, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_minWidth", 1}},
+    {0x5598FF0, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_minHeight", 0}}, {0x559BB50, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_minHeight", 1}},
+    {0x5599150, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_paddingLeft", 0}}, {0x559BEB0, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_paddingLeft", 1}},
+    {0x5599190, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_paddingRight", 0}}, {0x559BF50, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_paddingRight", 1}},
+    {0x55991D0, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_paddingTop", 0}}, {0x559BFF0, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_paddingTop", 1}},
+    {0x5599110, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.get_paddingBottom", 0}}, {0x559BE10, {"InlineStyleAccess", "UnityEngine.UIElements.IStyle.set_paddingBottom", 1}},
     // tools-ui.cpp and native-click.cpp.
-    {0x5707F10, {"ScrollView", ".ctor", 0}}, {0x5707F20, {"ScrollView", "get_contentContainer", 0}},
-    {0x16D1A00, {"DofusContextualMenu", "AppendTitle", 1}}, {0x16D1170, {"DofusContextualMenu", "AppendSeparator", 0}},
-    {0x16D06F0, {"DofusContextualMenu", "AppendDefaultItem", 13}}, {0x16CFE60, {"DofusContextualMenu", "AppendCheckboxItem", 9}},
-    {0x16D0D80, {"DofusContextualMenu", "AppendRadioButtonItem", 12}},
-    {0x16D22E0, {"DofusContextualMenu", "InsertItem", 2}}, {0x16D2680, {"DofusContextualMenu", "RemoveItemAt", 1}},
-    {0x563A930, {"VisualElementExtensions", "AddManipulator", 2}}, {0x563BDD0, {"VisualElementExtensions", "RemoveManipulator", 2}},
-    {0x15AC250, {"MagneticDragWindow", "SetHeaderSize", 1}}, {0x17D39A0, {"WidgetManager", "CreateHeaderSubMenu", 0}},
-    {0x17D7C70, {"WidgetManager", "SetAllHeaderState", 1}},
-    {0x750870, {"Clickable", "get_active", 0}}, {0x5555940, {"Clickable", "ContainsPointer", 1}}, {0x3099CD0, {"Manipulator", "get_target", 0}},
-    {0x1725170, {"ExtendedClickable", "ProcessUpEvent", 3}}};
+    {0x570A3B0, {"ScrollView", ".ctor", 0}}, {0x570A3C0, {"ScrollView", "get_contentContainer", 0}},
+    {0x16C9960, {"DofusContextualMenu", "AppendTitle", 1}}, {0x16C90D0, {"DofusContextualMenu", "AppendSeparator", 0}},
+    {0x16C8650, {"DofusContextualMenu", "AppendDefaultItem", 13}}, {0x16C7DC0, {"DofusContextualMenu", "AppendCheckboxItem", 9}},
+    {0x16C8CE0, {"DofusContextualMenu", "AppendRadioButtonItem", 12}},
+    {0x16CA240, {"DofusContextualMenu", "InsertItem", 2}}, {0x16CA5E0, {"DofusContextualMenu", "RemoveItemAt", 1}},
+    {0x563CDD0, {"VisualElementExtensions", "AddManipulator", 2}}, {0x563E270, {"VisualElementExtensions", "RemoveManipulator", 2}},
+    {0x15A43B0, {"MagneticDragWindow", "SetHeaderSize", 1}}, {0x17CB760, {"WidgetManager", "CreateHeaderSubMenu", 0}},
+    {0x17CFA30, {"WidgetManager", "SetAllHeaderState", 1}},
+    {0x748220, {"Clickable", "get_active", 0}}, {0x5557DE0, {"Clickable", "ContainsPointer", 1}}, {0x309E910, {"Manipulator", "get_target", 0}},
+    {0x171D0D0, {"ExtendedClickable", "ProcessUpEvent", 3}}};
 }
 
 namespace managed {
@@ -353,7 +353,7 @@ Method Api::FindVerified(Klass klass, const char* name, int count, uintptr_t rva
     return method;
 }
 void* Api::NativeAt(uintptr_t rva) const {
-    fake::Check(rva == 0x16679C0, "Only the drag flag's native helper");
+    fake::Check(rva == 0x165F920, "Only the drag flag's native helper");
     return reinterpret_cast<void*>(&fake::DragFlag);
 }
 Obj Api::Invoke(Method method, Obj self, std::initializer_list<void*> args) const { return fake::Invoke(method, self, args); }
@@ -425,12 +425,12 @@ void Module::Change(Settings value, bool) { settings = std::move(value); }
 void Log(const std::string& message) { fake::logs.push_back(message); }
 void AddHook(managed::Method method, uintptr_t rva, void* replacement, void** original) {
     const auto& m = *static_cast<const fake::MethodInfo*>(method);
-    if (rva == 0x1725170) {
+    if (rva == 0x171D0D0) {
         fake::Check(m.name == "ProcessUpEvent" && m.count == 3, "The native button click hook");
         fake::clickHook = reinterpret_cast<fake::UpFn>(replacement); *original = reinterpret_cast<void*>(&fake::OriginalButtonUp); return;
     }
-    if (rva == 0x17D39A0) { fake::subMenuHook = reinterpret_cast<fake::SubMenuFn>(replacement); *original = reinterpret_cast<void*>(&fake::OriginalSubMenu); return; }
-    if (rva == 0x17D7C70) { fake::allHeadersHook = reinterpret_cast<fake::AllFn>(replacement); *original = reinterpret_cast<void*>(&fake::OriginalAllHeaders); return; }
+    if (rva == 0x17CB760) { fake::subMenuHook = reinterpret_cast<fake::SubMenuFn>(replacement); *original = reinterpret_cast<void*>(&fake::OriginalSubMenu); return; }
+    if (rva == 0x17CFA30) { fake::allHeadersHook = reinterpret_cast<fake::AllFn>(replacement); *original = reinterpret_cast<void*>(&fake::OriginalAllHeaders); return; }
     throw std::runtime_error("Unexpected hook");
 }
 namespace soul {
@@ -582,7 +582,7 @@ void InstallAndTopBar() {
     for (const auto& [rva, contract] : Contracts) {
         const std::string owner = contract.owner;
         if (owner == "ScrollView" || owner == "DofusContextualMenu" || owner == "VisualElementExtensions" || owner == "WidgetManager" ||
-            owner == "Clickable" || owner == "Manipulator" || owner == "ExtendedClickable" || rva == 0x15AC250 || rva == 0x55BB230) continue;
+            owner == "Clickable" || owner == "Manipulator" || owner == "ExtendedClickable" || rva == 0x15A43B0 || rva == 0x55BD6D0) continue;
         Check(verified.count(rva) && verified.at(rva) == owner + "." + contract.name, "The window checks " + owner + "." + contract.name);
     }
     Check(Shortcut() && !toolsUi::Visible("stats"), "The top-bar button « Statistiques » with the chart icon, the window closed");

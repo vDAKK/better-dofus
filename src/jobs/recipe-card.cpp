@@ -19,10 +19,10 @@ constexpr const char* PriceLineName = "better_dofus_craft_price";
 constexpr int LocationCenter = 4, SlotXSmall = 0, PickingIgnore = 1;
 using MessageFn = void (*)(Obj, Obj, Method);
 using BuilderFn = void (*)(Obj, Method);
-// ggm's four copies of the recipe message's handler: the build's obfuscation keeps
+// ggm's two copies of the recipe message's handler: the build's obfuscation keeps
 // them apart, and which one the game subscribes is not visible in the files.
-constexpr std::array<uintptr_t, 4> MessageRvas{0x1F57680, 0x1F57A90, 0x1F57DA0, 0x1F581C0};
-std::array<MessageFn, 4> originalMessage{};
+constexpr std::array<uintptr_t, 2> MessageRvas{0x1F7D9B0, 0x1F7DDC0};
+std::array<MessageFn, 2> originalMessage{};
 BuilderFn originalSetup = nullptr, originalPrices = nullptr;
 Method tooltipFactory = nullptr, createItem = nullptr;
 Klass tooltipServiceClass = nullptr;
@@ -280,7 +280,7 @@ void PricesHook(Obj builder, Method method) {
 }
 template <size_t... I> void HookMessages(std::index_sequence<I...>) {
     const auto handler = api.Class("Core.dll", "", "ggm");
-    constexpr std::array<const char*, 4> names{"bkmd", "dpd", "jzh", "nuy"};
+    constexpr std::array<const char*, 2> names{"bkmd", "dod"};
     (AddHook(api.FindVerified(handler, names[I], 1, MessageRvas[I]), MessageRvas[I], reinterpret_cast<void*>(&MessageHook<I>), reinterpret_cast<void**>(&originalMessage[I])), ...);
 }
 }
@@ -289,32 +289,32 @@ void InstallRecipeCard() {
     try {
         recipeNative::Install();
         const auto builder = api.Class("Core.dll", Builders, "ItemTooltipBuilder");
-        tooltipFactory = api.FindVerified(builder, "CreateItemTooltip", 4, 0x1609DE0);
-        api.FindVerified(builder, "get_itemWrapper", 0, 0x1611A30);
+        tooltipFactory = api.FindVerified(builder, "CreateItemTooltip", 4, 0x1601F40);
+        api.FindVerified(builder, "get_itemWrapper", 0, 0x1609B90);
         const auto info = api.Class("Core.dll", "Core.UILogic.Components.Tooltips.Builder.Infos", "ItemTooltipInformation");
-        api.FindVerified(info, ".ctor", 1, 0x164CB30);
-        api.FindVerified(info, "set_pinned", 1, 0xBED620);
-        api.FindVerified(info, "set_pinnable", 1, 0x844870);
+        api.FindVerified(info, ".ctor", 1, 0x1644A90);
+        api.FindVerified(info, "set_pinned", 1, 0xBE8120);
+        api.FindVerified(info, "set_pinnable", 1, 0x83F370);
         const auto effects = api.class_get_field_from_name(info, "effects");
         if (!effects || api.field_get_offset(effects) != 24) throw std::runtime_error("Tooltip information layout");
         const auto binding = api.Class("Core.dll", "Core.UILogic.Bindings", "ItemTooltipBinding");
-        api.FindVerified(binding, "get_ctr_tooltipBlocks", 0, 0x2F121C0);
-        api.FindVerified(binding, "get_dataSection_weight", 0, 0x2F13000);
-        api.FindVerified(binding, "get_ctr_tooltipDescription", 0, 0x2F12280);
-        api.FindVerified(binding, "get_dataSection_price", 0, 0x2F12DC0);
+        api.FindVerified(binding, "get_ctr_tooltipBlocks", 0, 0x2F16E00);
+        api.FindVerified(binding, "get_dataSection_weight", 0, 0x2F17C40);
+        api.FindVerified(binding, "get_ctr_tooltipDescription", 0, 0x2F16EC0);
+        api.FindVerified(binding, "get_dataSection_price", 0, 0x2F17A00);
         const auto item = api.Class("Core.dll", "", "mc");
-        createItem = api.FindVerified(item, "ohc", 5, 0x2A6BF80);
-        api.FindVerified(item, "myx", 0, 0x2A69C20);
-        api.FindVerified(api.Class(Ui, UiSpace, "VisualElement"), "AddToClassList", 1, 0x55A4B60);
-        api.FindVerified(api.Class(Ui, UiSpace, "VisualElement"), "EnableInClassList", 2, 0x55A8130);
+        createItem = api.FindVerified(item, "ohc", 5, 0x2935200);
+        api.FindVerified(item, "myx", 0, 0x29330F0);
+        api.FindVerified(api.Class(Ui, UiSpace, "VisualElement"), "AddToClassList", 1, 0x55A7000);
+        api.FindVerified(api.Class(Ui, UiSpace, "VisualElement"), "EnableInClassList", 2, 0x55AA5D0);
         tooltipServiceClass = api.Class("Core.dll", "", "gbr");
-        api.FindVerified(tooltipServiceClass, "bfpo", 1, 0x1EC99B0);
+        api.FindVerified(tooltipServiceClass, "bfpo", 1, 0x1EDA940);
         const auto message = api.Class("Core.dll", "", "bfz");
-        api.FindVerified(message, "rwq", 0, 0x68D2B0);
+        api.FindVerified(message, "rwq", 0, 0x68E2B0);
         nativeClick::AddHandler(CardAction);
-        HookMessages(std::make_index_sequence<4>{});
-        AddHook(api.FindVerified(builder, "SetupViewWithContent", 0, 0x16108C0), 0x16108C0, reinterpret_cast<void*>(&SetupHook), reinterpret_cast<void**>(&originalSetup));
-        AddHook(api.FindVerified(builder, "SetItemPrices", 0, 0x160D3B0), 0x160D3B0, reinterpret_cast<void*>(&PricesHook), reinterpret_cast<void**>(&originalPrices));
+        HookMessages(std::make_index_sequence<2>{});
+        AddHook(api.FindVerified(builder, "SetupViewWithContent", 0, 0x1608A20), 0x1608A20, reinterpret_cast<void*>(&SetupHook), reinterpret_cast<void**>(&originalSetup));
+        AddHook(api.FindVerified(builder, "SetItemPrices", 0, 0x1605510), 0x1605510, reinterpret_cast<void*>(&PricesHook), reinterpret_cast<void**>(&originalPrices));
         Log("RECIPE_CARD_READY");
     } catch (const std::exception& error) {
         Log(std::string("RECIPE_CARD_UNAVAILABLE ") + error.what());

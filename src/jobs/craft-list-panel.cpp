@@ -493,20 +493,20 @@ int CraftListCount(int item) {
 
 void InstallCraftList() {
     try {
-        unsubscribe = api.FindVerified(api.Class("Core.dll", "Core.Engine.Inputs.Events", "InputCustomEvent"), "UnSubscribe", 1, 0x2097300);
-        createItem = api.FindVerified(api.Class("Core.dll", "", "mc"), "ohc", 5, 0x2A6BF80);
+        unsubscribe = api.FindVerified(api.Class("Core.dll", "Core.Engine.Inputs.Events", "InputCustomEvent"), "UnSubscribe", 1, 0x20E65D0);
+        createItem = api.FindVerified(api.Class("Core.dll", "", "mc"), "ohc", 5, 0x2935200);
         selectMessage = api.Class("Core.dll", "", "bjy");
-        api.FindVerified(selectMessage, ".ctor", 1, 0x262E190);
+        api.FindVerified(selectMessage, ".ctor", 1, 0x26301C0);
         const auto buy = api.Class("Core.dll", "Core.UILogic.TradeCenter.Buy", "AuctionHouseBuy");
-        selectFromRecipe = api.FindVerified(buy, "OnBidHouseSelectItemFromRecipe", 1, 0x2874740);
+        selectFromRecipe = api.FindVerified(buy, "OnBidHouseSelectItemFromRecipe", 1, 0x28797F0);
         const auto checkbox = api.Class("Core.dll", Figma, "CheckboxCustom");
-        api.FindVerified(checkbox, "get_value", 0, 0x16FEAE0);
-        api.FindVerified(checkbox, "set_value", 1, 0x16FF100);
-        addManipulator = api.FindVerified(api.Class(Ui, UiSpace, "VisualElementExtensions"), "AddManipulator", 2, 0x563A930);
+        api.FindVerified(checkbox, "get_value", 0, 0x16F6A40);
+        api.FindVerified(checkbox, "set_value", 1, 0x16F7060);
+        addManipulator = api.FindVerified(api.Class(Ui, UiSpace, "VisualElementExtensions"), "AddManipulator", 2, 0x563CDD0);
         clickableClass = api.Class("Core.dll", Figma, "ExtendedClickable");
-        clickableCtor = api.FindVerified(clickableClass, ".ctor", 1, 0x1725300); // ExtendedClickable(Action), not (Action<EventBase>)
-        AddHook(api.FindVerified(buy, "OnEnable", 0, 0x2875A20), 0x2875A20, reinterpret_cast<void*>(&EnableHook), reinterpret_cast<void**>(&originalEnable));
-        AddHook(api.FindVerified(buy, "OnDisable", 0, 0x28756A0), 0x28756A0, reinterpret_cast<void*>(&DisableHook), reinterpret_cast<void**>(&originalDisable));
+        clickableCtor = api.FindVerified(clickableClass, ".ctor", 1, 0x171D260); // ExtendedClickable(Action), not (Action<EventBase>)
+        AddHook(api.FindVerified(buy, "OnEnable", 0, 0x287AAD0), 0x287AAD0, reinterpret_cast<void*>(&EnableHook), reinterpret_cast<void**>(&originalEnable));
+        AddHook(api.FindVerified(buy, "OnDisable", 0, 0x287A750), 0x287A750, reinterpret_cast<void*>(&DisableHook), reinterpret_cast<void**>(&originalDisable));
         if (!module->settingsPath.empty()) dataPath = craftList::DataPath(module->settingsPath);
         Reload();
         soul::SetAuxiliaryPanelAction(Action); nativeClick::AddHandler(Action);
@@ -530,7 +530,7 @@ void RestoreCraftList() {
         if (state.header.get() && api.Value<bool>(api.Invoke(api.Find(mouse, "HasMouseCapture", 1), nullptr, {state.header.get()}))) {
             *static_cast<bool*>(api.FieldAddress(state.dragger.get(), "m_active")) = false;
             api.Invoke(api.Find(mouse, "ReleaseMouse", 1), nullptr, {state.header.get()});
-            reinterpret_cast<void (*)(bool, Method)>(api.NativeAt(0x16679C0))(false, nullptr);
+            reinterpret_cast<void (*)(bool, Method)>(api.NativeAt(0x165F920))(false, nullptr);
         }
         if (state.dragger.get()) api.Call(state.dragger.get(), "RemoveSnapPreview");
         bool locked = true; int none = 0;

@@ -436,29 +436,29 @@ void InstallContextDisplayMenu() {
     const auto root = api.NestedClass(state.menuClass, "DofusContextualMenuRoot");
     const auto cached = api.Class("Core.dll", "Core.Services.Player.OptionsService", "CachedDataService");
     state.appendRadio = api.Find(state.menuClass, "AppendRadioButtonItem", 12);
-    api.Native(state.appendRadio, 0x16D0D80);
+    api.Native(state.appendRadio, 0x16C8CE0);
     state.appendCheckbox = api.Find(state.menuClass, "AppendCheckboxItem", 9);
-    api.Native(state.appendCheckbox, 0x16CFE60);
-    api.Native(api.Find(state.menuClass, "AppendSeparator", 0), 0x16D1170);
-    api.Native(api.Find(state.menuClass, ".ctor", 0), 0x16D2750);
-    api.Native(api.Find(state.menuClass, "AppendSubMenu", 6), 0x16D1780);
-    api.Native(api.Find(state.menuClass, "InsertItem", 2), 0x16D22E0);
-    api.Native(api.Find(state.menuClass, "RemoveItemAt", 1), 0x16D2680);
-    api.Native(api.Find(state.menuClass, "get_menuItems", 0), 0x68D2B0);
-    api.Native(api.Find(state.itemClass, "get_m_callback", 0), 0x16C8AD0);
-    api.Native(api.Find(state.itemClass, "get_disabled", 0), 0x16C8AB0);
-    api.Native(api.Find(state.itemClass, "set_isOn", 1), 0x11E39F0);
-    api.Native(api.Find(state.viewClass, "get_itemData", 0), 0x1578A70);
-    api.Native(api.Find(state.viewClass, "set_isOn", 1), 0x16C8400);
-    api.Native(api.Find(root, "get_menuData", 0), 0x1578A80);
-    api.Native(api.Find(root, "GetChildItemsInMenu", 0), 0x16CB350);
-    api.Native(api.Find(root, "RemoveMenu", 1), 0x16CC540);
-    api.Native(api.Find(cached, "get_creatureMode", 0), 0x18B4050);
-    AddHook(api.Find(api.Class("Core.dll", MakerNamespace, "WorldMenuMaker"), "CreateMenu", 0), 0x16F9B00,
+    api.Native(state.appendCheckbox, 0x16C7DC0);
+    api.Native(api.Find(state.menuClass, "AppendSeparator", 0), 0x16C90D0);
+    api.Native(api.Find(state.menuClass, ".ctor", 0), 0x16CA6B0);
+    api.Native(api.Find(state.menuClass, "AppendSubMenu", 6), 0x16C96E0);
+    api.Native(api.Find(state.menuClass, "InsertItem", 2), 0x16CA240);
+    api.Native(api.Find(state.menuClass, "RemoveItemAt", 1), 0x16CA5E0);
+    api.Native(api.Find(state.menuClass, "get_menuItems", 0), 0x68E2B0);
+    api.Native(api.Find(state.itemClass, "get_m_callback", 0), 0x16C0A30);
+    api.Native(api.Find(state.itemClass, "get_disabled", 0), 0x16C0A10);
+    api.Native(api.Find(state.itemClass, "set_isOn", 1), 0x11DE4F0);
+    api.Native(api.Find(state.viewClass, "get_itemData", 0), 0x1570BD0);
+    api.Native(api.Find(state.viewClass, "set_isOn", 1), 0x16C0360);
+    api.Native(api.Find(root, "get_menuData", 0), 0x1570BE0);
+    api.Native(api.Find(root, "GetChildItemsInMenu", 0), 0x16C32B0);
+    api.Native(api.Find(root, "RemoveMenu", 1), 0x16C44A0);
+    api.Native(api.Find(cached, "get_creatureMode", 0), 0x18AD1C0);
+    AddHook(api.Find(api.Class("Core.dll", MakerNamespace, "WorldMenuMaker"), "CreateMenu", 0), 0x16F1A60,
         reinterpret_cast<void*>(WorldHook), reinterpret_cast<void**>(&originalWorld));
-    AddHook(api.Find(api.Class("Core.dll", MakerNamespace, "FightWorldMenuMaker"), "CreateMenu", 0), 0x16D5DF0,
+    AddHook(api.Find(api.Class("Core.dll", MakerNamespace, "FightWorldMenuMaker"), "CreateMenu", 0), 0x16CDD50,
         reinterpret_cast<void*>(FightHook), reinterpret_cast<void**>(&originalFight));
-    AddHook(api.Find(state.callbackClass, "InvokeCallback", 1), 0x16C4090,
+    AddHook(api.Find(state.callbackClass, "InvokeCallback", 1), 0x16BBFF0,
         reinterpret_cast<void*>(CallbackHook), reinterpret_cast<void**>(&originalCallback));
     state.failed = false;
     state.installed = true;

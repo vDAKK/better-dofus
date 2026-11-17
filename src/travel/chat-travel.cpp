@@ -656,41 +656,41 @@ void InstallChatTravel() {
     chat_route::Install();
     const auto verify=[](const char* type,const char* name,int argc,uintptr_t rva) { return api.FindVerified(api.Class("Core.dll","",type),name,argc,rva); };
     noticeClass=api.Class("Core.dll","","cwo");chatClass=api.Class("Core.dll","","hal");
-    noticeCtor=verify("cwo",".ctor",12,0x2643A90);
-    noticeConvert=verify("hay","bncy",1,0x2583AA0);
-    noticeDisplay=verify("hal","bmyc",1,0x20E77C0);
-    resolve=verify("esg","zid",3,0x18B97D0);
+    noticeCtor=verify("cwo",".ctor",12,0x2645B30);
+    noticeConvert=verify("hay","bncy",1,0x2119B60);
+    noticeDisplay=verify("hal","bmyc",1,0x210AE00);
+    resolve=verify("esg","zid",3,0x18B2F60);
     routeClass=api.Class("Core.dll","","faw"); mapServiceClass=api.Class("Core.dll","","epf");
-    mapReady=verify("epf","xkj",0,0x1832640);
-    mapData=verify("epf","xkd",0,0x11E3980);
-    routeActive=verify("faw","bcdi",0,0x7D8A60);
-    currentMap=verify("esg","zeo",0,0x1854C30); inBag=verify("esg","zfr",0,0x18B7920);
-    eligible=verify("esg","zhx",0,0x18B9320);
+    mapReady=verify("epf","xkj",0,0x1831020);
+    mapData=verify("epf","xkd",0,0x11DE480);
+    routeActive=verify("faw","bcdi",0,0x7D3390);
+    currentMap=verify("esg","zeo",0,0x18516B0); inBag=verify("esg","zfr",0,0x18B10B0);
+    eligible=verify("esg","zhx",0,0x18B2AB0);
     // The game's autopilot request handler (faw.bcdl and faw.bcdm call it):
     // travel to an exact map. esg.zhy is zhx, then zid's last map to this call.
-    travel=verify("faw","bcdq",2,0x1A34C10);
+    travel=verify("faw","bcdq",2,0x1A202C0);
     // Party follow state of the character (esg <dpzc>, set by the game's
     // follow messages): the only native source of trips after a cancel.
-    following=verify("esg","zcl",0,0x18B6D80);
-    funds=verify("esg","zdc",0,0x11E5800);
-    isKnown=verify("esg","zhr",1,0x18B8A50);
-    quoteClass=api.Class("Core.dll","","dhw"); quoteCtor=verify("dhw",".ctor",1,0x68A590);
-    quote=verify("fhk","bepd",1,0x1C36D10);
-    interactives=verify("wp","qyb",0,0x25DFC00);
+    following=verify("esg","zcl",0,0x18B0510);
+    funds=verify("esg","zdc",0,0x11E0300);
+    isKnown=verify("esg","zhr",1,0x18B21E0);
+    quoteClass=api.Class("Core.dll","","dhw"); quoteCtor=verify("dhw",".ctor",1,0x68B590);
+    quote=verify("fhk","bepd",1,0x1C387F0);
+    interactives=verify("wp","qyb",0,0x25D3A20);
     skillMakerClass=api.Class("Core.dll","Core.UILogic.Components.ContextMenu.ContextMenuFactory","SkillMenuMaker");
-    interactCtor=api.FindVerified(skillMakerClass,".ctor",10,0x16F08B0);
-    interact=api.FindVerified(skillMakerClass,"OnSkillClicked",4,0x16F0770);
-    teleportClass=api.Class("Core.dll","","dhc"); teleportCtor=api.FindVerified(teleportClass,".ctor",4,0x2644520);
-    teleport=verify("fbq","bcla",1,0x1A66040);
+    interactCtor=api.FindVerified(skillMakerClass,".ctor",10,0x16E8810);
+    interact=api.FindVerified(skillMakerClass,"OnSkillClicked",4,0x16E86D0);
+    teleportClass=api.Class("Core.dll","","dhc"); teleportCtor=api.FindVerified(teleportClass,".ctor",4,0x26466A0);
+    teleport=verify("fbq","bcla",1,0x1A4E790);
     constexpr const char* image="Ankama.Dofus.Core.DataCenter.dll",*space="Core.DataCenter.Metadata.World";
     auto info=api.Class(image,space,"MapInformationData");
-    mapInfo=api.FindVerified(info,"GetMapInformationById",1,0x7BB050);
-    subarea=api.FindVerified(info,"get_subArea",0,0x7BB300);
-    world=api.FindVerified(api.Class(image,space,"SubAreaData"),"get_worldmapId",0,0x7C7E90);
-    auto receive=verify("fbq","bcld",1,0x1A66510);
-    AddHook(receive,0x1A66510,reinterpret_cast<void*>(&ListHook),reinterpret_cast<void**>(&originalList));
-    auto price=verify("fhk","bepe",1,0x1C36DC0);
-    AddHook(price,0x1C36DC0,reinterpret_cast<void*>(&QuoteHook),reinterpret_cast<void**>(&originalQuote));
+    mapInfo=api.FindVerified(info,"GetMapInformationById",1,0x7B5980);
+    subarea=api.FindVerified(info,"get_subArea",0,0x7B5C30);
+    world=api.FindVerified(api.Class(image,space,"SubAreaData"),"get_worldmapId",0,0x7C27C0);
+    auto receive=verify("fbq","bcld",1,0x1A4EBC0);
+    AddHook(receive,0x1A4EBC0,reinterpret_cast<void*>(&ListHook),reinterpret_cast<void**>(&originalList));
+    auto price=verify("fhk","bepe",1,0x1C388A0);
+    AddHook(price,0x1C388A0,reinterpret_cast<void*>(&QuoteHook),reinterpret_cast<void**>(&originalQuote));
     // The player's own zone, as the game's world path service reads it (eza.bbnj).
     // Optional: without it, every zone of the current map starts the comparison.
     try {
@@ -698,9 +698,9 @@ void InstallChatTravel() {
         registryClass=api.Class("Core.dll","","evv"); entityClass=api.Class("Core.dll",entities,"EntityInfo");
         mapDataClass=api.Class("AleCore.dll",cells,"ClientMapData"); cellClass=api.Class("AleCore.dll",cells,"ClientCellData");
         RequireField(mapDataClass,"cellsData",0x80); RequireField(cellClass,"cellNumber",0x10);
-        localId=verify("esg","zcx",0,0x18B7060); findEntity=verify("evv","bamm",2,0x195CFF0);
-        entityCell=api.FindVerified(entityClass,"bajk",0,0x1956760);
-        cellZone=api.FindVerified(cellClass,"GetLinkedRpZone",0,0x681F30);
+        localId=verify("esg","zcx",0,0x18B07F0); findEntity=verify("evv","bamm",2,0x1950980);
+        entityCell=api.FindVerified(entityClass,"bajk",0,0x193E140);
+        cellZone=api.FindVerified(cellClass,"GetLinkedRpZone",0,0x682F30);
     } catch (const std::exception& e) {
         localId=findEntity=entityCell=cellZone=nullptr;
         Log(std::string("CHAT_TRAVEL_HERE_ZONE_UNAVAILABLE ")+e.what());

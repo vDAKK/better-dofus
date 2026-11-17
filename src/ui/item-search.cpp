@@ -169,7 +169,7 @@ void Create(Obj root) {
 }
 
 void InstallItemSearch() {
-    unsubscribe = api.FindVerified(api.Class("Core.dll", "Core.Engine.Inputs.Events", "InputCustomEvent"), "UnSubscribe", 1, 0x2097300);
+    unsubscribe = api.FindVerified(api.Class("Core.dll", "Core.Engine.Inputs.Events", "InputCustomEvent"), "UnSubscribe", 1, 0x20E65D0);
     soul::SetAuxiliaryPanelAction(Action); nativeClick::AddHandler(Action);
     toolsUi::Register(Key, "Recherche d’objets", IconMagnifier, [] { return wanted; }, [] { wanted = !wanted; return true; }, {},
         [] { return module && module->settings.itemSearchButton; });
@@ -187,7 +187,7 @@ void RestoreItemSearch() {
         if (state.header.get() && api.Value<bool>(api.Invoke(api.Find(mouse, "HasMouseCapture", 1), nullptr, {state.header.get()}))) {
             *static_cast<bool*>(api.FieldAddress(state.dragger.get(), "m_active")) = false;
             api.Invoke(api.Find(mouse, "ReleaseMouse", 1), nullptr, {state.header.get()});
-            reinterpret_cast<void (*)(bool, Method)>(api.NativeAt(0x16679C0))(false, nullptr);
+            reinterpret_cast<void (*)(bool, Method)>(api.NativeAt(0x165F920))(false, nullptr);
         }
         if (state.dragger.get()) api.Call(state.dragger.get(), "RemoveSnapPreview");
         bool locked = true; int none = 0;
